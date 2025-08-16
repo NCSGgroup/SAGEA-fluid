@@ -1,12 +1,8 @@
 import numpy as np
-from pysrc.Auxiliary.MathTool import MathTool
-from pysrc.LoadFile.DataClass import SHC,GRID
-import pysrc.Auxiliary.EnumClasses as Enums
 from pysrc.Auxiliary.Constants import PMConstant
 from pysrc.Auxiliary.FileTool import FileTool
 from pysrc.LoadFile.LoadL2SH import load_SHC
-from pysrc.Auxiliary.LLN import LoveNumber
-import time
+
 
 
 def LOD_mass_term(C00,C20,isMas=False):
