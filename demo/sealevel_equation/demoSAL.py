@@ -3,6 +3,7 @@ from datetime import date
 import pysrc.Auxiliary.EnumClasses as Enums
 from pysrc.Auxiliary.FileTool import FileTool
 from pysrc.Auxiliary.TimeTool import TimeTool
+from pysrc.Auxiliary.MathTool import MathTool
 from pysrc.LoadFile.LoadL2LowDeg import load_low_degs
 from pysrc.LoadFile.LoadL2SH import load_SHC
 from pysrc.SeaLevelEquation.SeaLevelEquation import PseudoSpectralSLE
@@ -12,6 +13,19 @@ def demo1():
     begin_date, end_date = date(2009, 1, 1), date(2009, 12, 31)
     gaa_dir, gaa_key = FileTool.get_project_dir("data/L2_SH_products/GAA/GFZ/RL06/BC01/"), "GRCOF2"
     shc_gaa = load_SHC(gaa_dir, key=gaa_key, lmax=lmax, begin_date=begin_date, end_date=end_date)  # load GAA
+    shc_gaa.de_background()
+    shc_gaa.convert_type(from_type=Enums.PhysicalDimensions.Dimensionless,to_type=Enums.PhysicalDimensions.EWH)
+
+    lat,lon = MathTool.get_global_lat_lon_range(resolution=res)
+
+    SAL = PseudoSpectralSLE(SH=shc_gaa.value,lmax=lmax)
+    SAL.setLoveNumber(lmax=lmax,method=Enums.LLN_Data.Wang,frame=Enums.Frame.CM)
+    SAL.setLatLon(lat=lat,lon=lon)
+
+    ATM_SAL = SAL.SLE(rotation=True,mask=None,isOnlyTWS=False)
+    print(ATM_SAL['RSL_SH'].shape)
+
+
     print(shc_gaa.value.shape)
 def demo3():
     lmax, res = 60, 0.5
