@@ -546,8 +546,5 @@ class SpatialSLE:
         print('%-20s%-20s ' % ('Convergence:', f'{np.max(delta)}'))
         print('%-20s%-20s ' % ('Time-consuming:', f'{end_time - start_time:.4f} s'))
         print("-------------------------------------------------\n")
-        # print(f"----------------------------------------------\n"
-        #       f"-----time-consuming: {end_time - start_time:.4f} s-------\n"
-        #       f"==============================================\n")
 
         return SLE
