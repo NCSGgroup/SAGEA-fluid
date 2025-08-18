@@ -49,10 +49,10 @@ class GeocenterMotion:
     def setResolution(self,resolution):
         self.res = resolution
         self.lat,self.lon = MathTool.get_global_lat_lon_range(resolution)
-        print(f"-----------------\n"
-              f"Setting the processing data resolution is: {resolution} degree\n"
-              f"The lat is from {self.lat[0]} to {self.lat[-1]},the lon is from {self.lon[0]} to {self.lon[-1]}\n"
-              f"----------------")
+        # print(f"-----------------\n"
+        #       f"Setting the processing data resolution is: {resolution} degree\n"
+        #       f"The lat is from {self.lat[0]} to {self.lat[-1]},the lon is from {self.lon[0]} to {self.lon[-1]}\n"
+        #       f"----------------")
         return self
     def setLatLon(self,lat,lon):
         self.lat,self.lon = lat,lon
