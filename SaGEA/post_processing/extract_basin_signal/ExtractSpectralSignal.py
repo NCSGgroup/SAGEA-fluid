@@ -3,7 +3,7 @@ from pathlib import Path
 
 import numpy as np
 
-from pysrc.LoadFile.DataClass import SHC
+from pysrc.load_file.DataClass import SHC
 from SaGEA.post_processing.extract_basin_signal.ExtractSpectralSignalConfig import ExtractSpectralSignalConfig
 
 from SaGEA.auxiliary.load_file.LoadL2SH import load_SHC

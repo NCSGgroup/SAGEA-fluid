@@ -4,7 +4,7 @@ from pathlib import Path
 import numpy as np
 
 from SaGEA.data_class.CoreGRID import CoreGRID
-from pysrc.LoadFile.DataClass import GRID
+from pysrc.load_file.DataClass import GRID
 from SaGEA.post_processing.extract_basin_signal.ExtractSpatialSignalConfig import ExtractSpatialSignalConfig
 
 from SaGEA.auxiliary.load_file.LoadL2SH import load_SHC

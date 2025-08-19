@@ -1,4 +1,4 @@
-from pysrc.SeaLevelEquation.SeaLevelEquation_Old import SpatialSLE
+from pysrc.sealevel_equation.SeaLevelEquation_Old import SpatialSLE
 from SaGEA.auxiliary.aux_tool.FileTool import FileTool
 from SaGEA.auxiliary.load_file.LoadL2SH import load_SHC
 import numpy as np

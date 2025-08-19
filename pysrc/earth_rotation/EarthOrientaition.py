@@ -3,10 +3,10 @@ from SaGEA.auxiliary.preference.Constants import PMConstant
 import time
 import SaGEA.auxiliary.preference.EnumClasses as Enums
 from SaGEA.auxiliary.aux_tool.FileTool import FileTool
-from pysrc.LoadFile.DataClass import SHC,GRID
+from pysrc.load_file.DataClass import SHC,GRID
 from SaGEA.auxiliary.aux_tool.MathTool import MathTool
 from SaGEA.auxiliary.load_file.LoadL2SH import load_SHC
-from pysrc.SeaLevelEquation.SeaLevelEquation import PseudoSpectralSLE
+from pysrc.sealevel_equation.SeaLevelEquation import PseudoSpectralSLE
 from pysrc.Auxiliary.LLN import LoveNumber
 
 class EOP:

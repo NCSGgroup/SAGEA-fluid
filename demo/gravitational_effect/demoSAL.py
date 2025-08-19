@@ -5,7 +5,7 @@ from SaGEA.auxiliary.aux_tool.TimeTool import TimeTool
 from SaGEA.auxiliary.aux_tool.MathTool import MathTool
 from SaGEA.auxiliary.load_file.LoadL2LowDeg import load_low_degs
 from SaGEA.auxiliary.load_file.LoadL2SH import load_SHC
-from pysrc.SeaLevelEquation.SeaLevelEquation import PseudoSpectralSLE
+from pysrc.sealevel_equation.SeaLevelEquation import PseudoSpectralSLE
 
 def demo1():
     lmax, res = 60, 0.5

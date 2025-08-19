@@ -1,16 +1,15 @@
 import numpy as np
-from pysrc.LoadFile.DataClass import SHC,GRID
+from pysrc.load_file.DataClass import SHC,GRID
 from SaGEA.auxiliary.aux_tool.MathTool import MathTool
 from SaGEA.auxiliary.aux_tool.FileTool import FileTool
 from SaGEA.auxiliary.load_file.LoadL2SH import load_SHC
-from pysrc.SeaLevelEquation.SeaLevelEquation import PseudoSpectralSLE
+from pysrc.sealevel_equation.SeaLevelEquation import PseudoSpectralSLE
 import SaGEA.auxiliary.preference.EnumClasses as Enums
 from pysrc.Auxiliary.LLN import LoveNumber
 from SaGEA.auxiliary.preference.Constants import EarthConstant
 import time
 
-
-class GRACE_OBP_C30:
+class GRACE_OBP:
     '''
     Attention:
     the coefficients type of input data about GRACE and OceanModel is mass coefficients;
@@ -66,37 +65,33 @@ class GRACE_OBP_C30:
         return self
 
     def GAC_Convert_Term(self):
-        GAC_CF = np.zeros((len(self.GAC.value), 5))
+        GAC_CF = np.zeros((len(self.GAC.value), 3))
         lln = LoveNumber().config(lmax=self.lmax,method=self.LLN_method).get_Love_number()
         lln.convert(target=self.frame)
         k = lln.LLN[Enums.LLN_variable.k]
         GAC_CF[:,0] = self.GAC.value[:,2]*(1+k[1])
         GAC_CF[:,1] = self.GAC.value[:,3]*(1+k[1])
         GAC_CF[:,2] = self.GAC.value[:,1]*(1+k[1])
-        GAC_CF[:,3] = self.GAC.value[:,6]
-        GAC_CF[:,4] = self.GAC.value[:,12]
         # print(f"GAC Term: {GAC_CF[0]}")
 
         return GAC_CF
 
     def GAD_Convert_Term(self):
         GAD = self.GAD.value
-        GAD_CF = np.zeros((len(GAD),5))
+        GAD_CF = np.zeros((len(GAD),3))
         lln = LoveNumber().config(lmax=self.lmax, method=self.LLN_method).get_Love_number()
         lln.convert(target=self.frame)
         k = lln.LLN[Enums.LLN_variable.k]
         GAD_CF[:,0] = GAD[:,2] * (EarthConstant.radiusm * EarthConstant.rhoear) / (1 + k[1])
         GAD_CF[:,1] = GAD[:,3] * (EarthConstant.radiusm * EarthConstant.rhoear) / (1 + k[1])
         GAD_CF[:,2] = GAD[:,1] * (EarthConstant.radiusm * EarthConstant.rhoear) / (1 + k[1])
-        GAD_CF[:,3] = GAD[:,6] * (5*EarthConstant.radiusm * EarthConstant.rhoear) / (3 + 3*k[2])
-        GAD_CF[:,4] = GAD[:,12] * (7*EarthConstant.radiusm * EarthConstant.rhoear) / (3 + 3*k[3])
         # print(f"GAD Term: {GAD_CF[0]}")
 
         return GAD_CF
 
     def I_Matrix_Term(self,mask=None):
         N = len(self.GRACE.value)
-        I = np.zeros((N,5,5))
+        I = np.zeros((N,3,3))
         ocean_mask = self.setOcean(ocean_mask=mask)
         theta, phi = MathTool.get_colat_lon_rad(lat=self.lat, lon=self.lon)
         Pilm = MathTool.get_Legendre(lat=theta, lmax=self.lmax, option=0)
@@ -104,38 +99,19 @@ class GRACE_OBP_C30:
         cosC10 = np.cos(0 * phi)
         cosC11 = np.cos(1 * phi)
         sinS11 = np.sin(1 * phi)
-        cosC20 = np.cos(0 * phi)
-        cosC30 = np.cos(0 * phi)
 
         CoreI10C = Pilm[:, 1, 0][:, None] * ocean_mask * cosC10[None, :]
         CoreI11C = Pilm[:, 1, 1][:, None] * ocean_mask * cosC11[None, :]
         CoreI11S = Pilm[:, 1, 1][:, None] * ocean_mask * sinS11[None, :]
-        CoreI20C = Pilm[:, 2, 0][:, None] * ocean_mask * cosC20[None, :]
-        CoreI30C = Pilm[:, 3, 0][:, None] * ocean_mask * cosC30[None, :]
 
         I_10C = GRID(grid=CoreI10C, lat=self.lat, lon=self.lon).to_SHC(self.lmax)
         I_11C = GRID(grid=CoreI11C, lat=self.lat, lon=self.lon).to_SHC(self.lmax)
         I_11S = GRID(grid=CoreI11S, lat=self.lat, lon=self.lon).to_SHC(self.lmax)
-        I_20C = GRID(grid=CoreI20C, lat=self.lat, lon=self.lon).to_SHC(self.lmax)
-        I_30C = GRID(grid=CoreI30C, lat=self.lat, lon=self.lon).to_SHC(self.lmax)
 
-
-        I[:, 0, 0], I[:, 0, 1], I[:, 0, 2], I[:, 0, 3], I[:, 0, 4]  = \
-            I_10C.value[:, 2], I_11C.value[:, 2], I_11S.value[:, 2], I_20C.value[:,2], I_30C.value[:,2]
-
-        I[:, 1, 0], I[:, 1, 1], I[:, 1, 2], I[:, 1, 3], I[:, 1, 4] = \
-            I_10C.value[:, 3], I_11C.value[:, 3], I_11S.value[:, 3], I_20C.value[:,3], I_30C.value[:,3]
-
-        I[:, 2, 0], I[:, 2, 1], I[:, 2, 2], I[:, 2, 3], I[:, 2, 4]= \
-            I_10C.value[:, 1], I_11C.value[:, 1], I_11S.value[:, 1], I_20C.value[:,1], I_30C.value[:,1]
-
-        I[:, 3, 0], I[:, 3, 1], I[:, 3, 2], I[:, 3, 3], I[:, 3, 4]= \
-            I_10C.value[:, 6], I_11C.value[:, 6], I_11S.value[:, 6], I_20C.value[:,6], I_30C.value[:,6]
-
-        I[:, 4, 0], I[:, 4, 1], I[:, 4, 2], I[:, 4, 3], I[:, 4, 4] = \
-            I_10C.value[:, 12], I_11C.value[:, 12], I_11S.value[:, 12], I_20C.value[:,12], I_30C.value[:, 12]
+        I[:, 0, 0], I[:, 0, 1], I[:, 0, 2] = I_10C.value[:, 2], I_11C.value[:, 2], I_11S.value[:, 2]
+        I[:, 1, 0], I[:, 1, 1], I[:, 1, 2] = I_10C.value[:, 3], I_11C.value[:, 3], I_11S.value[:, 3]
+        I[:, 2, 0], I[:, 2, 1], I[:, 2, 2] = I_10C.value[:, 1], I_11C.value[:, 1], I_11S.value[:, 1]
         I = I
-        # print(f"I Matrix shape is: {I.shape}")
         # print(f'I Matrix is: \n{I[0]},\n{I[1]}')
         print("-------------Finished I Matrix computation-------------")
         return I
@@ -143,51 +119,44 @@ class GRACE_OBP_C30:
     def G_Matrix_Term(self,mask=None,SLE=False):
         GRACE_SH = self.GRACE.value
         GRACE_SH[:,0:4] = 0
-        GRACE_SH[:,6] = 0
-        GRACE_SH[:,12] = 0
         if SLE:
-            GRACE_SH = SHC(c=GRACE_SH).convert_type(from_type=Enums.PhysicalDimensions.Density,to_type=Enums.PhysicalDimensions.EWH)
-            SLE = PseudoSpectralSLE(SH=GRACE_SH.value,lmax=self.lmax)
-            SLE.setLoveNumber(lmax=self.lmax,method=self.LLN_method,frame=self.frame)
-            SLE.setLatLon(lat=self.lat,lon=self.lon)
-            kernal_SH = SLE.SLE(mask=self.setOcean(ocean_mask=mask),rotation=True)['RSL_SH']
-            kernal = SHC(c=kernal_SH).convert_type(from_type=Enums.PhysicalDimensions.EWH,to_type=Enums.PhysicalDimensions.Density)
-            kernal = (kernal.to_grid(grid_space=self.res).value)*(self.setOcean(ocean_mask=mask))
+            SLE_input = SHC(c=GRACE_SH).convert_type(from_type=Enums.PhysicalDimensions.Density,
+                                                    to_type=Enums.PhysicalDimensions.EWH)
+            SLE = PseudoSpectralSLE(SH=SLE_input.value, lmax=self.lmax)
+            SLE.setLoveNumber(lmax=self.lmax, method=self.LLN_method, frame=self.frame)
+            SLE.setLatLon(lat=self.lat, lon=self.lon)
+            kernal_SH = SLE.SLE(mask=self.setOcean(ocean_mask=mask), rotation=True)['RSL_SH']
+            kernal = SHC(c=kernal_SH).convert_type(from_type=Enums.PhysicalDimensions.EWH,
+                                                   to_type=Enums.PhysicalDimensions.Density)
+            kernal = (kernal.to_grid(grid_space=self.res).value) * (self.setOcean(ocean_mask=mask))
         else:
             kernal = (SHC(c=GRACE_SH).to_grid(self.res).value)*(self.setOcean(ocean_mask=mask))
         G_SH = GRID(grid=kernal,lat=self.lat,lon=self.lon).to_SHC(self.lmax).value
-        G = np.zeros((len(GRACE_SH),5))
+        G = np.zeros((len(GRACE_SH),3))
         G[:,0] = G_SH[:,2]
         G[:,1] = G_SH[:,3]
         G[:,2] = G_SH[:,1]
-        G[:,3] = G_SH[:,6]
-        G[:,4] = G_SH[:,12]
         G = G
-        # print(f"G V2 is: {G[0]}")
+        # print(f"G V1:{G[0]}")
         print("-------------Finished G Matrix computation-------------")
         return G
 
-    def Ocean_Model_Term(self,C10,C11,S11,C20,C30):
+    def Ocean_Model_Term(self,C10,C11,S11):
         GAD_Correct = self.GAD_Convert_Term()
         OM_SH = self.OceanModel.value
-        OM = np.zeros((len(OM_SH),5))
+        OM = np.zeros((len(OM_SH),3))
         # print(OM.shape)
         OM[:,0] = OM_SH[:,2]-GAD_Correct[:,0]+C10
         OM[:,1] = OM_SH[:,3]-GAD_Correct[:,1]+C11
         OM[:,2] = OM_SH[:,1]-GAD_Correct[:,2]+S11
-        OM[:,3] = OM_SH[:,6]-GAD_Correct[:,3]+C20
-        OM[:,4] = OM_SH[:,12]-GAD_Correct[:,4]+C30
         # print(f"OceanModel Term: {OM[0]}")
         return OM
 
-    def GRD_Term(self,C10=None,C11=None,S11=None,C20=None,C30=None,mask=None,GRD=False,rotation=True):
+    def GRD_Term(self,C10=None,C11=None,S11=None,mask=None,GRD=False,rotation=True):
         GRACE_SH = self.GRACE.value
         GRACE_SH[:,1]=S11
         GRACE_SH[:,2]=C10
         GRACE_SH[:,3]=C11
-        GRACE_SH[:,6]=C20
-        GRACE_SH[:,12]=C30
-        # GRACE_SH[:,]
         GRACE_SH = SHC(c=GRACE_SH).convert_type(from_type=Enums.PhysicalDimensions.Density,to_type=Enums.PhysicalDimensions.EWH)
         GRACE_GRID = GRACE_SH.to_grid(self.res)
         if GRD:
@@ -203,19 +172,18 @@ class GRACE_OBP_C30:
             uniform_mask = uniform_value[:,None,None]*ocean_mask
             UpdateTerm = GRID(grid=uniform_mask,lat=self.lat,lon=self.lon).to_SHC(self.lmax).value
         UpdateTerm = SHC(c=UpdateTerm).convert_type(from_type=Enums.PhysicalDimensions.EWH,to_type=Enums.PhysicalDimensions.Density).value
-        return UpdateTerm[:,2],UpdateTerm[:,3],UpdateTerm[:,1],UpdateTerm[:,6],UpdateTerm[:, 12]
-        # return UpdateTerm[:, 2], UpdateTerm[:, 3], UpdateTerm[:, 1], UpdateTerm[:, 4],
+        return UpdateTerm[:,2],UpdateTerm[:,3],UpdateTerm[:,1]
 
     def Low_Degree_Term(self,mask=None,GRD=False,rotation=True,SLE=False):
         """
-        the series of Stokes coefficients follow: C10, C11, S11, C20,
-        that means, index 0->C10, 1->C11, 2->S11, 3->C20
+        the series of Stokes coefficients follow: C10, C11, S11,
+        that means, index 0->C10, 1->C11, 2->S11
         """
         print(f"=========Begin Geocenter Motion computing==========")
         start_time = time.time()
         GRACE_SH = self.GRACE.value
-        I_C10,I_C11,I_S11,I_C20,I_C30 = [np.zeros(len(GRACE_SH))]*5
-        OM = self.Ocean_Model_Term(C10=I_C10,C11=I_C11,S11=I_S11,C20=I_C20,C30=I_C30)
+        I_C10,I_C11,I_S11 = [np.zeros(len(GRACE_SH))]*3
+        OM = self.Ocean_Model_Term(C10=I_C10,C11=I_C11,S11=I_S11)
         I = self.I_Matrix_Term(mask=mask)
         G = self.G_Matrix_Term(mask=mask,SLE=SLE)
 
@@ -224,11 +192,9 @@ class GRACE_OBP_C30:
         # print(f"verfiy: {I[0]@I_inv[0]}")
         C = np.einsum('nij,nj->ni',I_inv,OM-G)
 
-        GRD_Ocean_Term = self.GRD_Term(C10=C[:,0],C11=C[:,1],S11=C[:,2],C20=C[:,3],C30=C[:,4],
-                                       mask=mask,GRD=GRD,rotation=rotation)
+        GRD_Ocean_Term = self.GRD_Term(C10=C[:,0],C11=C[:,1],S11=C[:,2],mask=mask,GRD=GRD,rotation=rotation)
         for iter in np.arange(100):
-            OM_new = self.Ocean_Model_Term(C10=GRD_Ocean_Term[0],C11=GRD_Ocean_Term[1],
-                                           S11=GRD_Ocean_Term[2],C20=GRD_Ocean_Term[3],C30=GRD_Ocean_Term[4])
+            OM_new = self.Ocean_Model_Term(C10=GRD_Ocean_Term[0],C11=GRD_Ocean_Term[1],S11=GRD_Ocean_Term[2])
             C_new = np.einsum('nij,nj->ni', I_inv, OM_new - G)
             delta = np.abs(C_new-C).flatten()
             if np.max(delta) < 10e-4:
@@ -236,17 +202,9 @@ class GRACE_OBP_C30:
                 break
             C = C_new
 
-        lln = LoveNumber().config(lmax=self.lmax, method=self.LLN_method).get_Love_number()
-        lln.convert(target=self.frame)
-        k = lln.LLN[Enums.LLN_variable.k]
-
         factor = 1.021/(EarthConstant.rhoear*EarthConstant.radiusm)
-        factor2 = (3+3*k[2])/(5*EarthConstant.radiusm*EarthConstant.rhoear)
-        factor3 = (3+3*k[3])/(7*EarthConstant.rhoear*EarthConstant.radiusm)
-        print(f"Love numbers degree-1:{k[1]},degre-2:{k[2]},degree-3:{k[3]}")
-        Mass_Coef = {"C10":C[:,0],"C11":C[:,1],"S11":C[:,2],"C20":C[:,3],"C30":C[:,4]}
-        Stokes_Coef = {"C10":C[:,0]*factor,"C11":C[:,1]*factor,"S11":C[:,2]*factor,
-                       "C20":C[:,3]*factor2,"C30":C[:,4]*factor3}
+        Mass_Coef = {"C10":C[:,0],"C11":C[:,1],"S11":C[:,2]}
+        Stokes_Coef = {"C10":C[:,0]*factor,"C11":C[:,1]*factor,"S11":C[:,2]*factor}
 
         SH = {"Mass":Mass_Coef,"Stokes":Stokes_Coef}
         end_time = time.time()
@@ -256,23 +214,38 @@ class GRACE_OBP_C30:
         return SH
 
 
+    def Convert_Mass_to_Coordinates(self,C10,C11,S11):
+        k1 = 0.021
+        rho_earth = EarthConstant.rhoear
+        X = np.sqrt(3)*(1+k1)*C11/rho_earth
+        Y = np.sqrt(3)*(1+k1)*S11/rho_earth
+        Z = np.sqrt(3)*(1+k1)*C10/rho_earth
+        Coordinate = {"X":X,"Y":Y,"Z":Z}
+        return Coordinate
+
+    def Convert_Stokes_to_Coordinates(self,C10,C11,S11):
+        X = np.sqrt(3)*EarthConstant.radiusm*C11
+        Y = np.sqrt(3)*EarthConstant.radiusm*S11
+        Z = np.sqrt(3)*EarthConstant.radiusm*C10
+        Coordinate = {"X":X,"Y":Y,"Z":Z}
+        return Coordinate
 
 
     def GSM_Like(self,mask=None,GRD=False,rotation=True,SLE=False):
         SH = self.Low_Degree_Term(mask=mask,GRD=GRD,rotation=rotation,SLE=SLE)
         C = SH['Mass']
-        Coordinate = Convert_Mass_to_Coordinates(C10=C["C10"],C11=C["C11"],S11=C["S11"])
+        Coordinate = self.Convert_Mass_to_Coordinates(C10=C["C10"],C11=C["C11"],S11=C["S11"])
         print("-------------Finished GSM-like computation-------------\n"
               "==========================================================")
         return Coordinate
 
     def Full_Geocenter(self,mask=None,GRD=False,rotation=True,SLE=False):
         GAC = self.GAC_Convert_Term()
-        GAC_Coordinate = Convert_Stokes_to_Coordinates(C10=GAC[:, 0], C11=GAC[:, 1], S11=GAC[:, 2])
+        GAC_Coordinate = self.Convert_Stokes_to_Coordinates(C10=GAC[:, 0], C11=GAC[:, 1], S11=GAC[:, 2])
         # print(f"X/Y/Z:\n{coordinate['X']}\n\n{coordinate['Y']}\n\n{coordinate['Z']}")
         SH = self.Low_Degree_Term(mask=mask, GRD=GRD, rotation=rotation,SLE=SLE)
         C = SH['Mass']
-        GSM_Coordinate = Convert_Mass_to_Coordinates(C10=C["C10"], C11=C["C11"], S11=C["S11"])
+        GSM_Coordinate = self.Convert_Mass_to_Coordinates(C10=C["C10"], C11=C["C11"], S11=C["S11"])
         X = GAC_Coordinate['X']+GSM_Coordinate['X']
         Y = GAC_Coordinate['Y']+GSM_Coordinate['Y']
         Z = GAC_Coordinate['Z']+GSM_Coordinate['Z']
@@ -282,22 +255,9 @@ class GRACE_OBP_C30:
         return full_geocenter
 
 
-def Convert_Mass_to_Coordinates(C10, C11, S11):
-    k1 = 0.021
-    rho_earth = EarthConstant.rhoear
-    X = np.sqrt(3) * (1 + k1) * C11 / rho_earth
-    Y = np.sqrt(3) * (1 + k1) * S11 / rho_earth
-    Z = np.sqrt(3) * (1 + k1) * C10 / rho_earth
-    Coordinate = {"X": X, "Y": Y, "Z": Z}
-    return Coordinate
 
 
-def Convert_Stokes_to_Coordinates(C10, C11, S11):
-    X = np.sqrt(3) * EarthConstant.radiusm * C11
-    Y = np.sqrt(3) * EarthConstant.radiusm * S11
-    Z = np.sqrt(3) * EarthConstant.radiusm * C10
-    Coordinate = {"X": X, "Y": Y, "Z": Z}
-    return Coordinate
+
 
 def demo1():
     from datetime import date
@@ -321,11 +281,11 @@ def demo1():
     shc.convert_type(from_type=Enums.PhysicalDimensions.Dimensionless,to_type=Enums.PhysicalDimensions.Density)
 
     OceanSH = np.zeros_like(shc.value)
-    A = GRACE_OBP_V2(GRACE=shc.value,OceanSH=OceanSH,GAD=shc_gad.value,lmax=60)
-    A.G_Matrix_Term()
-    A.I_Matrix_Term()
+    A = GRACE_OBP(GRACE=shc.value,OceanSH=OceanSH,GAC=shc_gac.value,GAD=shc_gad.value,lmax=60)
+    # A.G_Matrix()
+    # A.I_Matrix()
     # A.CorrectGAD()
-    # GCM = A.GCM(mask=None,GRD=False,rotation=True)
+    GCM = A.Low_Degree_Term(mask=None,GRD=False,rotation=True)
 
 
 

@@ -14,8 +14,8 @@ from SaGEA.auxiliary.aux_tool.MathTool import MathTool
 import time as ti
 import xarray as xr
 from tqdm import tqdm
-from pysrc.LoadFile.LoadAOD import AOD_GFZ,AODtype
-from pysrc.AliasingModel.Specify.Harmonic import Harmonic
+from pysrc.load_file.LoadAOD import AOD_GFZ,AODtype
+from pysrc.aliasing_model.Specify.Harmonic import Harmonic
 from SaGEA.post_processing.geometric_correction.old.LoveNumber import LoveNumber,LoveNumberType
 from SaGEA.post_processing.geometric_correction.old.Setting import HarAnalysisType,SynthesisType
 
@@ -528,7 +528,7 @@ class SyntheticGAX:
         return date.strftime('%Y-%m-%d')
 
 def demo1():
-    from pysrc.LoadFile.LoadAOD import AOD_GFZ, AODtype
+    from pysrc.load_file.LoadAOD import AOD_GFZ, AODtype
     ad = AOD_GFZ().load('../data/Products/RL05').setType(AODtype.ATM).setTime('2005-01-01', '12:00:00')
     C, S = ad.getCS(ad.maxDegree)
 

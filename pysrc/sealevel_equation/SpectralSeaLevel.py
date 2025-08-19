@@ -4,7 +4,7 @@ from SaGEA.auxiliary.load_file.LoadL2SH import load_SHC
 from SaGEA.auxiliary.preference.Constants import GeoConstants,EarthConstant
 from pysrc.Auxiliary.LLN import LoveNumber,LLN_Data,LLN_variable,Frame
 import numpy as np
-from pysrc.LoadFile.DataClass import SHC,GRID
+from pysrc.load_file.DataClass import SHC,GRID
 import time
 
 
@@ -43,7 +43,7 @@ class PseudoSpectralSLE:
 
         mask = {"SH":mask_sh,"Grid":mask_grid}
         return mask
-    def EustaticTerm(self,AL_SH,GRD_Grid,mask=None):
+    def BaryTerm(self,AL_SH,GRD_Grid,mask=None):
         '''Baryterm means only the mass change leads to the sea level changes, which also called eustatic term'''
         ocean_function = self.setOcean(ocean_mask=mask)
         ocean_grid = ocean_function['Grid']
@@ -53,23 +53,8 @@ class PseudoSpectralSLE:
         AL00 = AL_SH[:,0]
         RO_SH = GRID(grid=GRD_Grid*ocean_grid,lat=self.lat,lon=self.lon).to_SHC(self.lmax).value
 
-        Eustatic = -(AL00+RO_SH[:,0])/Mask00
-        return Eustatic
-
-    def EustaticTerm_Ocean(self,AL_SH,GRD_Grid,mask=None):
-        '''Baryterm means only the mass change leads to the sea level changes, which also called eustatic term'''
-        ocean_function = self.setOcean(ocean_mask=mask)
-        ocean_grid = ocean_function['Grid']
-        ocean_sh = ocean_function['SH']
-
-        Mask00 = ocean_sh[0,0]
-        AL00 = AL_SH[:,0]
-        RO_SH = GRID(grid=GRD_Grid*ocean_grid,lat=self.lat,lon=self.lon).to_SHC(self.lmax).value
-
-        Eustatic = -(AL00+RO_SH[:,0])/Mask00
-        return Eustatic
-
-
+        Bary = -(AL00+RO_SH[:,0])/Mask00
+        return Bary
     def GRDparameter(self, option=0):
         lln = self.lln
         kl = lln.LLN[LLN_variable.k]
@@ -246,33 +231,33 @@ class PseudoSpectralSLE:
                  "GHC_SH":GHC_SH}
         return SL_SH
 
-    def SLE(self,mask=None,rotation=None):
+    def SLE(self,mask=None,rotation=None,Gaunt=None,Psudo=True,isOnlyTWS=True):
         print(f"=========Begin Spectral SLF computing==========")
         start_time = time.time()
         ocean_function = self.setOcean(ocean_mask=mask)
         ocean_mask = ocean_function['Grid']
-        land_mask = 1-ocean_mask
         Mask_SH = ocean_function['SH']
+        if isOnlyTWS:
+            input_Grid = self.shc.to_grid(self.res).value*(1-ocean_mask)
+            input_SH = GRID(grid=input_Grid,lat=self.lat,lon=self.lon).to_SHC(self.lmax).value
+        else:
+            input_Grid = self.shc.to_grid(self.res).value
+            input_SH = GRID(grid=input_Grid,lat=self.lat,lon=self.lon).to_SHC(self.lmax).value
 
-        # input_Grid = self.shc.to_grid(self.res).value*(1-ocean_mask)
-        # input_SH = GRID(grid=input_Grid,lat=self.lat,lon=self.lon).to_SHC(self.lmax).value
-        input_Grid = self.shc.to_grid(self.res).value
-        input_SH = GRID(grid=input_Grid,lat=self.lat,lon=self.lon).to_SHC(self.lmax).value
-        GHC, VLM = None, None
-
-        GRD = {"Grid": np.zeros_like(input_Grid),
-               "SH": np.zeros_like(input_SH),
+        GRD = {"Grid":np.zeros_like(input_Grid),
+               "SH":np.zeros_like(input_SH),
                "N": np.zeros_like(input_SH),
                "U": np.zeros_like(input_SH),
-               "N_Grid": np.zeros_like(input_Grid)
+               "N_Grid":np.zeros_like(input_Grid)
                }
-        BaryTerm = self.EustaticTerm(AL_SH=input_SH,GRD_Grid=GRD['Grid'],mask=mask)
+        GHC,VLM = None,None
+
+        BaryTerm = self.BaryTerm(AL_SH=input_SH,GRD_Grid=GRD['Grid'],mask=mask)
         SL_SH = self.RSLTerm(GRD=GRD,Bary=BaryTerm,mask=mask)
         RSL_SH = SL_SH['RSL_SH']
-
         for iter in np.arange(100):
             GRD = self.GRDTerm(AL_SH=input_SH, RSL_SH=RSL_SH, rotation=rotation)
-            BaryTerm = self.EustaticTerm(AL_SH=input_SH, GRD_Grid=GRD['Grid'], mask=mask)
+            BaryTerm = self.BaryTerm(AL_SH=input_SH, GRD_Grid=GRD['Grid'], mask=mask)
             SL_SH = self.RSLTerm(GRD=GRD, Bary=BaryTerm, mask=mask)
             new_RSL_SH =  SL_SH['RSL_SH']
             VLM = GRD['U']
@@ -321,42 +306,58 @@ def quick_fig(grid,lat=None,lon=None,maxvalue=2,savefile=None,unit="EWH (cm)"):
         fig.savefig(savefile)
     fig.show()
 def demo1():
+    from pysrc.load_file.LoadCS import LoadCS
     import netCDF4 as nc
     from datetime import date
-    import SaGEA.auxiliary.preference.EnumClasses as Enums
     res=0.5
     ocean_mask = nc.Dataset("../../data/ref_sealevel/ocean_mask.nc")['ocean_mask'][:]
     filepath = FileTool.get_project_dir('data/ref_sealevel/SLFsh_coefficients/GFZOP/CM/WOUTrotation/')
-    begin_date, end_date = date(2004, 1, 1), date(2010,1, 1)
+    begin_date, end_date = date(2003, 1, 1), date(2003, 2, 1)
+    Load_SH = LoadCS().get_CS(filepath, begin_date=begin_date, end_date=end_date,
+                              lmcs_in_queue=np.array([0, 1, 2, 4]))
+    ReferenceRSL_SH = LoadCS().get_CS(filepath, begin_date=begin_date, end_date=end_date,
+                            lmcs_in_queue=np.array([0, 1, 6, 8]))
+    RefRSL_Grid = ReferenceRSL_SH.to_grid(grid_space=res).value[0]
 
-    gab_file,gab_key = FileTool.get_project_dir("I:\CRALICOM/result\GAB/"),"gfc"
-    # gab_SH = LoadCS().get_CS(gab_file,begin_date=begin_date,end_date=end_date,lmcs_in_queue=np.array([1,2,3,4]))
 
-    gab_SH = load_SHC(gab_file,key=gab_key,lmax=60,begin_date=begin_date,end_date=end_date,get_dates=False)
-    # print(gab_SH.value.shape)
-    gab_SH.convert_type(from_type=Enums.PhysicalDimensions.Dimensionless,to_type=Enums.PhysicalDimensions.EWH)
+    lat, lon = MathTool.get_global_lat_lon_range(res)
 
-    GAB_input = gab_SH.value
-    # GAB_input[:,0] = 0
-
-    GRACE = np.zeros_like(gab_SH.value)
-    lat,lon = MathTool.get_global_lat_lon_range(res)
-
-    A = PseudoSpectralSLE(SH=GAB_input, lmax=60).setLatLon(lat=lat, lon=lon)
+    A = PseudoSpectralSLE(SH=Load_SH.value, lmax=60).setLatLon(lat=lat, lon=lon)
 
     RSLwout = A.SLE(rotation=True, mask=ocean_mask)
-    # print(RSLwout['RSL'].shape,type(np.array(RSLwout['RSL'])))
-    # np.save('I:/temp/SAL_OCEAN.npy',np.array(RSLwout['RSL']))
-    np.save('I:/temp/SAL_OCEAN_SH.npy',np.array(RSLwout['RSL_SH']))
-    quick_fig(grid=100*(RSLwout['RSL'][0]),lat=lat,lon=lon,maxvalue=1)
+    Quasi_SH = RSLwout['Quasi_RSL_SH']
+    Quasi_Grid = SHC(c=Quasi_SH).to_grid(res)
+
+    quick_fig(grid=100*(RSLwout['RSL'][0]),lat=lat,lon=lon,maxvalue=2)
+    quick_fig(grid=100*(Quasi_Grid.value[0]),lat=lat,lon=lon,maxvalue=2)
 
 
-    #
-    # gab_grid = gab_SH.to_grid(res)
-    #
-    # quick_fig(grid=100*(gab_grid.value[0]),lat=lat,lon=lon,maxvalue=20)
+    Load_Grid = Load_SH.to_grid(res).value[0]
+    quick_fig(grid=(Load_Grid),lat=lat,lon=lon,maxvalue=1,unit="EWH (m)")
 
+def demo2():
+    from pysrc.sealevel_equation.SeaLevelEquation_Old import SpectralSLE
+    from pysrc.load_file.LoadCS import LoadCS
+    import netCDF4 as nc
+    from datetime import date
+    res = 0.5
+    ocean_mask = nc.Dataset("../../data/ref_sealevel/ocean_mask.nc")['ocean_mask'][:]
+    filepath = FileTool.get_project_dir('data/ref_sealevel/SLFsh_coefficients/GFZOP/CM/WOUTrotation/')
+    begin_date, end_date = date(2003, 1, 1), date(2003, 2, 1)
+    Load_SH = LoadCS().get_CS(filepath, begin_date=begin_date, end_date=end_date,
+                              lmcs_in_queue=np.array([0, 1, 2, 4])).value
+    ReferenceRSL_SH = LoadCS().get_CS(filepath, begin_date=begin_date, end_date=end_date,
+                                      lmcs_in_queue=np.array([0, 1, 6, 8]))
+    RefRSL_Grid = ReferenceRSL_SH.to_grid(grid_space=res).value[0]
 
+    lat, lon = MathTool.get_global_lat_lon_range(res)
+
+    A = SpectralSLE(SH=Load_SH, lmax=60).setLatLon(lat=lat, lon=lon)
+
+    RSLwout = A.SLE(rotation=False, mask=ocean_mask)
+
+    quick_fig(grid=100 * (RSLwout['RSL'].value[0]), lat=lat, lon=lon, maxvalue=2)
+    # quick_fig(grid=100 * (Quasi_Grid.value[0]), lat=lat, lon=lon, maxvalue=2)
 
 
 if __name__ == "__main__":

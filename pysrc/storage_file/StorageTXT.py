@@ -1,7 +1,7 @@
 import os
 import numpy as np
 from datetime import date
-from pysrc.LoadFile.DataClass import SHC
+from pysrc.load_file.DataClass import SHC
 
 
 class CnmSnm:
@@ -16,7 +16,7 @@ class CnmSnm:
             self.SH[keys[i]]=SH[i]
 
         return self
-class StorageGFC:
+class StorageTXT:
     def __init__(self):
         self.__fileDir = None
         self.__SH = None
@@ -63,7 +63,7 @@ class StorageGFC:
         if not os.path.exists(subdir):
             os.makedirs(subdir)
 
-        self.__fileFullPath = subdir+os.sep+f'{self.Prefix}{formatted_begin_date}-{formatted_end_date}{self.Suffix}.gfc'
+        self.__fileFullPath = subdir+os.sep+f'{self.Prefix}{formatted_begin_date}-{formatted_end_date}{self.Suffix}.txt'
         return self
     def SLEStyle(self):
         with open(self.__fileFullPath,'w') as file:
@@ -132,47 +132,7 @@ class StorageGFC:
                                   VCnm[0,i,j],VSnm[0,i,j],OCnm[0,i,j],OSnm[0,i,j]))
 
 
-def demo_SLE():
-    import netCDF4 as nc
-    from SaGEA.auxiliary.aux_tool.FileTool import FileTool
-    from pysrc.LoadFile.LoadCS import LoadCS
-    from SaGEA.auxiliary.aux_tool.MathTool import MathTool
-    from pysrc.SeaLevelEquation.SpectralSeaLevel import PseudoSpectralSLE
-    from pysrc.Auxiliary.LLN import LLN_Data,Frame
-    res = 0.5
-    ocean_mask = nc.Dataset("../../data/ref_sealevel/ocean_mask.nc")['ocean_mask'][:]
-    filepath = FileTool.get_project_dir('data/ref_sealevel/SLFsh_coefficients/GFZOP/CM/WOUTrotation/')
-    begin_date, end_date = date(2003, 1, 1), date(2010, 2, 1)
-    Load_SH, begins, ends = LoadCS().get_CS(filepath, begin_date=begin_date, end_date=end_date,
-                                            lmcs_in_queue=np.array([0, 1, 2, 4]), get_dates=True)
 
-    lat, lon = MathTool.get_global_lat_lon_range(res)
-    A = PseudoSpectralSLE(SH=Load_SH.value, lmax=60).setLatLon(lat=lat, lon=lon)
-    A.setLoveNumber(lmax=60,method=LLN_Data.PREM,frame=Frame.CM)
-
-    RSLwout = A.SLE(rotation=False, mask=ocean_mask)
-    Input_SH = RSLwout['Input']
-    Quasi_SH = RSLwout['Quasi_RSL_SH']
-    GHC_SH = RSLwout['GHC']
-    VLM_SH = RSLwout['VLM']
-    OCE_SH = RSLwout['mask']
-    print(f"SLE Information: {Input_SH.shape},{Quasi_SH.shape},{GHC_SH.shape},{VLM_SH.shape}")
-    SH = []
-    SH.append(Input_SH)
-    SH.append(Quasi_SH)
-    SH.append(GHC_SH)
-    SH.append(VLM_SH)
-    SH.append(OCE_SH)
-    SH = np.array(SH)
-
-    print(SH.shape)
-
-    fm = StorageGFC().setRootDir(fileDir='../../result/SLFsh_coefficients/GFZOP/CM/WOUTrotation/')
-    fm.setPreSufFix(prefix="SLF-2_", suffix="_GRAC_GFZOP_BA01_0600")
-    for dayindex in np.arange(len(begins)):
-        sh_fm = CnmSnm(begin_date=begins[dayindex], end_date=ends[dayindex], Nmax=60)
-        sh_fm.add(SH=SH, keys=['Input', 'RSL', 'GHC', 'VLM','Ocean_mask'])
-        fm.setSH(SH=sh_fm).SLEStyle()
 
 if __name__ == '__main__':
     demo_SLE()

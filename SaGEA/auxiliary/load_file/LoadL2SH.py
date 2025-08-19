@@ -10,7 +10,7 @@ from SaGEA.auxiliary.preference.EnumClasses import L2ProductType, L2InstituteTyp
 from SaGEA.auxiliary.scripts.MatchConfigWithEnums import match_config
 from SaGEA.auxiliary.aux_tool.FileTool import FileTool
 from SaGEA.auxiliary.aux_tool.TimeTool import TimeTool
-from pysrc.LoadFile.DataClass import SHC
+from pysrc.load_file.DataClass import SHC
 
 def match_dates_from_filename(filename):
     match_flag = False

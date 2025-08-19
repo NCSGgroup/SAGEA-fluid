@@ -6,7 +6,7 @@ import numpy as np
 import xarray
 
 from SaGEA.auxiliary.preference.EnumClasses import AODtype,TidesType,DataType
-from pysrc.LoadFile.DataClass import SHC
+from pysrc.load_file.DataClass import SHC
 from SaGEA.post_processing.geometric_correction.old.GeoMathKit import GeoMathKit
 
 

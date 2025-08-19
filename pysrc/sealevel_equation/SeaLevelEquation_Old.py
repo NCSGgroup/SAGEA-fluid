@@ -4,9 +4,9 @@ from SaGEA.auxiliary.load_file.LoadL2SH import load_SHC
 from SaGEA.auxiliary.preference.Constants import GeoConstants,EarthConstant
 from pysrc.Auxiliary.LLN import LoveNumber,LLN_Data,LLN_variable
 from SaGEA.auxiliary.preference.EnumClasses import Displacement,GreenFunction
-from pysrc.BasisFunction import PointLoad,DiskLoad
+from pysrc.basis_fuction import PointLoad,DiskLoad
 import numpy as np
-from pysrc.LoadFile.DataClass import SHC,GRID
+from pysrc.load_file.DataClass import SHC,GRID
 import xarray as xr
 from tqdm import tqdm
 import time
@@ -1511,7 +1511,7 @@ def demo2():
     # load_SH = GRID(grid=load,lat=lat,lon=lon).to_SHC(lmax=180)
     # print(f"SH is: {SH.shape}")
     '''Input SH from reference'''
-    from pysrc.LoadFile.LoadCS import LoadCS
+    from pysrc.load_file.LoadCS import LoadCS
     import netCDF4 as nc
     from datetime import date
     ocean_mask = nc.Dataset("../../data/ref_sealevel/ocean_mask.nc")['ocean_mask'][:]
@@ -1569,7 +1569,7 @@ def demo2():
     # print(KH.shape)
 
 def demo3():
-    from pysrc.LoadFile.LoadCS import LoadCS
+    from pysrc.load_file.LoadCS import LoadCS
     from datetime import date
     filepath = FileTool.get_project_dir('data/ref_sealevel/SLFsh_coefficients/GFZOP/CM/WITHrotation/')
     begin_date,end_date = date(2003,1,1),date(2003,2,1)
@@ -1587,7 +1587,7 @@ def demo3():
 
 def demo4():
     import netCDF4 as nc
-    from pysrc.LoadFile.LoadCS import LoadCS
+    from pysrc.load_file.LoadCS import LoadCS
     from SaGEA.auxiliary.preference.EnumClasses import SLEReference
     import pygmt
     ocean_mask = nc.Dataset("../../data/ref_sealevel/ocean_mask.nc")['ocean_mask'][:]
