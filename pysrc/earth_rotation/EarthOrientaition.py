@@ -7,7 +7,7 @@ from pysrc.aux_fuction.load_file.DataClass import SHC,GRID
 from SaGEA.auxiliary.aux_tool.MathTool import MathTool
 from SaGEA.auxiliary.load_file.LoadL2SH import load_SHC
 from pysrc.sealevel_equation.SeaLevelEquation import PseudoSpectralSLE
-from pysrc.aux_fuction.LLN import LoveNumber
+from pysrc.aux_fuction.geotools.LLN import LoveNumber
 
 class EOP:
     def __init__(self):

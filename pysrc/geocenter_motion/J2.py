@@ -6,7 +6,7 @@ from pysrc.sealevel_equation.SeaLevelEquation import PseudoSpectralSLE
 from SaGEA.auxiliary.preference.Constants import PMConstant
 from SaGEA.auxiliary.aux_tool.FileTool import FileTool
 from SaGEA.auxiliary.load_file.LoadL2SH import load_SHC
-from pysrc.aux_fuction.LLN import LoveNumber
+from pysrc.aux_fuction.geotools.LLN import LoveNumber
 import time
 
 

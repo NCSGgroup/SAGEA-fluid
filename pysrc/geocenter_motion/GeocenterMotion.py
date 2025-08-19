@@ -6,7 +6,7 @@ from pysrc.sealevel_equation.SeaLevelEquation import PseudoSpectralSLE
 from SaGEA.auxiliary.preference.Constants import PMConstant
 from SaGEA.auxiliary.aux_tool.FileTool import FileTool
 from SaGEA.auxiliary.load_file.LoadL2SH import load_SHC
-from pysrc.aux_fuction.LLN import LoveNumber
+from pysrc.aux_fuction.geotools.LLN import LoveNumber
 import time
 
 
@@ -45,7 +45,7 @@ class GeocenterMotion:
         self.lat,self.lon = MathTool.get_global_lat_lon_range(self.res)
 
         self.LLN_method = Enums.LLN_Data.PREM
-        self.frame = Enums.Frame.CF
+        self.frame = Enums.Frame.CM
     def setResolution(self,resolution):
         self.res = resolution
         self.lat,self.lon = MathTool.get_global_lat_lon_range(resolution)
@@ -104,7 +104,7 @@ class GeocenterMotion:
         I[:, 2, 0], I[:, 2, 1], I[:, 2, 2] = I_10C.value[:, 1], I_11C.value[:, 1], I_11S.value[:, 1]
 
         I = I
-        print("-------------Finished I Matrix computation-------------")
+        # print("-------------Finished I Matrix computation-------------")
         return I
     def G_Matrix_Term(self,mask=None,SLE=False):
         GRACE_SH = self.GRACE.value
@@ -131,7 +131,7 @@ class GeocenterMotion:
         # G[:,5] = G_SH[:,5]
         G = G
         # print(f"G V2 is: {G[0]}")
-        print("-------------Finished G Matrix computation-------------")
+        # print("-------------Finished G Matrix computation-------------")
         return G
     def Ocean_Model_Term(self,C10,C11,S11):
         GAD_Correct = self.GAD.value
@@ -176,7 +176,7 @@ class GeocenterMotion:
         the series of Stokes coefficients follow: C10, C11, S11, C20, C21, S21
         that means, index 0->C10, 1->C11, 2->S11, 3->C20, 4->C21, 5->S21
         """
-        print(f"=========Begin GRACE Degree Terms computing==========")
+        print(f"======Begin GRACE Low Degree Terms computing=======")
         start_time = time.time()
         GRACE_SH = self.GRACE.value
         I_C10,I_C11,I_S11 = [np.zeros(len(GRACE_SH))]*3
@@ -196,7 +196,7 @@ class GeocenterMotion:
             C_new = np.einsum('nij,nj->ni', I_inv, OM_new - G)
             delta = np.abs(C_new-C).flatten()
             if np.max(delta) < 10e-4:
-                print(f"Iterative number is: {iter + 1}")
+                # print(f"Iterative number is: {iter + 1}")
                 break
             C = C_new
 
@@ -208,22 +208,32 @@ class GeocenterMotion:
         factor2 = (3+3*k[2])/(5*PMConstant.rho_earth*PMConstant.radius)
         # factor3 = (3+3*k[3])/(7*EarthConstant.rhoear*EarthConstant.radiusm)
 
-        print(f"Love numbers degree-1:{k[1]},degre-2:{k[2]},degree-3:{k[3]}")
+        # print(f"Love numbers degree-1:{k[1]},degre-2:{k[2]},degree-3:{k[3]}")
         Mass_Coef = {"C10":C[:,0],"C11":C[:,1],"S11":C[:,2]}
         Stokes_Coef = {"C10":C[:,0]*factor,"C11":C[:,1]*factor,"S11":C[:,2]*factor}
 
         SH = {"Mass":Mass_Coef,"Stokes":Stokes_Coef}
         end_time = time.time()
-        print(f"----------------------------------------------\n"
-              f"time-consuming: {end_time - start_time:.4f} s\n"
-              f"==============================================\n")
+        print('---------------------------------------------------\n'
+              'GRACE-OBP: Geocenter motion estimation\n'
+              '---------------------------------------------------')
+        print('%-20s%-20s ' % ('Maxdegree:', f'{self.lmax}'))
+        print('%-20s%-20s ' % ('Resolution:', f'{self.res}°'))
+        print('%-20s%-20s ' % ('LoveNumber:', f'{self.LLN_method}'))
+        print('%-20s%-20s ' % ('Frame:', f'{self.frame}'))
+        print("%-20s%-20s " % ('SAL:',f'{GRD} (if False, omit rotation)'))
+        print("%-20s%-20s " % ('Rotation feedback:', f'{rotation}'))
+        print('%-20s%-20s ' % ('Iteration:', f'{iter + 1}'))
+        print('%-20s%-20s ' % ('Convergence:', f'{np.max(delta)}'))
+        print('%-20s%-20s ' % ('Time-consuming:', f'{end_time - start_time:.4f} s'))
+        print(f"---------------------------------------------------")
         return SH
     def GSM_Like(self,mask=None,GRD=False,rotation=True,SLE=False):
         SH = self.Low_Degree_Term(mask=mask,GRD=GRD,rotation=rotation,SLE=SLE)
         C = SH['Mass']
         Coordinate = Convert_Mass_to_Coordinates(C10=C["C10"],C11=C["C11"],S11=C["S11"])
-        print("-------------Finished GSM-like computation-------------\n"
-              "==========================================================")
+        print("-----------Finished GSM-like computation-----------\n"
+              "===================================================\n")
         return Coordinate
     def Full_Geocenter(self,GAC=None,mask=None,GRD=False,rotation=True,SLE=False):
         GAC = SHC(c=GAC)
@@ -235,7 +245,7 @@ class GeocenterMotion:
         Y = GAC_Coordinate['Y']+GSM_Coordinate['Y']
         Z = GAC_Coordinate['Z']+GSM_Coordinate['Z']
         full_geocenter = {"X":X,"Y":Y,"Z":Z}
-        print("-------------Finished Full-Geocenter computation-------------\n"
-              "=============================================================")
+        print("--------Finished Full-Geocenter computation--------\n"
+              "===================================================\n")
         return full_geocenter
 

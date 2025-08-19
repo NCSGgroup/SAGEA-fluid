@@ -2,7 +2,7 @@ from SaGEA.auxiliary.aux_tool.FileTool import FileTool
 from SaGEA.auxiliary.aux_tool.MathTool import MathTool
 from SaGEA.auxiliary.load_file.LoadL2SH import load_SHC
 from SaGEA.auxiliary.preference.Constants import EarthConstant
-from pysrc.aux_fuction.LLN import LoveNumber,LLN_Data,LLN_variable,Frame
+from pysrc.aux_fuction.geotools.LLN import LoveNumber,LLN_Data,LLN_variable,Frame
 from SaGEA.auxiliary.preference.EnumClasses import Displacement,GreenFunction
 from pysrc.basis_func import PointLoad,DiskLoad
 import numpy as np

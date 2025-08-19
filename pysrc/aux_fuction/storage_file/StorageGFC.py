@@ -138,7 +138,7 @@ def demo_SLE():
     from pysrc.aux_fuction.load_file.LoadCS import LoadCS
     from SaGEA.auxiliary.aux_tool.MathTool import MathTool
     from pysrc.sealevel_equation.SpectralSeaLevel import PseudoSpectralSLE
-    from pysrc.aux_fuction.LLN import LLN_Data,Frame
+    from pysrc.aux_fuction.geotools.LLN import LLN_Data,Frame
     res = 0.5
     ocean_mask = nc.Dataset("../../data/ref_sealevel/ocean_mask.nc")['ocean_mask'][:]
     filepath = FileTool.get_project_dir('data/ref_sealevel/SLFsh_coefficients/GFZOP/CM/WOUTrotation/')

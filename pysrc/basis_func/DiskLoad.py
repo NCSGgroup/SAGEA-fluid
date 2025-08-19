@@ -1,6 +1,6 @@
 import numpy as np
 
-from pysrc.aux_fuction.LLN import LoveNumber, LLN_Data, LLN_variable
+from pysrc.aux_fuction.geotools.LLN import LoveNumber, LLN_Data, LLN_variable
 from pysrc.basis_func.Legendre import Legendre_polynomial
 from SaGEA.auxiliary.preference.Constants import EarthConstant
 from SaGEA.auxiliary.aux_tool.MathTool import MathTool
