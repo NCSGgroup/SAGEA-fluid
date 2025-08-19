@@ -181,8 +181,8 @@ class ForwardModeling(Leakage):
 
 def demo1():
     import time
-    from pysrc.auxiliary.load_file.LoadL2SH import load_SHC
-    from pysrc.auxiliary.aux_tool.FileTool import FileTool
+    from pysrc.aux_fuction.load_file.LoadL2SH import load_SHC
+    from pysrc.aux_fuction.aux_tool.FileTool import FileTool
 
     '''load shc'''
     multi_times = 220
@@ -190,7 +190,7 @@ def demo1():
     spatial_resolution = 1
 
     cqlm, sqlm = load_SHC(
-        FileTool.get_project_dir('data/auxiliary/GIF48.gfc'),
+        FileTool.get_project_dir('data/aux_fuction/GIF48.gfc'),
         key='gfc',
         lmax=lmax,
         lmcs_in_queue=(2, 3, 4, 5)

@@ -179,8 +179,8 @@ class ReplaceLowDegree:
 
 
 def demo():
-    from pysrc.auxiliary.load_file.LoadL2SH import LoadL2SH, TimeTool
-    from pysrc.auxiliary.load_file.LoadL2LowDeg import LoadLowDegree, L2LowDegreeFileID
+    from pysrc.aux_fuction.load_file.LoadL2SH import LoadL2SH, TimeTool
+    from pysrc.aux_fuction.load_file.LoadL2LowDeg import LoadLowDegree, L2LowDegreeFileID
     import datetime
 
     load = LoadL2SH()

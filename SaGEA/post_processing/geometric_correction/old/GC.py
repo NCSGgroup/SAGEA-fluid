@@ -296,7 +296,7 @@ class GeometricalCorrection:
         ell = RefEllipsoid(elltype)
         undulation = GeoidUndulation(elltype).getGeoid(self.__lat, self.__lon).flatten()
 
-        LN = LoveNumber(FileTool.get_project_dir('data/auxiliary/'))
+        LN = LoveNumber(FileTool.get_project_dir('data/aux_fuction/'))
         PHISFC = FileTool.get_project_dir('data/topography/PHISFC_ERA5_invariant.nc', relative=True)
         orography = ReadNC().setPar(PHISFC, DataType.PHISFC).read()[0].flatten()
         self.__Pnm = GeoMathKit.getPnm(self.__lat, self.__Nmax, 1)

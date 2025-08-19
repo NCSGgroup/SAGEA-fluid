@@ -155,7 +155,7 @@ class LoveNumber:
 
 
 def demo():
-    LN = LoveNumber('../data/auxiliary/')
+    LN = LoveNumber('../data/aux_fuction/')
     Kn = LN.getNumber(30, LoveNumberType.Wang)
     pass
 

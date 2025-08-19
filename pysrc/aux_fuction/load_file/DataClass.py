@@ -14,8 +14,8 @@ from SaGEA.data_class.CoreGRID import CoreGRID
 from SaGEA.data_class.CoreSHC import CoreSHC
 import SaGEA.auxiliary.preference.EnumClasses as Enums
 from SaGEA.auxiliary.preference.EnumClasses import match_string
-# from pysrc.Auxiliary.LoveNumber import LoveNumber
-from pysrc.Auxiliary.LLN import LoveNumber
+# from pysrc.aux_fuction.LoveNumber import LoveNumber
+from pysrc.aux_fuction.LLN import LoveNumber
 
 from SaGEA.post_processing.convert_field_physical_quantity.ConvertSHC import ConvertSHC
 from SaGEA.post_processing.harmonic.Harmonic import Harmonic

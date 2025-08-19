@@ -89,18 +89,18 @@ class BufferZone(Leakage):
 
 
 if __name__ == '__main__':
-    from pysrc.auxiliary.aux_tool.FileTool import FileTool
-    from pysrc.auxiliary.scripts.PlotGrids import plot_grids
+    from pysrc.aux_fuction.aux_tool.FileTool import FileTool
+    from pysrc.aux_fuction.scripts.PlotGrids import plot_grids
     from pysrc.post_processing.filter.Gaussian import Gaussian
 
-    from pysrc.auxiliary.load_file.LoadL2SH import load_SHC
+    from pysrc.aux_fuction.load_file.LoadL2SH import load_SHC
 
     bfz = BufferZone()
 
     grid_space = 1
     lmax = 60
 
-    basin_path = FileTool.get_project_dir('data/auxiliary/ocean360_grndline.sh')
+    basin_path = FileTool.get_project_dir('data/aux_fuction/ocean360_grndline.sh')
     basin_shc = load_SHC(basin_path, key="", lmcs_in_queue=(1, 2, 3, 4), lmax=lmax)
     basin_grid = basin_shc.to_grid(grid_space=grid_space).value[0]
 

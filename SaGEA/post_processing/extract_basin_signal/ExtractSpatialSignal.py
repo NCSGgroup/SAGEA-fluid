@@ -4,7 +4,7 @@ from pathlib import Path
 import numpy as np
 
 from SaGEA.data_class.CoreGRID import CoreGRID
-from pysrc.load_file.DataClass import GRID
+from pysrc.aux_fuction.load_file.DataClass import GRID
 from SaGEA.post_processing.extract_basin_signal.ExtractSpatialSignalConfig import ExtractSpatialSignalConfig
 
 from SaGEA.auxiliary.load_file.LoadL2SH import load_SHC
@@ -146,7 +146,7 @@ class ExtractSpatial:
 
 
 if __name__ == '__main__':
-    from pysrc.auxiliary.aux_tool.FileTool import FileTool
+    from pysrc.aux_fuction.aux_tool.FileTool import FileTool
 
     signal = np.random.uniform(0, 10, (180, 360))
 

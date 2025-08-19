@@ -3,7 +3,7 @@ from pathlib import Path
 
 import numpy as np
 
-from pysrc.load_file.DataClass import SHC
+from pysrc.aux_fuction.load_file.DataClass import SHC
 from SaGEA.post_processing.extract_basin_signal.ExtractSpectralSignalConfig import ExtractSpectralSignalConfig
 
 from SaGEA.auxiliary.load_file.LoadL2SH import load_SHC
@@ -84,7 +84,7 @@ class ExtractSpectral:
 
 
 if __name__ == '__main__':
-    from pysrc.auxiliary.aux_tool.FileTool import FileTool
+    from pysrc.aux_fuction.aux_tool.FileTool import FileTool
 
     signal_c = np.random.normal(0, 100, (61, 61))
     signal_s = np.random.normal(0, 100, (61, 61))

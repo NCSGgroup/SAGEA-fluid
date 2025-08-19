@@ -5,7 +5,7 @@ from netCDF4 import Dataset
 
 from SaGEA.auxiliary.aux_tool.FileTool import FileTool
 from SaGEA.auxiliary.aux_tool.MathTool import MathTool
-from pysrc.load_file.DataClass import GRID
+from pysrc.aux_fuction.load_file.DataClass import GRID
 
 
 class LoadNOAH21:
