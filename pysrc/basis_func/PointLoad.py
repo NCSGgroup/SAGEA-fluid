@@ -1,6 +1,6 @@
 import numpy as np
-from pysrc.Auxiliary.LLN import LoveNumber, LLN_variable
-from pysrc.basis_fuction.Legendre import Legendre_polynomial
+from pysrc.aux_fuction.LLN import LoveNumber, LLN_variable
+from pysrc.basis_func.Legendre import Legendre_polynomial
 from SaGEA.auxiliary.preference.Constants import EarthConstant
 from SaGEA.auxiliary.preference.EnumClasses import Displacement
 from SaGEA.auxiliary.aux_tool.MathTool import MathTool

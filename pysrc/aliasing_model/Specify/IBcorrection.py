@@ -13,7 +13,7 @@ import numpy as np
 
 from SaGEA.post_processing.geometric_correction.old.GeoMathKit import GeoMathKit
 from pysrc.aliasing_model.Specify.Harmonic import Harmonic, SynthesisType
-from pysrc.load_file.LoadAOD import SimpleSH
+from pysrc.aux_fuction.load_file.LoadAOD import SimpleSH
 from SaGEA.post_processing.geometric_correction.old.LoveNumber import LoveNumberType, LoveNumber
 
 
@@ -52,12 +52,12 @@ class LandSeaMask:
         :return:
         """
         # lmax = 300
-        # topo_coeff = pysh.SHCoeffs.from_file('../data//Auxiliary/srtmp300.msl.txt', lmax=lmax)
+        # topo_coeff = pysh.SHCoeffs.from_file('../data//aux_fuction/srtmp300.msl.txt', lmax=lmax)
         #
         # # lat = np.arange(89.75, -90, -0.5)
         # # lon = np.arange(0.25, 360, 0.5)
         #
-        # LN = LoveNumber('../data/Auxiliary/')
+        # LN = LoveNumber('../data/aux_fuction/')
         # hm = Harmonic(LN, Parallel=5).setLoveNumMethod(LoveNumberType.Wang)
         #
         # SHC = GeoMathKit.CS_2dTo1d(topo_coeff.coeffs[0, :, :])
@@ -77,13 +77,13 @@ class LandSeaMask:
         The values are between 0 (sea) and 1 (land).
         :return:
         """
-        # OceanMask = Dataset('../data/Auxiliary/OceanMask.nc')
+        # OceanMask = Dataset('../data/aux_fuction/OceanMask.nc')
         #
         # lat = np.array(OceanMask.variables['latitude'][:], dtype=np.float)
         # lon = np.array(OceanMask.variables['longitude'][:], dtype=np.float)
         # Val = np.array(OceanMask.variables['lsm'][0, :, :], dtype=np.float)
         #
-        # LN = LoveNumber('../data/Auxiliary/')
+        # LN = LoveNumber('../data/aux_fuction/')
         # hm = Harmonic(LN, Parallel=5).setLoveNumMethod(LoveNumberType.Wang)
         #
         # Nmax = 200
@@ -103,12 +103,12 @@ class LandSeaMask:
         :return:
         """
         lmax = 360
-        SHC, SHS = SimpleSH().load('H:/Paper3/paper_data/Auxiliary/ocean360_grndline.sh').getCS(lmax)
+        SHC, SHS = SimpleSH().load('H:/Paper3/paper_data/aux_fuction/ocean360_grndline.sh').getCS(lmax)
 
         # lat = np.arange(89.75, -90, -0.5)
         # lon = np.arange(0.25, 360, 0.5)
 
-        LN = LoveNumber('H:/Paper3/paper_data/Auxiliary/')
+        LN = LoveNumber('H:/Paper3/paper_data/aux_fuction/')
         hm = Harmonic(LN).setLoveNumMethod(LoveNumberType.Wang)
         PnmMat = GeoMathKit.getPnmMatrix(self.__lat, lmax, 2)
         grids = hm.synthesis(Cqlm=SHC, Sqlm=SHS, lat=self.__lat, lon=self.__lon, Nmax=lmax, PnmMat=PnmMat,kind=SynthesisType.synthesis)

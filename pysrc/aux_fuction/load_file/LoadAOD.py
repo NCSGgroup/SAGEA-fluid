@@ -6,7 +6,7 @@ import numpy as np
 import xarray
 
 from SaGEA.auxiliary.preference.EnumClasses import AODtype,TidesType,DataType
-from pysrc.load_file.DataClass import SHC
+from pysrc.aux_fuction.load_file.DataClass import SHC
 from SaGEA.post_processing.geometric_correction.old.GeoMathKit import GeoMathKit
 
 
@@ -26,8 +26,8 @@ class LoadFields:
         self.__nLat, self.__nLon = None, None
         self.__level = None
         self.__q_level = None
-        self.a = np.load('H:/Paper3/paper_data/Auxiliary/ABCoefficients137.npy')[0]
-        self.b = np.load('H:/Paper3/paper_data/Auxiliary/ABCoefficients137.npy')[1]
+        self.a = np.load('H:/Paper3/paper_data/aux_fuction/ABCoefficients137.npy')[0]
+        self.b = np.load('H:/Paper3/paper_data/aux_fuction/ABCoefficients137.npy')[1]
         self.GeoHeight = GeoHeight
 
         pass
@@ -846,15 +846,15 @@ class AODtides(LoadSH):
 
 
 def demo1():
-    # a = Gif48().load('../data/Auxiliary/GIF48.gfc')
-    a = Gif48().load('../data/Auxiliary/ITG-Grace2010s.gfc')
+    # a = Gif48().load('../data/aux_fuction/GIF48.gfc')
+    a = Gif48().load('../data/aux_fuction/ITG-Grace2010s.gfc')
     C0, S0 = a.getCS(100)
     C1, S1 = a.getSigmaCS(100)
     pass
 
 
 def demo2():
-    a = SimpleSH().load('../data/Auxiliary/ocean360_grndline.sh')
+    a = SimpleSH().load('../data/aux_fuction/ocean360_grndline.sh')
     C0, S0 = a.getCS(360)
     pass
 
