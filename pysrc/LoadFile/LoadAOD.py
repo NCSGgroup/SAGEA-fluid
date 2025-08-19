@@ -5,10 +5,9 @@ import warnings
 import numpy as np
 import xarray
 
-from pysrc.Auxiliary.EnumClasses import AODtype,TidesType,DataType
+from SaGEA.auxiliary.preference.EnumClasses import AODtype,TidesType,DataType
 from pysrc.LoadFile.DataClass import SHC
-from pysrc.Auxiliary.MathTool import MathTool
-from pysrc.Auxiliary.GeoMathKit import GeoMathKit
+from SaGEA.post_processing.geometric_correction.old.GeoMathKit import GeoMathKit
 
 
 

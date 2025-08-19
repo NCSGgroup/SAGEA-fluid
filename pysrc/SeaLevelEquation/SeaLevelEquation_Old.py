@@ -1,16 +1,16 @@
-from pysrc.Auxiliary.FileTool import FileTool
-from pysrc.Auxiliary.MathTool import MathTool
-from pysrc.LoadFile.LoadL2SH import load_SHC
-from pysrc.Auxiliary.Constants import GeoConstants,EarthConstant
+from SaGEA.auxiliary.aux_tool.FileTool import FileTool
+from SaGEA.auxiliary.aux_tool.MathTool import MathTool
+from SaGEA.auxiliary.load_file.LoadL2SH import load_SHC
+from SaGEA.auxiliary.preference.Constants import GeoConstants,EarthConstant
 from pysrc.Auxiliary.LLN import LoveNumber,LLN_Data,LLN_variable
-from pysrc.Auxiliary.EnumClasses import Displacement,GreenFunction
+from SaGEA.auxiliary.preference.EnumClasses import Displacement,GreenFunction
 from pysrc.BasisFunction import PointLoad,DiskLoad
 import numpy as np
 from pysrc.LoadFile.DataClass import SHC,GRID
 import xarray as xr
 from tqdm import tqdm
 import time
-from pysrc.BasisFunction.Harmonic import Harmonic
+from SaGEA.post_processing.harmonic.Harmonic import Harmonic
 
 
 class SpatialSLE:
@@ -1512,7 +1512,6 @@ def demo2():
     # print(f"SH is: {SH.shape}")
     '''Input SH from reference'''
     from pysrc.LoadFile.LoadCS import LoadCS
-    from pysrc.Auxiliary.EnumClasses import SLEReference
     import netCDF4 as nc
     from datetime import date
     ocean_mask = nc.Dataset("../../data/ref_sealevel/ocean_mask.nc")['ocean_mask'][:]
@@ -1589,7 +1588,7 @@ def demo3():
 def demo4():
     import netCDF4 as nc
     from pysrc.LoadFile.LoadCS import LoadCS
-    from pysrc.Auxiliary.EnumClasses import SLEReference
+    from SaGEA.auxiliary.preference.EnumClasses import SLEReference
     import pygmt
     ocean_mask = nc.Dataset("../../data/ref_sealevel/ocean_mask.nc")['ocean_mask'][:]
 

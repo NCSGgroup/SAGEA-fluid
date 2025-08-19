@@ -1,10 +1,10 @@
 import numpy as np
 
-from pysrc.Auxiliary.LLN import LoveNumber, LLN_Data, LLN_variable, Frame
+from pysrc.Auxiliary.LLN import LoveNumber, LLN_Data, LLN_variable
 from pysrc.BasisFunction.Legendre import Legendre_polynomial
-from pysrc.Auxiliary.Constants import EarthConstant
-from pysrc.Auxiliary.MathTool import MathTool
-from pysrc.Auxiliary.EnumClasses import Displacement
+from SaGEA.auxiliary.preference.Constants import EarthConstant
+from SaGEA.auxiliary.aux_tool.MathTool import MathTool
+from SaGEA.auxiliary.preference.EnumClasses import Displacement
 from tqdm import tqdm
 
 class DiskLoad:
@@ -259,7 +259,7 @@ def grid2radius(lat_center, grid_size):
     :param grid_size: equal-distance grid, grid interval, e.g., 1 degree
     :return: theta_radius [degree], length_radius [m]
     """
-    from pysrc.Auxiliary.Constants import EarthConstant
+    from SaGEA.auxiliary.preference.Constants import EarthConstant
     example = 30  # longitude, but indeed the choice could be arbitrary.
 
     a = MathTool.angular_distance(point1_lat=lat_center + grid_size / 2, point1_lon=example,
@@ -281,7 +281,7 @@ def grid2radius_type2(lat_center, grid_size):
     :param grid_size: equal-distance grid, grid interval, e.g., 1 degree
     :return: theta_radius [degree], length_radius [m]
     """
-    from pysrc.Auxiliary.Constants import EarthConstant
+    from SaGEA.auxiliary.preference.Constants import EarthConstant
 
     area = np.cos(np.deg2rad(lat_center)) * np.deg2rad(grid_size) ** 2
 
@@ -300,7 +300,7 @@ def Mass(r, thickness):
     :param grid_size: equal-distance grid, grid interval, e.g., 1 degree
     :return: theta_radius [degree], length_radius [m]
     """
-    from pysrc.Auxiliary.Constants import EarthConstant
+    from SaGEA.auxiliary.preference.Constants import EarthConstant
 
     M1 = 2 * np.pi * EarthConstant.radiusm ** 2 * (
                 1 - np.cos(r / EarthConstant.radiusm)) * EarthConstant.rhow * thickness
@@ -309,7 +309,6 @@ def Mass(r, thickness):
 
     return M1, M2
 def demo():
-    from pysrc.Auxiliary.FileTool import FileTool
     lln = LoveNumber().config(lmax=40000, method=LLN_Data.REF).get_Love_number()
 
     # file = FileTool.get_project_dir() / 'data' / 'LLN' / 'PREM-LGFs.dat'

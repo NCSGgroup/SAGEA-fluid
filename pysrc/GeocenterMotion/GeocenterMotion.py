@@ -1,11 +1,11 @@
 import numpy as np
-from pysrc.Auxiliary.MathTool import MathTool
+from SaGEA.auxiliary.aux_tool.MathTool import MathTool
 from pysrc.LoadFile.DataClass import SHC,GRID
-import pysrc.Auxiliary.EnumClasses as Enums
+import SaGEA.auxiliary.preference.EnumClasses as Enums
 from pysrc.SeaLevelEquation.SeaLevelEquation import PseudoSpectralSLE
-from pysrc.Auxiliary.Constants import PMConstant
-from pysrc.Auxiliary.FileTool import FileTool
-from pysrc.LoadFile.LoadL2SH import load_SHC
+from SaGEA.auxiliary.preference.Constants import PMConstant
+from SaGEA.auxiliary.aux_tool.FileTool import FileTool
+from SaGEA.auxiliary.load_file.LoadL2SH import load_SHC
 from pysrc.Auxiliary.LLN import LoveNumber
 import time
 
@@ -57,10 +57,10 @@ class GeocenterMotion:
     def setLatLon(self,lat,lon):
         self.lat,self.lon = lat,lon
         self.res = np.abs(self.lat[1]-self.lat[0])
-        print(f"-----------------\n"
-              f"Setting the processing data resolution is: {self.res} degree\n"
-              f"The lat is from {self.lat[0]} to {self.lat[-1]},the lon is from {self.lon[0]} to {self.lon[-1]}."
-              f"----------------")
+        # print(f"-----------------\n"
+        #       f"Setting the processing data resolution is: {self.res} degree\n"
+        #       f"The lat is from {self.lat[0]} to {self.lat[-1]},the lon is from {self.lon[0]} to {self.lon[-1]}."
+        #       f"----------------")
         return self
     def setOcean(self,ocean_mask=None):
         if ocean_mask is not None:

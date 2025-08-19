@@ -1,13 +1,11 @@
-from pysrc.Auxiliary.FileTool import FileTool
-from pysrc.Auxiliary.MathTool import MathTool
-from pysrc.LoadFile.LoadL2SH import load_SHC
-from pysrc.Auxiliary.Constants import GeoConstants,EarthConstant
+from SaGEA.auxiliary.aux_tool.FileTool import FileTool
+from SaGEA.auxiliary.aux_tool.MathTool import MathTool
+from SaGEA.auxiliary.load_file.LoadL2SH import load_SHC
+from SaGEA.auxiliary.preference.Constants import GeoConstants,EarthConstant
 from pysrc.Auxiliary.LLN import LoveNumber,LLN_Data,LLN_variable,Frame
 import numpy as np
 from pysrc.LoadFile.DataClass import SHC,GRID
-from tqdm import tqdm
 import time
-from pysrc.BasisFunction.Harmonic import Harmonic
 
 
 class PseudoSpectralSLE:
@@ -323,10 +321,9 @@ def quick_fig(grid,lat=None,lon=None,maxvalue=2,savefile=None,unit="EWH (cm)"):
         fig.savefig(savefile)
     fig.show()
 def demo1():
-    from pysrc.LoadFile.LoadCS import LoadCS
     import netCDF4 as nc
     from datetime import date
-    import pysrc.Auxiliary.EnumClasses as Enums
+    import SaGEA.auxiliary.preference.EnumClasses as Enums
     res=0.5
     ocean_mask = nc.Dataset("../../data/ref_sealevel/ocean_mask.nc")['ocean_mask'][:]
     filepath = FileTool.get_project_dir('data/ref_sealevel/SLFsh_coefficients/GFZOP/CM/WOUTrotation/')

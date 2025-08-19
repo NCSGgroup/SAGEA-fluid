@@ -1,7 +1,5 @@
 import numpy as np
-from pathlib import Path, WindowsPath
-from pysrc.Auxiliary.FileTool import FileTool
-from pysrc.Auxiliary.EnumClasses import SLEReference
+from SaGEA.auxiliary.aux_tool.FileTool import FileTool
 from pysrc.LoadFile.DataClass import SHC
 import re
 import datetime

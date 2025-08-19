@@ -1,11 +1,10 @@
-import numpy as np
 from datetime import date
-import pysrc.Auxiliary.EnumClasses as Enums
-from pysrc.Auxiliary.FileTool import FileTool
-from pysrc.Auxiliary.TimeTool import TimeTool
-from pysrc.Auxiliary.MathTool import MathTool
-from pysrc.LoadFile.LoadL2LowDeg import load_low_degs
-from pysrc.LoadFile.LoadL2SH import load_SHC
+import SaGEA.auxiliary.preference.EnumClasses as Enums
+from SaGEA.auxiliary.aux_tool.FileTool import FileTool
+from SaGEA.auxiliary.aux_tool.TimeTool import TimeTool
+from SaGEA.auxiliary.aux_tool.MathTool import MathTool
+from SaGEA.auxiliary.load_file.LoadL2LowDeg import load_low_degs
+from SaGEA.auxiliary.load_file.LoadL2SH import load_SHC
 from pysrc.SeaLevelEquation.SeaLevelEquation import PseudoSpectralSLE
 
 def demo1():
@@ -74,5 +73,5 @@ def demo3():
                      to_type=Enums.PhysicalDimensions.EWH)
     shc.filter(method=filter_method, param=filter_params)  # average filter
 
-
-demo1()
+if __name__ == '__main__':
+    demo1()

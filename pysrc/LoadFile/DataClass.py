@@ -7,32 +7,32 @@ import h5py
 import netCDF4
 import numpy as np
 
-from pysrc.Auxiliary.FileTool import FileTool
-from pysrc.Auxiliary.MathTool import MathTool
-from pysrc.Auxiliary.TimeTool import TimeTool
-from pysrc.Auxiliary.CoreGRID import CoreGRID
-from pysrc.Auxiliary.CoreSHC import CoreSHC
-import pysrc.Auxiliary.EnumClasses as Enums
-from pysrc.Auxiliary.EnumClasses import match_string
+from SaGEA.auxiliary.aux_tool.FileTool import FileTool
+from SaGEA.auxiliary.aux_tool.MathTool import MathTool
+from SaGEA.auxiliary.aux_tool.TimeTool import TimeTool
+from SaGEA.data_class.CoreGRID import CoreGRID
+from SaGEA.data_class.CoreSHC import CoreSHC
+import SaGEA.auxiliary.preference.EnumClasses as Enums
+from SaGEA.auxiliary.preference.EnumClasses import match_string
 # from pysrc.Auxiliary.LoveNumber import LoveNumber
 from pysrc.Auxiliary.LLN import LoveNumber
 
-from pysrc.Auxiliary.ConvertSHC import ConvertSHC
-from pysrc.BasisFunction.Harmonic import Harmonic
+from SaGEA.post_processing.convert_field_physical_quantity.ConvertSHC import ConvertSHC
+from SaGEA.post_processing.harmonic.Harmonic import Harmonic
 
-from pysrc.PostProcessing.DeAliasing import DeAliasing
-from pysrc.Filter.GetSHCFilter import get_filter
-from pysrc.PostProcessing.GeometricalCorrection import GeometricalCorrection
-from pysrc.Leakage.Addictive import Addictive
-from pysrc.Leakage.BufferZone import BufferZone
-from pysrc.Leakage.DataDriven import DataDriven
-from pysrc.Leakage.ForwardModeling import ForwardModeling
-from pysrc.Leakage.Iterative import Iterative
-from pysrc.Leakage.Multiplicative import Multiplicative
-from pysrc.Leakage.Scaling import Scaling
-from pysrc.Leakage.ScalingGrid import ScalingGrid
-from pysrc.PostProcessing.ReplaceLowDegree import ReplaceLowDegree
-from pysrc.PostProcessing.SeismicCorrection import SeismicCorrection
+from SaGEA.post_processing.de_aliasing.DeAliasing import DeAliasing
+from SaGEA.post_processing.filter.GetSHCFilter import get_filter
+from SaGEA.post_processing.geometric_correction.GeometricalCorrection import GeometricalCorrection
+from SaGEA.post_processing.leakage.Addictive import Addictive
+from SaGEA.post_processing.leakage.BufferZone import BufferZone
+from SaGEA.post_processing.leakage.DataDriven import DataDriven
+from SaGEA.post_processing.leakage.ForwardModeling import ForwardModeling
+from SaGEA.post_processing.leakage.Iterative import Iterative
+from SaGEA.post_processing.leakage.Multiplicative import Multiplicative
+from SaGEA.post_processing.leakage.Scaling import Scaling
+from SaGEA.post_processing.leakage.ScalingGrid import ScalingGrid
+from SaGEA.post_processing.replace_low_deg.ReplaceLowDegree import ReplaceLowDegree
+from SaGEA.post_processing.seismic_correction.SeismicCorrection import SeismicCorrection
 
 
 class SHC(CoreSHC):

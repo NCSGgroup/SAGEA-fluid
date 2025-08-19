@@ -1,6 +1,6 @@
 from pysrc.SeaLevelEquation.SeaLevelEquation_Old import SpatialSLE
-from pysrc.Auxiliary.FileTool import FileTool
-from pysrc.LoadFile.LoadL2SH import load_SHC
+from SaGEA.auxiliary.aux_tool.FileTool import FileTool
+from SaGEA.auxiliary.load_file.LoadL2SH import load_SHC
 import numpy as np
 import netCDF4 as nc
 import xarray as xr
@@ -64,7 +64,7 @@ class Storage:
 
 
 def demo1():
-    from pysrc.Auxiliary.EnumClasses import GreenFunction
+    from SaGEA.auxiliary.preference.EnumClasses import GreenFunction
     res = 0.5
     DataSet = xr.open_dataset("../../data/ref_sealevel/SLFgrids_GFZOP_CM_WITHrotation.nc")
     lat = np.array(DataSet["lat"].values[int(res)::int(res * 2)])
@@ -85,7 +85,7 @@ def demo1():
     B.Save_nc_3D(data=data.value,lat=lat,lon=lon,time=time)
 
 def demo2():
-    from pysrc.Auxiliary.EnumClasses import GreenFunction
+    from SaGEA.auxiliary.preference.EnumClasses import GreenFunction
     res = 0.5
     DataSet = xr.open_dataset("../../data/ref_sealevel/SLFgrids_GFZOP_CM_WITHrotation.nc")
     lat = np.array(DataSet["lat"].values[int(res)::int(res * 2)])
@@ -107,7 +107,7 @@ def demo2():
 
 
 def demo3():
-    from pysrc.Auxiliary.EnumClasses import GreenFunction
+    from SaGEA.auxiliary.preference.EnumClasses import GreenFunction
     # res = 0.5
     DataSet = xr.open_dataset("../../data/ref_sealevel/SLFgrids_GFZOP_CM_WITHrotation.nc")
     lat = np.array(DataSet["lat"].values[:])
@@ -128,7 +128,7 @@ def demo3():
     B.Save_SLE(input=data['Input'],rsl=data["RSL"].value,ghc=data['GHC'],vlm=data['VLM'],lat=lat,lon=lon,time=time)
 
 def demo4():
-    from pysrc.Auxiliary.EnumClasses import GreenFunction
+    from SaGEA.auxiliary.preference.EnumClasses import GreenFunction
     # res = 0.5
     DataSet = xr.open_dataset("../../data/ref_sealevel/SLFgrids_GFZOP_CM_WITHrotation.nc")
     lat = np.array(DataSet["lat"].values[:])

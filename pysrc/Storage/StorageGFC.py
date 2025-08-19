@@ -134,9 +134,9 @@ class StorageGFC:
 
 def demo_SLE():
     import netCDF4 as nc
-    from pysrc.Auxiliary.FileTool import FileTool
+    from SaGEA.auxiliary.aux_tool.FileTool import FileTool
     from pysrc.LoadFile.LoadCS import LoadCS
-    from pysrc.Auxiliary.MathTool import MathTool
+    from SaGEA.auxiliary.aux_tool.MathTool import MathTool
     from pysrc.SeaLevelEquation.SpectralSeaLevel import PseudoSpectralSLE
     from pysrc.Auxiliary.LLN import LLN_Data,Frame
     res = 0.5

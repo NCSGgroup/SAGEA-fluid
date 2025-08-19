@@ -9,15 +9,15 @@ import os
 import numpy as np
 import time
 from datetime import datetime, timedelta
-from pysrc.Auxiliary.GeoMathKit import GeoMathKit
-from pysrc.Auxiliary.MathTool import MathTool
+from SaGEA.post_processing.geometric_correction.old.GeoMathKit import GeoMathKit
+from SaGEA.auxiliary.aux_tool.MathTool import MathTool
 import time as ti
 import xarray as xr
 from tqdm import tqdm
 from pysrc.LoadFile.LoadAOD import AOD_GFZ,AODtype
 from pysrc.AliasingModel.Specify.Harmonic import Harmonic
-from pysrc.PostProcessing.old.LoveNumber import LoveNumber,LoveNumberType
-from pysrc.PostProcessing.old.Setting import HarAnalysisType,SynthesisType
+from SaGEA.post_processing.geometric_correction.old.LoveNumber import LoveNumber,LoveNumberType
+from SaGEA.post_processing.geometric_correction.old.Setting import HarAnalysisType,SynthesisType
 
 
 

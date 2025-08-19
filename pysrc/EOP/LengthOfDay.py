@@ -1,7 +1,7 @@
 import numpy as np
-from pysrc.Auxiliary.Constants import PMConstant
-from pysrc.Auxiliary.FileTool import FileTool
-from pysrc.LoadFile.LoadL2SH import load_SHC
+from SaGEA.auxiliary.preference.Constants import PMConstant
+from SaGEA.auxiliary.aux_tool.FileTool import FileTool
+from SaGEA.auxiliary.load_file.LoadL2SH import load_SHC
 
 
 
@@ -145,7 +145,7 @@ def demo2():
     # print(chi['chi2'])
 
 def demo3():
-    import xarray as xr
+    pass
 
 if __name__ == '__main__':
     demo2()

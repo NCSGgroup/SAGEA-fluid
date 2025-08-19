@@ -9,10 +9,10 @@
 from multiprocessing import Pool
 
 import numpy as np
-from pysrc.Auxiliary.GeoMathKit import GeoMathKit
-from pysrc.PostProcessing.old.LoveNumber import LoveNumber
-from pysrc.PostProcessing.old.RefEllipsoid import RefEllipsoid
-from pysrc.PostProcessing.old.Setting import SynthesisType, EllipsoidType, LoveNumberType, Constants, HarAnalysisType
+from SaGEA.post_processing.geometric_correction.old.GeoMathKit import GeoMathKit
+from SaGEA.post_processing.geometric_correction.old.LoveNumber import LoveNumber
+from SaGEA.post_processing.geometric_correction.old.RefEllipsoid import RefEllipsoid
+from SaGEA.post_processing.geometric_correction.old.Setting import SynthesisType, EllipsoidType, LoveNumberType, Constants, HarAnalysisType
 
 
 class Harmonic:

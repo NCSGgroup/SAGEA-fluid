@@ -1,9 +1,9 @@
 import numpy as np
-from pysrc.Auxiliary.LLN import LoveNumber,LLN_Data,LLN_variable,Frame
+from pysrc.Auxiliary.LLN import LoveNumber, LLN_variable
 from pysrc.BasisFunction.Legendre import Legendre_polynomial
-from pysrc.Auxiliary.Constants import EarthConstant
-from pysrc.Auxiliary.EnumClasses import Displacement
-from pysrc.Auxiliary.MathTool import MathTool
+from SaGEA.auxiliary.preference.Constants import EarthConstant
+from SaGEA.auxiliary.preference.EnumClasses import Displacement
+from SaGEA.auxiliary.aux_tool.MathTool import MathTool
 from tqdm import tqdm
 
 

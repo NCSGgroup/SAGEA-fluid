@@ -1,13 +1,12 @@
 import numpy as np
 from pysrc.LoadFile.DataClass import SHC,GRID
-from pysrc.BasisFunction.Harmonic import Harmonic
-from pysrc.Auxiliary.MathTool import MathTool
-from pysrc.Auxiliary.FileTool import FileTool
-from pysrc.LoadFile.LoadL2SH import load_SHC
+from SaGEA.auxiliary.aux_tool.MathTool import MathTool
+from SaGEA.auxiliary.aux_tool.FileTool import FileTool
+from SaGEA.auxiliary.load_file.LoadL2SH import load_SHC
 from pysrc.SeaLevelEquation.SeaLevelEquation import PseudoSpectralSLE
-import pysrc.Auxiliary.EnumClasses as Enums
+import SaGEA.auxiliary.preference.EnumClasses as Enums
 from pysrc.Auxiliary.LLN import LoveNumber
-from pysrc.Auxiliary.Constants import EarthConstant
+from SaGEA.auxiliary.preference.Constants import EarthConstant
 import time
 
 
@@ -313,11 +312,9 @@ class GRACE_OBP_V2:
 
 def demo1():
     from datetime import date
-    import pysrc.Auxiliary.EnumClasses as Enums
-    from pysrc.Auxiliary.FileTool import FileTool
-    from pysrc.Auxiliary.TimeTool import TimeTool
-    from pysrc.LoadFile.LoadL2LowDeg import load_low_degs
-    from pysrc.LoadFile.LoadL2SH import load_SHC
+    import SaGEA.auxiliary.preference.EnumClasses as Enums
+    from SaGEA.auxiliary.aux_tool.FileTool import FileTool
+    from SaGEA.auxiliary.load_file.LoadL2SH import load_SHC
     lmax = 60
     grid_space = 1
     begin_date, end_date = date(2009, 1, 1), date(2009, 12, 31)

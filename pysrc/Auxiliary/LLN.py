@@ -1,10 +1,9 @@
 import numpy as np
 import scipy.io as scio
-from scipy import interpolate
 
-from pysrc.Auxiliary.FileTool import FileTool
+from SaGEA.auxiliary.aux_tool.FileTool import FileTool
 
-from pysrc.Auxiliary.EnumClasses import LLN_Data, LLN_variable, Frame
+from SaGEA.auxiliary.preference.EnumClasses import LLN_Data, LLN_variable, Frame
 
 
 class LoveNumber:

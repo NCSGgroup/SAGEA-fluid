@@ -1,11 +1,11 @@
 import numpy as np
-from pysrc.Auxiliary.Constants import PMConstant
+from SaGEA.auxiliary.preference.Constants import PMConstant
 import time
-import pysrc.Auxiliary.EnumClasses as Enums
-from pysrc.Auxiliary.FileTool import FileTool
+import SaGEA.auxiliary.preference.EnumClasses as Enums
+from SaGEA.auxiliary.aux_tool.FileTool import FileTool
 from pysrc.LoadFile.DataClass import SHC,GRID
-from pysrc.Auxiliary.MathTool import MathTool
-from pysrc.LoadFile.LoadL2SH import load_SHC
+from SaGEA.auxiliary.aux_tool.MathTool import MathTool
+from SaGEA.auxiliary.load_file.LoadL2SH import load_SHC
 from pysrc.SeaLevelEquation.SeaLevelEquation import PseudoSpectralSLE
 from pysrc.Auxiliary.LLN import LoveNumber
 
@@ -440,10 +440,10 @@ class GRACE_Exciatation:
 
 def demo1():
     from datetime import date
-    from pysrc.Auxiliary.FileTool import FileTool
-    from pysrc.Auxiliary.MathTool import MathTool
-    from pysrc.LoadFile.LoadL2SH import load_SHC
-    import pysrc.Auxiliary.EnumClasses as Enums
+    from SaGEA.auxiliary.aux_tool.FileTool import FileTool
+    from SaGEA.auxiliary.aux_tool.MathTool import MathTool
+    from SaGEA.auxiliary.load_file.LoadL2SH import load_SHC
+    import SaGEA.auxiliary.preference.EnumClasses as Enums
     lmax = 60
     begin_date, end_date = date(2010, 1, 1), date(2010, 12, 31)
     gad_dir, gad_key = FileTool.get_project_dir("I:\GFZ\GAB\GFZ_GFZ-Release-06_GAX_products_GAB/"), "gfc"
