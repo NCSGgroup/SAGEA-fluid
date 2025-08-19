@@ -1,9 +1,9 @@
 import numpy as np
+from pysrc.aux_fuction.constant.GCMConstant import GCMConstant
 from SaGEA.auxiliary.aux_tool.MathTool import MathTool
 from pysrc.aux_fuction.load_file.DataClass import SHC,GRID
 import SaGEA.auxiliary.preference.EnumClasses as Enums
 from pysrc.sealevel_equation.SeaLevelEquation import PseudoSpectralSLE
-from SaGEA.auxiliary.preference.Constants import PMConstant
 from SaGEA.auxiliary.aux_tool.FileTool import FileTool
 from SaGEA.auxiliary.load_file.LoadL2SH import load_SHC
 from pysrc.aux_fuction.geotools.LLN import LoveNumber
@@ -12,7 +12,7 @@ import time
 
 def Convert_Mass_to_Coordinates(C10, C11, S11):
     k1 = 0.021
-    rho_earth = PMConstant.rho_earth
+    rho_earth = GCMConstant.rho_earth
     X = np.sqrt(3) * (1 + k1) * C11 / rho_earth
     Y = np.sqrt(3) * (1 + k1) * S11 / rho_earth
     Z = np.sqrt(3) * (1 + k1) * C10 / rho_earth
@@ -20,9 +20,9 @@ def Convert_Mass_to_Coordinates(C10, C11, S11):
     return Coordinate
 
 def Convert_Stokes_to_Coordinates(C10, C11, S11):
-    X = np.sqrt(3) * PMConstant.radius * C11
-    Y = np.sqrt(3) * PMConstant.radius * S11
-    Z = np.sqrt(3) * PMConstant.radius * C10
+    X = np.sqrt(3) * GCMConstant.radius * C11
+    Y = np.sqrt(3) * GCMConstant.radius * S11
+    Z = np.sqrt(3) * GCMConstant.radius * C10
     Coordinate = {"X": X, "Y": Y, "Z": Z}
     return Coordinate
 
@@ -116,14 +116,10 @@ class GeocenterMotion:
         GAD_Correct = self.GAD.value
         OM_SH = self.OceanSH.value
         OM = np.zeros((len(OM_SH),3))
-        # print(OM.shape)
         OM[:,0] = OM_SH[:,2]-GAD_Correct[:,2]+C10
         OM[:,1] = OM_SH[:,3]-GAD_Correct[:,3]+C11
         OM[:,2] = OM_SH[:,1]-GAD_Correct[:,1]+S11
-        # OM[:,3] = OM_SH[:,6]-GAD_Correct[:,6]+C20
-        # OM[:,4] = OM_SH[:,7]-GAD_Correct[:,7]+C21
-        # OM[:,5] = OM_SH[:,5]-GAD_Correct[:,5]+S21
-        # print(f"OceanModel Term: {OM[0]}")
+
         return OM
     def GRD_Term(self,C10=None,C11=None,S11=None,mask=None,GRD=False,rotation=True):
         GRACE_SH = self.GRACE.value
@@ -183,8 +179,8 @@ class GeocenterMotion:
         lln.convert(target=self.frame)
         k = lln.LLN[Enums.LLN_variable.k]
 
-        factor = 1.021/(PMConstant.rho_earth*PMConstant.radius)
-        factor2 = (3+3*k[2])/(5*PMConstant.rho_earth*PMConstant.radius)
+        factor = 1.021/(GCMConstant.rho_earth*GCMConstant.radius)
+        factor2 = (3+3*k[2])/(5*GCMConstant.rho_earth*GCMConstant.radius)
         # factor3 = (3+3*k[3])/(7*EarthConstant.rhoear*EarthConstant.radiusm)
 
         # print(f"Love numbers degree-1:{k[1]},degre-2:{k[2]},degree-3:{k[3]}")
