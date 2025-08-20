@@ -37,8 +37,9 @@ class EOP:
         return chi
     def PM_motion_term(self,u_speed,v_speed,lat,lon,pressure,isMas=True):
         """
-        :param u_speed: latitude velocity (also known as zonal velocity)
-        :param v_speed: longitude velocity. Notes: both u and v shape is (time,layer,lat,lon)
+        :param u_speed: eastward along latitude (also known as zonal wind)
+        :param v_speed: northward along longitude (also known as meridional wind)
+        Notes: both u and v shape is (time,layer,lat,lon)
         :param lat: the range is from 90--90
         :param lon: the range is from 0-360
         :param pressure: multi-layer pressure data, make sure the unit is Pa (not hPa)
@@ -52,7 +53,7 @@ class EOP:
         dp = np.zeros_like(pressure)
         dp[0] = pressure[0]-(pressure[0]+pressure[1])/2
         for k in np.arange(1,len(pressure)-1):
-            dp[k] = (pressure[k-1]+pressure[k+1])/2
+            dp[k] = (pressure[k-1]+pressure[k])/2
         dp[-1] = (pressure[-2]+pressure[-1])/2-pressure[-1]
 
         phi = np.deg2rad(lat)
@@ -76,7 +77,7 @@ class EOP:
         dL1 = (u_sin_lam+v_cos_lam)*cos_phi_4d*dg_g
         dL2 = (u_cos_lam-v_sin_lam)*cos_phi_4d*dg_g
         L1_vert = np.sum(dL1,axis=1)
-        L2_vert = np.sum(dL2,axis=2)
+        L2_vert = np.sum(dL2,axis=1)
 
         h1 = (PMConstant.radius**3)*np.sum(L1_vert*dA[None,:,:],axis=(1,2))
         h2 = (PMConstant.radius**3)*np.sum(L2_vert*dA[None,:,:],axis=(1,2))
