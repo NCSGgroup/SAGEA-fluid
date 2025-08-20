@@ -21,6 +21,7 @@ class GCMConstant:
     # Cm = 8.01736e37  #(3,3) component mantle tensor of inertia, unit is (kg m^2)
     # Am = 8.01014e37  #(1,1) component mantle tensor of inertia, unit is (kg m^2)
     LOD = 86400 # 24h=1440min=86400s
+
 class PMConstant:
     # radius = 6371000 # Earth mean radius, unit is m
     radius = 6378136.3
@@ -40,3 +41,12 @@ class PMConstant:
     # Cm = 8.01736e37  #(3,3) component mantle tensor of inertia, unit is (kg m^2)
     # Am = 8.01014e37  #(1,1) component mantle tensor of inertia, unit is (kg m^2)
     LOD = 86400 # 24h=1440min=86400s
+
+class ADConstant:
+    """gas constant for dry air"""
+    Rd = 287.00
+    # Rd = 287.06
+    '''gravity constant g defined by WMO'''
+    g_wmo = 9.80665
+    ''' water density'''
+    rho_water = 1025.0
