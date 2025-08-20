@@ -12,7 +12,7 @@ import numpy as np
 # from netCDF4 import Dataset
 
 from SaGEA.post_processing.geometric_correction.old.GeoMathKit import GeoMathKit
-from pysrc.aliasing_model.Specify.Harmonic import Harmonic, SynthesisType
+from pysrc.aliasing_model.specify.Harmonic import Harmonic, SynthesisType
 from pysrc.aux_fuction.load_file.LoadAOD import SimpleSH
 from SaGEA.post_processing.geometric_correction.old.LoveNumber import LoveNumberType, LoveNumber
 

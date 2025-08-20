@@ -14,9 +14,10 @@ sys.path.append('../Configure')
 from SaGEA.post_processing.geometric_correction.old.GeoMathKit import GeoMathKit
 from scipy import signal
 from pysrc.aux_fuction.load_file.LoadAOD import LoadFields, DataType
-from pysrc.aliasing_model.Specify.Harmonic import Harmonic, LoveNumber, LoveNumberType, HarAnalysisType
+from pysrc.aliasing_model.specify.Harmonic import Harmonic, LoveNumber, LoveNumberType, HarAnalysisType
 from pysrc.aux_fuction.storage_file.StorageAOD import FormatWrite, CnmSnm
-from pysrc.aliasing_model.Integral.SurPres2CS import SurPres2CS, RefEllipsoid, EllipsoidType
+from pysrc.aliasing_model.geoheight.SurPres2CS import SurPres2CS, RefEllipsoid, EllipsoidType
+from pysrc.aux_fuction.constant.Setting import EllipsoidType
 from SaGEA.post_processing.geometric_correction.old.GeoidUndulation import GeoidUndulation
 import numpy as np
 import os
@@ -492,7 +493,7 @@ class TideFit:
                   'EndDate':'2014-12-31'}
 
         if isWrite:
-            with open('../SetFile/TideFit.json', 'w') as f:
+            with open('../SetFile/tidefit.json', 'w') as f:
                 f.write(json.dumps(config,indent=4))
         return config
 
@@ -606,7 +607,7 @@ def demo2():
     tf.generateTide_byTopography(end='2014',tides=tides, Nmax=180, lat=lat, lon=lon)
 
 def demo3():
-    with open('../Settings/TideFit.json', 'r') as f:
+    with open('../Settings/tidefit.json', 'r') as f:
         config = json.load(f)
     tf = TideFit().setButterworth()
     tf.setDataDir(dataDirIn=config['dataDirIn'], dataDirOut=config['dataDirOut'])

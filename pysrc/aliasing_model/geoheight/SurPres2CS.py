@@ -8,7 +8,7 @@
 import numpy as np
 
 from SaGEA.post_processing.geometric_correction.old.GeoMathKit import GeoMathKit
-from pysrc.aliasing_model.Specify.Harmonic import Harmonic
+from pysrc.aliasing_model.specify.Harmonic import Harmonic
 from SaGEA.post_processing.geometric_correction.old.LoveNumber import LoveNumber
 from SaGEA.post_processing.geometric_correction.old.RefEllipsoid import RefEllipsoid
 from SaGEA.post_processing.geometric_correction.old.Setting import LoveNumberType, Constants, HarAnalysisType

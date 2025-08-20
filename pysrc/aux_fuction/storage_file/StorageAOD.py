@@ -15,7 +15,7 @@ import time as ti
 import xarray as xr
 from tqdm import tqdm
 from pysrc.aux_fuction.load_file.LoadAOD import AOD_GFZ,AODtype
-from pysrc.aliasing_model.Specify.Harmonic import Harmonic
+from pysrc.aliasing_model.specify.Harmonic import Harmonic
 from SaGEA.post_processing.geometric_correction.old.LoveNumber import LoveNumber,LoveNumberType
 from SaGEA.post_processing.geometric_correction.old.Setting import HarAnalysisType,SynthesisType
 
