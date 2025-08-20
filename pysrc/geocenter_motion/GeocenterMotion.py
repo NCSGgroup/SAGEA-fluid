@@ -1,5 +1,5 @@
 import numpy as np
-from pysrc.aux_fuction.constant.GCMConstant import GCMConstant
+from pysrc.aux_fuction.constant.GeoConstant import GCMConstant
 from SaGEA.auxiliary.aux_tool.MathTool import MathTool
 from pysrc.aux_fuction.load_file.DataClass import SHC,GRID
 import SaGEA.auxiliary.preference.EnumClasses as Enums
