@@ -28,7 +28,7 @@ def Convert_Stokes_to_Coordinates(C10, C11, S11):
     return Coordinate
 
 
-class GRACE_OBP_V2:
+class GRACE_OBP_C20:
     '''
     Attention:
     the coefficients type of input data about GRACE and OceanModel is mass coefficients;
@@ -332,7 +332,7 @@ def demo1():
     shc.convert_type(from_type=Enums.PhysicalDimensions.Dimensionless,to_type=Enums.PhysicalDimensions.Density)
 
     OceanSH = np.zeros_like(shc.value)
-    A = GRACE_OBP_V2(GRACE=shc.value,OceanSH=OceanSH,GAD=shc_gad.value,lmax=60)
+    A = GRACE_OBP_C20(GRACE=shc.value,OceanSH=OceanSH,GAD=shc_gad.value,lmax=60)
     A.G_Matrix_Term()
     A.I_Matrix_Term()
     # A.CorrectGAD()

@@ -49,18 +49,18 @@ class J2:
     def setResolution(self,resolution):
         self.res = resolution
         self.lat,self.lon = MathTool.get_global_lat_lon_range(resolution)
-        print(f"-----------------\n"
-              f"Setting the processing data resolution is: {resolution} degree\n"
-              f"The lat is from {self.lat[0]} to {self.lat[-1]},the lon is from {self.lon[0]} to {self.lon[-1]}\n"
-              f"----------------")
+        # print(f"-----------------\n"
+        #       f"Setting the processing data resolution is: {resolution} degree\n"
+        #       f"The lat is from {self.lat[0]} to {self.lat[-1]},the lon is from {self.lon[0]} to {self.lon[-1]}\n"
+        #       f"----------------")
         return self
     def setLatLon(self,lat,lon):
         self.lat,self.lon = lat,lon
         self.res = np.abs(self.lat[1]-self.lat[0])
-        print(f"-----------------\n"
-              f"Setting the processing data resolution is: {self.res} degree\n"
-              f"The lat is from {self.lat[0]} to {self.lat[-1]},the lon is from {self.lon[0]} to {self.lon[-1]}."
-              f"----------------")
+        # print(f"-----------------\n"
+        #       f"Setting the processing data resolution is: {self.res} degree\n"
+        #       f"The lat is from {self.lat[0]} to {self.lat[-1]},the lon is from {self.lon[0]} to {self.lon[-1]}."
+        #       f"----------------")
         return self
     def setOcean(self,ocean_mask=None):
         if ocean_mask is not None:
@@ -116,25 +116,14 @@ class J2:
         I[:, 4, 0], I[:, 4, 1], I[:, 4, 2], I[:, 4, 3], I[:, 4, 4] = \
             I_10C.value[:, 12], I_11C.value[:, 12], I_11S.value[:, 12], I_20C.value[:, 12], I_30C.value[:, 12]
         I = I
-        print("-------------Finished I Matrix computation-------------")
+        # print("-------------Finished I Matrix computation-------------")
         return I
-    def G_Matrix_Term(self,mask=None,SLE=False):
+    def G_Matrix_Term(self,mask=None):
         GRACE_SH = self.GRACE.value
         GRACE_SH[:, 0:4] = 0
         GRACE_SH[:, 6] = 0
         GRACE_SH[:, 12] = 0
-        if SLE:
-            GRACE_SH = SHC(c=GRACE_SH).convert_type(from_type=Enums.PhysicalDimensions.Density,
-                                                    to_type=Enums.PhysicalDimensions.EWH)
-            SLE = PseudoSpectralSLE(SH=GRACE_SH.value, lmax=self.lmax)
-            SLE.setLoveNumber(lmax=self.lmax, method=self.LLN_method, frame=self.frame)
-            SLE.setLatLon(lat=self.lat, lon=self.lon)
-            kernal_SH = SLE.SLE(mask=self.setOcean(ocean_mask=mask), rotation=True)['RSL_SH']
-            kernal = SHC(c=kernal_SH).convert_type(from_type=Enums.PhysicalDimensions.EWH,
-                                                   to_type=Enums.PhysicalDimensions.Density)
-            kernal = (kernal.to_grid(grid_space=self.res).value) * (self.setOcean(ocean_mask=mask))
-        else:
-            kernal = (SHC(c=GRACE_SH).to_grid(self.res).value) * (self.setOcean(ocean_mask=mask))
+        kernal = (SHC(c=GRACE_SH).to_grid(self.res).value) * (self.setOcean(ocean_mask=mask))
         G_SH = GRID(grid=kernal, lat=self.lat, lon=self.lon).to_SHC(self.lmax).value
         G = np.zeros((len(GRACE_SH), 5))
         G[:, 0] = G_SH[:, 2]
@@ -143,8 +132,7 @@ class J2:
         G[:, 3] = G_SH[:, 6]
         G[:, 4] = G_SH[:, 12]
         G = G
-        # print(f"G V2 is: {G[0]}")
-        print("-------------Finished G Matrix computation-------------")
+        # print("-------------Finished G Matrix computation-------------")
         return G
     def Ocean_Model_Term(self,C10,C11,S11,C20,C30):
         GAD_Correct = self.GAD.value
@@ -181,7 +169,7 @@ class J2:
             UpdateTerm = GRID(grid=uniform_mask,lat=self.lat,lon=self.lon).to_SHC(self.lmax).value
         UpdateTerm = SHC(c=UpdateTerm).convert_type(from_type=Enums.PhysicalDimensions.EWH,to_type=Enums.PhysicalDimensions.Density).value
         return UpdateTerm[:,2],UpdateTerm[:,3],UpdateTerm[:,1],UpdateTerm[:,6],UpdateTerm[:, 12]
-    def Low_Degree_Term(self,mask=None,GRD=False,rotation=True,SLE=False):
+    def Low_Degree_Term(self,mask=None,GRD=False,rotation=True):
         """
         the series of Stokes coefficients follow: C10, C11, S11, C20, C21, S21
         that means, index 0->C10, 1->C11, 2->S11, 3->C20, 4->C21, 5->S21
@@ -192,7 +180,7 @@ class J2:
         I_C10,I_C11,I_S11,I_C20,I_C30 = [np.zeros(len(GRACE_SH))]*5
         OM = self.Ocean_Model_Term(C10=I_C10,C11=I_C11,S11=I_S11,C20=I_C20,C30=I_C30)
         I = self.I_Matrix_Term(mask=mask)
-        G = self.G_Matrix_Term(mask=mask,SLE=SLE)
+        G = self.G_Matrix_Term(mask=mask)
 
         I_inv = np.linalg.inv(I)
         # print(f"I and I_inv:\n{I[0]}\n\n{I_inv[0]}")
@@ -207,7 +195,7 @@ class J2:
             C_new = np.einsum('nij,nj->ni', I_inv, OM_new - G)
             delta = np.abs(C_new-C).flatten()
             if np.max(delta) < 10e-4:
-                print(f"Iterative number is: {iter + 1}")
+                # print(f"Iterative number is: {iter + 1}")
                 break
             C = C_new
 
@@ -219,28 +207,38 @@ class J2:
         factor2 = (3+3*k[2])/(5*PMConstant.rho_earth*PMConstant.radius)
         factor3 = (3+3*k[3])/(7*PMConstant.rho_earth*PMConstant.radius)
 
-        print(f"Love numbers degree-1:{k[1]},degre-2:{k[2]},degree-3:{k[3]}")
+        # print(f"Love numbers degree-1:{k[1]},degre-2:{k[2]},degree-3:{k[3]}")
         Mass_Coef = {"C10":C[:,0],"C11":C[:,1],"S11":C[:,2],"C20":C[:,3],"C30":C[:,4]}
         Stokes_Coef = {"C10":C[:,0]*factor,"C11":C[:,1]*factor,"S11":C[:,2]*factor,
                        "C20":C[:,3]*factor2,"C30":C[:,4]*factor3}
 
         SH = {"Mass":Mass_Coef,"Stokes":Stokes_Coef}
         end_time = time.time()
-        print(f"----------------------------------------------\n"
-              f"time-consuming: {end_time - start_time:.4f} s\n"
-              f"==============================================\n")
+        print('---------------------------------------------------\n'
+              'GRACE-OBP: GCM, C20, and C30 estimation\n'
+              '---------------------------------------------------')
+        print('%-20s%-20s ' % ('Maxdegree:', f'{self.lmax}'))
+        print('%-20s%-20s ' % ('Resolution:', f'{self.res}°'))
+        print('%-20s%-20s ' % ('LoveNumber:', f'{self.LLN_method}'))
+        print('%-20s%-20s ' % ('Frame:', f'{self.frame}'))
+        print("%-20s%-20s " % ('SAL:',f'{GRD} (if False, omit rotation)'))
+        print("%-20s%-20s " % ('Rotation feedback:', f'{rotation}'))
+        print('%-20s%-20s ' % ('Iteration:', f'{iter + 1}'))
+        print('%-20s%-20s ' % ('Convergence:', f'{np.max(delta)}'))
+        print('%-20s%-20s ' % ('Time-consuming:', f'{end_time - start_time:.4f} s'))
+        print(f"---------------------------------------------------")
         return SH
-    def GSM_Like(self,mask=None,GRD=False,rotation=True,SLE=False):
-        SH = self.Low_Degree_Term(mask=mask,GRD=GRD,rotation=rotation,SLE=SLE)
+    def GSM_Like(self,mask=None,GRD=False,rotation=True):
+        SH = self.Low_Degree_Term(mask=mask,GRD=GRD,rotation=rotation)
         C = SH['Mass']
         Coordinate = Convert_Mass_to_Coordinates(C10=C["C10"],C11=C["C11"],S11=C["S11"])
         print("-------------Finished GSM-like computation-------------\n"
               "==========================================================")
         return Coordinate
-    def Full_Geocenter(self,GAC=None,mask=None,GRD=False,rotation=True,SLE=False):
+    def Full_Geocenter(self,GAC=None,mask=None,GRD=False,rotation=True):
         GAC = SHC(c=GAC)
         GAC_Coordinate = Convert_Stokes_to_Coordinates(C10=GAC.value[:,2],C11=GAC.value[:,3],S11=GAC.value[:,1])
-        SH = self.Low_Degree_Term(mask=mask,GRD=GRD,rotation=rotation,SLE=SLE)
+        SH = self.Low_Degree_Term(mask=mask,GRD=GRD,rotation=rotation)
         C = SH['Mass']
         GSM_Coordinate = Convert_Mass_to_Coordinates(C10=C["C10"], C11=C["C11"], S11=C["S11"])
         X = GAC_Coordinate['X']+GSM_Coordinate['X']
@@ -248,6 +246,6 @@ class J2:
         Z = GAC_Coordinate['Z']+GSM_Coordinate['Z']
         full_geocenter = {"X":X,"Y":Y,"Z":Z}
         print("-------------Finished Full-Geocenter computation-------------\n"
-              "=============================================================")
+              "=============================================================\n")
         return full_geocenter
 
