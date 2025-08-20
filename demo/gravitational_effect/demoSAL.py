@@ -9,6 +9,7 @@ from SaGEA.auxiliary.load_file.LoadL2SH import load_SHC
 from pysrc.sealevel_equation.SeaLevelEquation import PseudoSpectralSLE
 
 def demo1():
+    """This is an example of SAL effect induced by atmosphere"""
     lmax, res = 60, 0.5
     begin_date, end_date = date(2009, 1, 1), date(2009, 12, 31)
     gaa_dir, gaa_key = FileTool.get_project_dir("data/L2_SH_products/GAA/GFZ/RL06/BC01/"), "GRCOF2"

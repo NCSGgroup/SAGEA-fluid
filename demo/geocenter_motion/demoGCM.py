@@ -11,6 +11,7 @@ from pysrc.geocenter_motion.GeocenterMotion import GeocenterMotion
 
 
 def demo1():
+    """this demo shows an example of GRACE GCM estimation"""
     lmax, res = 60, 1
     begin_date, end_date = date(2009,1,1),date(2009,12,31)
     begins, ends = begin_date.strftime("%Y-%m-%d").split('-'),end_date.strftime('%Y-%m-%d').split('-')
@@ -73,6 +74,9 @@ def demo1():
     print(f"Y axis:\nOnly:{GCM_like_Y}\nFull:{GCM_full_Y}")
     print(f"Z axis:\nOnly:{GCM_like_Z}\nFull:{GCM_full_Z}")
 
+def demo2():
+    """this demo shows an example of low-dergee terms, i.e., C10,S11,C11,C20,C30 estimation"""
+    pass
 
 if __name__ == '__main__':
     demo1()
