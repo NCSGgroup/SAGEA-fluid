@@ -363,23 +363,41 @@ class PolarMotion:
 
 def demo_AOM_motion():
     import xarray as xr
-    u_set = xr.open_dataset("I:\ERA5\MAD/2010/u_wind-201001.nc")
-    v_set = xr.open_dataset("I:\ERA5\MAD/2010/v_wind-201001.nc")
-    u_wind = u_set['u'].values
-    v_wind = v_set['v'].values
-    pressure = u_set['pressure_level'].values*100
-    lats = u_set['latitude'].values
-    lons = u_set['longitude'].values
+    import pandas as pd
+    from tqdm import tqdm
+    # u_set = xr.open_dataset("I:\ERA5\MAD/2010/u_wind-201001.nc")
+    # v_set = xr.open_dataset("I:\ERA5\MAD/2010/v_wind-201001.nc")
+    u_set,v_set=[],[]
+    date_range = pd.date_range(start='2009-01-01',end='2009-12-31',freq="MS").strftime("%Y%m").tolist()
+    for i in tqdm(date_range):
+        u_temp = xr.open_dataset(f"I:\ERA5\MAD/2009/u_wind-{i}.nc")
+        v_temp = xr.open_dataset(f"I:\ERA5\MAD/2009/v_wind-{i}.nc")
+        u_set.append(u_temp['u'].values[0])
+        v_set.append(v_temp['v'].values[0])
+    # u_wind = u_set['u'].values
+    # v_wind = v_set['v'].values
+    pressure = u_temp['pressure_level'].values*100
+    lats = u_temp['latitude'].values
+    lons = u_temp['longitude'].values
+
+    u_set = np.array(u_set)
+    v_set = np.array(v_set)
+    u_mean = np.mean(u_set,axis=0)
+    v_mean = np.mean(v_set,axis=0)
+
+    u_set = u_set-u_mean[None,:,:,:]
+    v_set = v_set-v_mean[None,:,:,:]
 
     # print(v_set['v'].values.max())
     # print(u_set['u'].values.max())
 
+
     print(pressure[0])
     print(pressure[-1])
     print(pressure[-2])
-    chi = AAM_motion_term(u=u_wind,v=v_wind,lat=lats,lon=lons,pl=pressure)
+    chi = AAM_motion_term(u=u_set,v=v_set,lat=lats,lon=lons,pl=pressure,isMas=True)
     print(chi['chi1'])
-    print(chi['chi2'])
+    # print(chi['chi2'])
 
 
 
