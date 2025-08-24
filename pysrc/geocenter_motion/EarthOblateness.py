@@ -26,6 +26,7 @@ def Convert_Stokes_to_Coordinates(C10, C11, S11):
     Coordinate = {"X": X, "Y": Y, "Z": Z}
     return Coordinate
 
+"""Earth oblateness also called J2 in geophysical science"""
 class J2:
     def __init__(self,GRACE,OceanSH,GAD,lmax):
         """
@@ -137,7 +138,7 @@ class J2:
     def Ocean_Model_Term(self,C10,C11,S11,C20,C30):
         GAD_Correct = self.GAD.value
         OM_SH = self.OceanSH.value
-        OM = np.zeros((len(OM_SH),3))
+        OM = np.zeros((len(OM_SH),5))
         # print(OM.shape)
         OM[:,0] = OM_SH[:,2]-GAD_Correct[:,2]+C10
         OM[:,1] = OM_SH[:,3]-GAD_Correct[:,3]+C11
