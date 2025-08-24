@@ -62,3 +62,26 @@ class GeoMathKit:
             else:
                 current = current.replace(month=current.month + 1)
         return months
+
+    @staticmethod
+    def linear_fit(t,y,Dimenson=2):
+        """
+        :param t: x-axis value means time epoch
+        :param y: y-axis values including multidimensional grid data
+        :return: there are six parameters in total,
+                 coeffs[0] means the constant term, coeffes[1] means the trend term;
+                 sqrt(coeffs[2]**2+coeffs[3]**2) means the annual amplitude term;
+                 sqrt(coeffs[4]**2+coeffs[5]**2) means the semiannual amplitude term;
+        """
+        Coef_Matrix = np.column_stack([np.ones_like(t),
+                                       t,
+                                       np.cos(2 * np.pi * t),
+                                       np.sin(2 * np.pi * t),
+                                       np.cos(4 * np.pi * t),
+                                       np.sin(4 * np.pi * t)])
+        inv_matrix = np.linalg.pinv(Coef_Matrix)
+        if Dimenson == 2:
+            coeffs = np.einsum('ij,jkl->ikl', inv_matrix, y, optimize=True)
+        else:
+            coeffs = np.einsum('ij,jk->ik',inv_matrix,y,optimize=True)
+        return coeffs
