@@ -5,11 +5,11 @@ import numpy as np
 sys.path.append('../Configure')
 import os
 from pysrc.aliasing_model.specify.GeoMathKit import GeoMathKit
-from pysrc.aux_fuction.storage_file.StorageAOD import CnmSnm, FormatWrite
+from pysrc.ancillary.storage_file.StorageAOD import CnmSnm, FormatWrite
 from pysrc.aliasing_model.specify.Harmonic import Harmonic, LoveNumber, LoveNumberType
 # from Configure.IntegralMethods import innerIn, InnerIntegral, InterpOption
-from pysrc.aux_fuction.load_file.LoadFields_Model import LoadFields,DataType
-from pysrc.aux_fuction.constant.Setting import AODtype, Constants, EllipsoidType, HarAnalysisType
+from pysrc.ancillary.load_file.LoadFields_Model import LoadFields,DataType
+from pysrc.ancillary.constant.Setting import AODtype, Constants, EllipsoidType, HarAnalysisType
 from pysrc.aliasing_model.geoheight.GeoHight_Model import GeopotentialHeight
 from pysrc.aliasing_model.geoheight.InnerIntegral import InnerIntegral
 import time as ti

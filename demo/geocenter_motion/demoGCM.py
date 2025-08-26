@@ -5,8 +5,8 @@ import SaGEA.auxiliary.preference.EnumClasses as Enums
 from SaGEA.auxiliary.aux_tool.FileTool import FileTool
 from SaGEA.auxiliary.aux_tool.TimeTool import TimeTool
 from SaGEA.auxiliary.load_file.LoadL2SH import load_SHC
-from pysrc.aux_fuction.geotools.GeoMathKit import GeoMathKit
-from pysrc.aux_fuction.load_file.DataClass import GRID
+from pysrc.ancillary.geotools.GeoMathKit import GeoMathKit
+from pysrc.ancillary.load_file.DataClass import GRID
 from pysrc.geocenter_motion.GeocenterMotion import GeocenterMotion
 
 

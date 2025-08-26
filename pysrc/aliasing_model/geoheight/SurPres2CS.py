@@ -238,7 +238,7 @@ class SurPres2CS:
     #     ellipsoid = RefEllipsoid(elltype)
     #
     #     lmax = 180 - 1
-    #     SH = Gif48().load('../data/aux_fuction/GIF48.gfc').getCS(lmax)
+    #     SH = Gif48().load('../data/ancillary/GIF48.gfc').getCS(lmax)
     #
     #     topo_sh = np.zeros((2, lmax + 1, lmax + 1))
     #     topo_sh[0, :, :] = GeoMathKit.CS_1dTo2d(SH[0])
@@ -259,7 +259,7 @@ class SurPres2CS:
 #
 #     elltype = EllipsoidType.GRS80_IERS2010
 #     ell = RefEllipsoid(elltype)
-#     LN = LoveNumber('../data/aux_fuction/')
+#     LN = LoveNumber('../data/ancillary/')
 #
 #     lat = np.arange(90, -90.1, -0.5)
 #     lon = np.arange(0, 360, 0.5)

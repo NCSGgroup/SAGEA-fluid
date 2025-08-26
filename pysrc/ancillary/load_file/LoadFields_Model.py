@@ -24,7 +24,7 @@ import numpy as np
 
 # from GeoMathKit import GeoMathKit
 # from LoadSH_AOD import AOD_GFZ, AODtype
-from pysrc.aux_fuction.constant.Setting import DataType, ForceFields
+from pysrc.ancillary.constant.Setting import DataType, ForceFields
 # import Ngl, Nio
 import cfgrib
 import xarray

@@ -20,7 +20,7 @@ class GCMConstant:
     Am = 7.0999e37  #(1,1) component mantle tensor of inertia, unit is (kg m^2)
     # Cm = 8.01736e37  #(3,3) component mantle tensor of inertia, unit is (kg m^2)
     # Am = 8.01014e37  #(1,1) component mantle tensor of inertia, unit is (kg m^2)
-    LOD = 86400 # 24h=1440min=86400s
+
 
 class PMConstant:
     # radius = 6371000 # Earth mean radius, unit is m

@@ -14,7 +14,7 @@ from SaGEA.auxiliary.aux_tool.MathTool import MathTool
 import time as ti
 import xarray as xr
 from tqdm import tqdm
-from pysrc.aux_fuction.load_file.LoadAOD import AOD_GFZ,AODtype
+from pysrc.ancillary.load_file.LoadAOD import AOD_GFZ,AODtype
 from pysrc.aliasing_model.specify.Harmonic import Harmonic
 from SaGEA.post_processing.geometric_correction.old.LoveNumber import LoveNumber,LoveNumberType
 from SaGEA.post_processing.geometric_correction.old.Setting import HarAnalysisType,SynthesisType
@@ -343,7 +343,7 @@ class SyntheticAOD:
         self.daylist = GeoMathKit.dayListByDay('2024-03-01','2024-04-30')
         self.TimeEpoch = ['00:00:00','06:00:00','12:00:00','18:00:00']
         self.lat,self.lon = MathTool.get_global_lat_lon_range_V2(resolution=0.5)
-        self.LN = LoveNumber('../../data/aux_fuction/')
+        self.LN = LoveNumber('../../data/ancillary/')
         self.HM = Harmonic(self.LN).setLoveNumMethod(LoveNumberType.Wang)
         self.ATM_path = 'I:\CRALICOM/result\ATM/'
         self.OCN_path = 'I:\CRALICOM/result\OCN_pso/'
@@ -528,7 +528,7 @@ class SyntheticGAX:
         return date.strftime('%Y-%m-%d')
 
 def demo1():
-    from pysrc.aux_fuction.load_file.LoadAOD import AOD_GFZ, AODtype
+    from pysrc.ancillary.load_file.LoadAOD import AOD_GFZ, AODtype
     ad = AOD_GFZ().load('../data/Products/RL05').setType(AODtype.ATM).setTime('2005-01-01', '12:00:00')
     C, S = ad.getCS(ad.maxDegree)
 

@@ -23,8 +23,8 @@ import numpy as np
 # import pandas as pd
 
 # from Configure.GeoMathKit import GeoMathKit
-# from pysrc.aux_fuction.load_file.LoadSH import AOD_GFZ, AODtype
-from pysrc.aux_fuction.constant.Setting import DataType, ForceFields
+# from pysrc.ancillary.load_file.LoadSH import AOD_GFZ, AODtype
+from pysrc.ancillary.constant.Setting import DataType, ForceFields
 # import Ngl, Nio
 import cfgrib
 import xarray

@@ -14,7 +14,7 @@ import numpy as np
 from pysrc.aliasing_model.geoheight.GeoidUndulation import GeoidUndulation
 from pysrc.aliasing_model.geoheight.GeopotentialHeight import GeopotentialHeight, LoadFields
 from pysrc.aliasing_model.geoheight.RefEllipsoid import RefEllipsoid
-from pysrc.aux_fuction.constant.Setting import IntegralChoice, EllipsoidType, Constants
+from pysrc.ancillary.constant.Setting import IntegralChoice, EllipsoidType, Constants
 
 
 class InnerIntegral:

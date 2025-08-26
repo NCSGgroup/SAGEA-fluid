@@ -8,8 +8,8 @@
 """
 import numpy as np
 
-from pysrc.aux_fuction.load_file.LoadFields import LoadFields, DataType
-from pysrc.aux_fuction.constant.GeoConstant import ADConstant
+from pysrc.ancillary.load_file.LoadFields import LoadFields, DataType
+from pysrc.ancillary.constant.GeoConstant import ADConstant
 
 
 class GeopotentialHeight:

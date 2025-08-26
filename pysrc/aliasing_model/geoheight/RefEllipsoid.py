@@ -9,7 +9,7 @@
 import numpy as np
 
 from pysrc.aliasing_model.specify.GeoMathKit import GeoMathKit
-from pysrc.aux_fuction.constant.Setting import EllipsoidType
+from pysrc.ancillary.constant.Setting import EllipsoidType
 
 
 class RefEllipsoid:

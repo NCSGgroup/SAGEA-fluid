@@ -1,11 +1,11 @@
 import numpy as np
-from pysrc.aux_fuction.load_file.DataClass import SHC,GRID
+from pysrc.ancillary.load_file.DataClass import SHC,GRID
 from SaGEA.auxiliary.aux_tool.MathTool import MathTool
 from SaGEA.auxiliary.aux_tool.FileTool import FileTool
 from SaGEA.auxiliary.load_file.LoadL2SH import load_SHC
 from pysrc.sealevel_equation.SeaLevelEquation import PseudoSpectralSLE
 import SaGEA.auxiliary.preference.EnumClasses as Enums
-from pysrc.aux_fuction.geotools.LLN import LoveNumber
+from pysrc.ancillary.geotools.LLN import LoveNumber
 from SaGEA.auxiliary.preference.Constants import EarthConstant
 import time
 

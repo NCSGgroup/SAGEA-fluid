@@ -10,10 +10,10 @@
 import numpy as np
 
 from pysrc.aliasing_model.specify.Harmonic import Harmonic
-from pysrc.aux_fuction.load_file.LoadSH import LoadSH, Gif48
+from pysrc.ancillary.load_file.LoadSH import LoadSH, Gif48
 from pysrc.aliasing_model.specify.LoveNumber import LoveNumber
 from pysrc.aliasing_model.geoheight.RefEllipsoid import EllipsoidType, RefEllipsoid
-from pysrc.aux_fuction.constant.Setting import SynthesisType, LoveNumberType
+from pysrc.ancillary.constant.Setting import SynthesisType, LoveNumberType
 from pysrc.aliasing_model.specify.GeoMathKit import GeoMathKit
 
 

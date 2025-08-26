@@ -3,8 +3,8 @@ from pysrc.aliasing_model.specify.GeoMathKit import GeoMathKit
 import json
 import os
 from tqdm import tqdm
-from pysrc.aux_fuction.load_file.LoadSH import AOD_GFZ,AODtype
-from pysrc.aux_fuction.storage_file.StorageAOD import FormatWrite,CnmSnm
+from pysrc.ancillary.load_file.LoadSH import AOD_GFZ,AODtype
+from pysrc.ancillary.storage_file.StorageAOD import FormatWrite,CnmSnm
 import time as ti
 
 

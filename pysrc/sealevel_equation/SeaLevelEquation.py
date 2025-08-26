@@ -2,9 +2,9 @@ from SaGEA.auxiliary.aux_tool.FileTool import FileTool
 from SaGEA.auxiliary.aux_tool.MathTool import MathTool
 from SaGEA.auxiliary.load_file.LoadL2SH import load_SHC
 from SaGEA.auxiliary.preference.Constants import GeoConstants,EarthConstant
-from pysrc.aux_fuction.geotools.LLN import LoveNumber,LLN_Data,LLN_variable,Frame
+from pysrc.ancillary.geotools.LLN import LoveNumber,LLN_Data,LLN_variable,Frame
 import numpy as np
-from pysrc.aux_fuction.load_file.DataClass import SHC,GRID
+from pysrc.ancillary.load_file.DataClass import SHC,GRID
 import time
 from SaGEA.post_processing.harmonic.Harmonic import Harmonic
 from SaGEA.auxiliary.preference.EnumClasses import Displacement,GreenFunction
@@ -233,7 +233,7 @@ class PseudoSpectralSLE:
                  "GHC_SH":GHC_SH}
         return SL_SH
 
-    def SLE(self,mask=None,rotation=None,Gaunt=None,Psudo=True,isOnlyTWS=True):
+    def SLE(self,mask=None,rotation=None,isOnlyTWS=True):
         start_time = time.time()
         print(f"=========Begin Spectral SLE computing==========")
         ocean_function = self.setOcean(ocean_mask=mask)

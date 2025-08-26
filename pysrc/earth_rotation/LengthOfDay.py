@@ -1,6 +1,6 @@
 import numpy as np
 # from SaGEA.auxiliary.preference.Constants import PMConstant
-from pysrc.aux_fuction.constant.GeoConstant import PMConstant
+from pysrc.ancillary.constant.GeoConstant import PMConstant
 from SaGEA.auxiliary.aux_tool.FileTool import FileTool
 from SaGEA.auxiliary.load_file.LoadL2SH import load_SHC
 

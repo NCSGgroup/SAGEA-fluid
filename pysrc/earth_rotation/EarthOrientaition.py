@@ -1,14 +1,14 @@
 import numpy as np
 # from SaGEA.auxiliary.preference.Constants import PMConstant
-from pysrc.aux_fuction.constant.GeoConstant import PMConstant
+from pysrc.ancillary.constant.GeoConstant import PMConstant
 import time
 import SaGEA.auxiliary.preference.EnumClasses as Enums
 from SaGEA.auxiliary.aux_tool.FileTool import FileTool
-from pysrc.aux_fuction.load_file.DataClass import SHC,GRID
+from pysrc.ancillary.load_file.DataClass import SHC,GRID
 from SaGEA.auxiliary.aux_tool.MathTool import MathTool
 from SaGEA.auxiliary.load_file.LoadL2SH import load_SHC
 from pysrc.sealevel_equation.SeaLevelEquation import PseudoSpectralSLE
-from pysrc.aux_fuction.geotools.LLN import LoveNumber
+from pysrc.ancillary.geotools.LLN import LoveNumber
 
 class EOP:
     def __init__(self):
@@ -19,7 +19,7 @@ class EOP:
         self.factor_LOD_motion = 0.998/(PMConstant.Cm*PMConstant.omega)
         pass
 
-    def PM_mass_term(self,SH,isMas=True):
+    def PM_mass_term(self,SH,isMas=False):
         """
         :param SH: SH here means EWH harmonic coefficients
         :param isMas: if True, the units of chi1 and chi2 are mas, otherwise is rad
@@ -35,7 +35,24 @@ class EOP:
         chi2 = rad_to_mas*I23/(PMConstant.Cm-PMConstant.Am)
         chi = {"chi1":chi1,"chi2":chi2}
         return chi
-    def PM_motion_term(self,u_speed,v_speed,lat,lon,pressure,isMas=True):
+
+    def PM_vertical_integral(self,u_speed,v_speed,pressure):
+        dp = np.zeros_like(pressure)
+        dp[0] = pressure[0] - (pressure[0] + pressure[1]) / 2
+        for k in np.arange(1, len(pressure) - 1):
+            dp[k] = (pressure[k - 1] - pressure[k + 1]) / 2
+        dp[-1] = (pressure[-2] + pressure[-1]) / 2 - pressure[-1]
+
+        dp_g = (dp / PMConstant.grav)[np.newaxis, :, np.newaxis, np.newaxis]
+
+        dU = u_speed * dp_g
+        dV = v_speed * dp_g
+        # print(f"shape:{dU.shape}")
+        U = np.sum(dU, axis=1)
+        V = np.sum(dV, axis=1)
+        # print(f"shape:{U.shape}")
+        return U,V
+    def PM_motion_term(self,U,V,lat,lon,pressure=None,isMas=True):
         """
         :param u_speed: eastward along latitude (also known as zonal wind)
         :param v_speed: northward along longitude (also known as meridional wind)
@@ -46,16 +63,12 @@ class EOP:
         :param isMas: False means results are rad, True means results are mas
         :return:
         """
-
         rad_to_mas = 1
         if isMas:
             rad_to_mas = (180 / np.pi) * 3600 * 1000
 
-        dp = np.zeros_like(pressure)
-        dp[0] = pressure[0] - (pressure[0] + pressure[1]) / 2
-        for k in np.arange(1, len(pressure) - 1):
-            dp[k] = (pressure[k - 1] - pressure[k + 1]) / 2
-        dp[-1] = (pressure[-2] + pressure[-1]) / 2 - pressure[-1]
+        if pressure is not None:
+            U,V = self.PM_vertical_integral(u_speed=U,v_speed=V,pressure=pressure)
 
         phi = np.deg2rad(lat)
         lam = np.deg2rad(lon)
@@ -63,31 +76,25 @@ class EOP:
         dlam = np.abs(lam[1] - lam[0])
 
         phi_grid, lam_grid = np.meshgrid(phi, lam, indexing="ij")
-
         cos_phi = np.cos(phi_grid)
+        cos_phi_4d = cos_phi[None, :, :]
 
         sin_lam = np.sin(lam)
         cos_lam = np.cos(lam)
 
         dA = cos_phi * dlam * dphi
 
-        u_sin_lam = u_speed * sin_lam
-        u_cos_lam = u_speed * cos_lam
+        u_sin_lam, u_cos_lam = U * sin_lam, U * cos_lam
+        v_sin_lam, v_cos_lam = V * sin_lam, V * cos_lam
 
-        v_sin_lam = v_speed * sin_lam
-        v_cos_lam = v_speed * cos_lam
 
-        dp_g = (dp / PMConstant.grav)[np.newaxis, :, np.newaxis, np.newaxis]
-        cos_phi_4d = cos_phi[None, None, :, :]
 
-        dL1 = (u_sin_lam + v_cos_lam) * cos_phi_4d * dp_g
-        dL2 = (u_cos_lam - v_sin_lam) * cos_phi_4d * dp_g
+        L1 = (u_sin_lam + v_cos_lam) * cos_phi_4d
+        L2 = (u_cos_lam - v_sin_lam) * cos_phi_4d
 
-        L1_vert = np.sum(dL1, axis=1)
-        L2_vert = np.sum(dL2, axis=1)
 
-        H1 = (PMConstant.radius ** 3) * np.sum(L1_vert * dA[None, :, :], axis=(1, 2))
-        H2 = (PMConstant.radius ** 3) * np.sum(L2_vert * dA[None, :, :], axis=(1, 2))
+        H1 = (PMConstant.radius ** 3) * np.sum(L1 * dA[None, :, :], axis=(1, 2))
+        H2 = (PMConstant.radius ** 3) * np.sum(L2 * dA[None, :, :], axis=(1, 2))
 
 
         chi1 = H1 / self.factor_PM_motion
@@ -98,7 +105,7 @@ class EOP:
         chi = {"chi1": chi1, "chi2": chi2}
         return chi
 
-    def LOD_mass_term(self,SH,isMas=True):
+    def LOD_mass_term(self,SH,isMas=False):
         """
         :param SH: Different with PM mass term, the type of LOD is Stokes coefficients.
         :param isMas: the same follow before.
@@ -478,8 +485,44 @@ def demo1():
     print(LOD2['LOD'])
     print(LOD2['chi3'])
 
+def demo2():
+    import xarray as xr
+    import pandas as pd
+    from tqdm import tqdm
+    # u_set = xr.open_dataset("I:\ERA5\MAD/2010/u_wind-201001.nc")
+    # v_set = xr.open_dataset("I:\ERA5\MAD/2010/v_wind-201001.nc")
+    u_set, v_set = [], []
+    date_range = pd.date_range(start='2009-01-01', end='2009-12-31', freq="MS").strftime("%Y%m").tolist()
+    for i in tqdm(date_range):
+        u_temp = xr.open_dataset(f"I:\ERA5\MAD/2009/u_wind-{i}.nc")
+        v_temp = xr.open_dataset(f"I:\ERA5\MAD/2009/v_wind-{i}.nc")
+        u_set.append(u_temp['u'].values[0])
+        v_set.append(v_temp['v'].values[0])
+    # u_wind = u_set['u'].values
+    # v_wind = v_set['v'].values
+    pressure = u_temp['pressure_level'].values * 100
+    lats = u_temp['latitude'].values
+    lons = u_temp['longitude'].values
+
+    u_set = np.array(u_set)
+    v_set = np.array(v_set)
+    u_mean = np.mean(u_set, axis=0)
+    v_mean = np.mean(v_set, axis=0)
+
+    u_set = u_set - u_mean[None, :, :, :]
+    v_set = v_set - v_mean[None, :, :, :]
+
+    # print(v_set['v'].values.max())
+    # print(u_set['u'].values.max())
+
+    print(pressure[0])
+    print(pressure[-1])
+    print(pressure[-2])
+    chi = EOP().PM_motion_term(U=u_set, V=v_set, lat=lats, lon=lons, pressure=pressure, isMas=True,)
+    print(chi['chi1'])
+
 
 
 
 if __name__ =="__main__":
-    demo1()
+    demo2()

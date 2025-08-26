@@ -56,7 +56,7 @@ def demo3():
     grid_Grelan.limiter(threshold=0.5)
     mask_Grelan = grid_Grelan.value[0]
 
-    '''load GSM and aux_fuction data'''
+    '''load GSM and ancillary data'''
     shc, dates_begin, dates_end = load_SHC(gsm_dir, key=gsm_key, lmax=lmax, begin_date=begin_date, end_date=end_date,
                                            get_dates=True, )  # load GSM and dates
     dates_ave = TimeTool.get_average_dates(dates_begin,dates_end)

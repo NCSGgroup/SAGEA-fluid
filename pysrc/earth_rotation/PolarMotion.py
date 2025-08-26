@@ -1,13 +1,13 @@
 import numpy as np
 from SaGEA.auxiliary.aux_tool.MathTool import MathTool
-from pysrc.aux_fuction.load_file.DataClass import SHC,GRID
+from pysrc.ancillary.load_file.DataClass import SHC,GRID
 import SaGEA.auxiliary.preference.EnumClasses as Enums
 from pysrc.sealevel_equation.SeaLevelEquation import PseudoSpectralSLE
 # from SaGEA.auxiliary.preference.Constants import PMConstant
-from pysrc.aux_fuction.constant.GeoConstant import PMConstant
+from pysrc.ancillary.constant.GeoConstant import PMConstant
 from SaGEA.auxiliary.aux_tool.FileTool import FileTool
 from SaGEA.auxiliary.load_file.LoadL2SH import load_SHC
-from pysrc.aux_fuction.geotools.LLN import LoveNumber
+from pysrc.ancillary.geotools.LLN import LoveNumber
 import time
 
 def mass_term(C21,S21,isMas=False):

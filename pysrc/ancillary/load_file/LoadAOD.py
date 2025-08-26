@@ -1,19 +1,12 @@
-#!/usr/bin/env python
-# -*- coding:utf-8 -*-
-# author:Yang Fan
-# mailbox: yfan_cge@hust.edu.cn
-# address: Huazhong University of Science and Technology, Wuhan, China
-# datetime:2020/6/15 下午3:18
-# software: atmosphere de-aliasing
-# usage of this file:
 
 import os
 import warnings
-
 import numpy as np
 
-from pysrc.aux_fuction.constant.Setting import AODtype
-from pysrc.aux_fuction.constant.Setting import TidesType
+from SaGEA.auxiliary.preference.EnumClasses import AODtype,TidesType
+from pysrc.ancillary.load_file.DataClass import SHC
+from SaGEA.post_processing.geometric_correction.old.GeoMathKit import GeoMathKit
+
 
 
 class LoadSH:
@@ -46,6 +39,22 @@ class LoadSH:
 
         if end > len(self._C):
             warnings.warn('Nmax is too big')
+        C_coef = GeoMathKit.CS_1dTo2d(CS=np.array(self._C[0:end].copy()))[None,:,:]
+        S_coef = GeoMathKit.CS_1dTo2d(CS=np.array(self._S[0:end].copy()))[None,:,:]
+        # C_coef = MathTool.cs_1dto2d(cs=self._C[0:end].copy())[None,:,:]
+        # S_coef = MathTool.cs_1dto2d(cs=self._S[0:end].copy())[None,:,:]
+        # print(f"C_coef is:{C_coef.shape}")
+        shc = SHC(c=C_coef,s=S_coef)
+        return shc
+
+    def getCS_old(self, Nmax):
+
+        assert Nmax >= 0
+
+        end = int((Nmax + 1) * (Nmax + 2) / 2)
+
+        if end > len(self._C):
+            warnings.warn('Nmax is too big')
 
         return self._C[0:end].copy(), self._S[0:end].copy()
 
@@ -61,6 +70,107 @@ class LoadSH:
         end = int((Nmax + 1) * (Nmax + 2) / 2)
 
         return self._sigmaC[0:end], self._sigmaS[0:end]
+
+class Gif48_NoSigma(LoadSH):
+    """
+    specified to read gif48 gravity fields. Plus, the file that formats the same as GIF48 can be read as well.
+    """
+
+    def __init__(self):
+        LoadSH.__init__(self)
+        # self.__sigmaC, self.__sigmaS = None, None
+        # self.__C, self.__S = None, None
+
+    def load(self, fileIn: str):
+        """
+        load gif48 fields
+        :param fileIn: gif48 file and its path
+        :return:
+        """
+
+        flag = 0
+
+        with open(fileIn) as f:
+            content = f.readlines()
+            pass
+
+        flag = self.__header(content)
+
+        self.__read(content[flag + 1:])
+
+        return self
+
+    def __header(self, content: list):
+        """
+        Read and identify the header of the gif48 gravity fields file
+        :param content: content of the file
+        :return: the line of "end_of_header"
+        """
+
+        flag = 0
+
+        for i in range(len(content)):
+            value = content[i].split()
+            if len(value) == 0: continue
+
+            if value[0] == 'product_type':
+                self.product_type = value[1]
+            elif value[0] == 'modelname':
+                self.modelname = value[1]
+            elif value[0] == 'earth_gravity_constant':
+                self.GM = float(value[1])
+            elif value[0] == 'radius':
+                self.Radius = float(value[1])
+            elif value[0] == 'max_degree':
+                self.maxDegree = int(value[1])
+            elif value[0] == 'errors':
+                self.errors = value[1]
+            elif value[0] == 'norm':
+                self.norm = value[1]
+            elif value[0] == 'tide_system':
+                self.zero_tide = (value[1] == 'zero_tide')
+            elif value[0] == 'end_of_head':
+                flag = i
+                break
+
+        return flag
+
+    def __read(self, content: list):
+        """
+        Start reading gif48 like line by line like below
+        key    L    M    C    S
+        :param content:
+        :return: all the C, S coefficients in order
+        """
+        l, m, C, S, sigmaC, sigmaS = [], [], [], [], [], []
+
+        for item in content:
+            value = item.split()
+            if len(value) == 0: continue
+
+            l.append(value[1])
+            m.append(value[2])
+            C.append(value[3])
+            S.append(value[4])
+
+        l = np.array(l).astype(np.int64)
+        m = np.array(m).astype(np.int64)
+        C = np.array(C).astype(np.float64)
+        S = np.array(S).astype(np.float64)
+
+
+        if self.maxDegree is not None:
+            assert len(l) == int((self.maxDegree + 1) * (self.maxDegree + 2) / 2)
+        else:
+            n = np.round(np.sqrt(len(l) * 2)) - 1
+            assert len(l) == int((n + 1) * (n + 2) / 2)
+
+        self._C = np.zeros(len(l))
+        self._S = np.zeros(len(l))
+
+
+        self._C[(l * (l + 1) / 2 + m).astype(np.int64)] = C
+        self._S[(l * (l + 1) / 2 + m).astype(np.int64)] = S
 
 
 class Gif48(LoadSH):
@@ -303,7 +413,11 @@ class AOD_GFZ(LoadSH):
         flag = 0
 
         for i in range(len(content)):
+
+
             value = content[i].split(':')
+
+
             if len(value) == 0:
                 continue
             value[0] = value[0].strip()
@@ -311,6 +425,7 @@ class AOD_GFZ(LoadSH):
                 value[1] = value[1].replace('\n', '')
             except Exception as e:
                 pass
+
 
             if value[0] == 'SOFTWARE VERSION':
                 self.product_type = value[1]
@@ -506,16 +621,18 @@ class AODtides(LoadSH):
         self._S[(l * (l + 1) / 2 + m).astype(np.int64)] = S
 
 
+
+
 def demo1():
-    # a = Gif48().load('../data/Auxiliary/GIF48.gfc')
-    a = Gif48().load('../data/Auxiliary/ITG-Grace2010s.gfc')
+    # a = Gif48().load('../data/ancillary/GIF48.gfc')
+    a = Gif48().load('../data/ancillary/ITG-Grace2010s.gfc')
     C0, S0 = a.getCS(100)
     C1, S1 = a.getSigmaCS(100)
     pass
 
 
 def demo2():
-    a = SimpleSH().load('../data/Auxiliary/ocean360_grndline.sh')
+    a = SimpleSH().load('../data/ancillary/ocean360_grndline.sh')
     C0, S0 = a.getCS(360)
     pass
 
@@ -526,9 +643,11 @@ def demo3():
     :return:
     """
 
-    ad = AOD_GFZ().load('../data/Products/RL05').setType(AODtype.ATM).setTime('2005-01-01', '12:00:00')
-    C, S = ad.getCS(ad.maxDegree)
-    pass
+    ad = AOD_GFZ().load('I:\GFZ\AOD1B07/').setType(AODtype.ATM).setTime('2005-01-01', '12:00:00')
+    # shc = ad.getCS(ad.maxDegree)
+    CS = ad.getCS(Nmax=180)
+    # print(CS[0].shape)
+    # print(shc.value.shape)
 
 
 def demo4():

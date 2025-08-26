@@ -10,7 +10,7 @@ import numpy as np
 # import scipy.io as scio
 # from scipy import interpolate
 
-from pysrc.aux_fuction.constant.Setting import LoveNumberType
+from pysrc.ancillary.constant.Setting import LoveNumberType
 
 
 class LoveNumber:

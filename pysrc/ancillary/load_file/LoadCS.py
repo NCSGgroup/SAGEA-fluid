@@ -1,6 +1,6 @@
 import numpy as np
 from SaGEA.auxiliary.aux_tool.FileTool import FileTool
-from pysrc.aux_fuction.load_file.DataClass import SHC
+from pysrc.ancillary.load_file.DataClass import SHC
 import re
 import datetime
 

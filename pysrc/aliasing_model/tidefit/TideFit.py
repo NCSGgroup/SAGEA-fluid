@@ -13,11 +13,11 @@ sys.path.append('../Configure')
 
 from SaGEA.post_processing.geometric_correction.old.GeoMathKit import GeoMathKit
 from scipy import signal
-from pysrc.aux_fuction.load_file.LoadAOD import LoadFields, DataType
+from pysrc.ancillary.load_file.LoadAOD import LoadFields, DataType
 from pysrc.aliasing_model.specify.Harmonic import Harmonic, LoveNumber, LoveNumberType, HarAnalysisType
-from pysrc.aux_fuction.storage_file.StorageAOD import FormatWrite, CnmSnm
+from pysrc.ancillary.storage_file.StorageAOD import FormatWrite, CnmSnm
 from pysrc.aliasing_model.geoheight.SurPres2CS import SurPres2CS, RefEllipsoid, EllipsoidType
-from pysrc.aux_fuction.constant.Setting import EllipsoidType
+from pysrc.ancillary.constant.Setting import EllipsoidType
 from SaGEA.post_processing.geometric_correction.old.GeoidUndulation import GeoidUndulation
 import numpy as np
 import os
@@ -348,7 +348,7 @@ class TideFit:
         tidesInfo = {}
         tidesDoodsonMatrix = {}
 
-        LN = LoveNumber('../../../Data/aux_fuction/')
+        LN = LoveNumber('../../../Data/ancillary/')
         HM = Harmonic(LN).setLoveNumMethod(LoveNumberType.Wang)
 
         MaxDeg = Nmax
@@ -407,7 +407,7 @@ class TideFit:
         outdir = self._dataDirOut + 'TideGeoCS_topography/'
 
         '''Configure for the surface pressure integration'''
-        LN = LoveNumber('../../../Data/aux_fuction/')
+        LN = LoveNumber('../../../Data/ancillary/')
         ell = RefEllipsoid(EllipsoidType.GRS80_IERS2010)
         undulation = GeoidUndulation(EllipsoidType.GRS80_IERS2010).getGeoid(lat, lon).flatten()
         ld = LoadFields(data_path='H:/ERA5/model level/')
@@ -424,7 +424,7 @@ class TideFit:
         tidesInfo = {}
         tidesDoodsonMatrix = {}
 
-        LN = LoveNumber('../../../Data/aux_fuction/')
+        LN = LoveNumber('../../../Data/ancillary/')
         HM = Harmonic(LN).setLoveNumMethod(LoveNumberType.Wang)
 
         MaxDeg = Nmax
