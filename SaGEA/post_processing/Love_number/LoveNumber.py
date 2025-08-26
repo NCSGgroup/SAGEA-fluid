@@ -33,7 +33,7 @@ class LoveNumber:
 
     def __init__(self):
 
-        self.__path = FileTool.get_project_dir() / 'data/aux_fuction'
+        self.__path = FileTool.get_project_dir() / 'data/ancillary'
         self.configuration = LoveNumberConfig()
 
         pass

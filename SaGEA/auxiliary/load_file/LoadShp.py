@@ -4,7 +4,7 @@ import numpy as np
 import geopandas as gpd
 import shapely.vectorized
 
-from pysrc.aux_fuction.load_file.DataClass import GRID
+from pysrc.ancillary.load_file.DataClass import GRID
 from SaGEA.auxiliary.aux_tool.MathTool import MathTool
 
 
@@ -95,8 +95,8 @@ class LoadShp:
 
 
 def demo():
-    from pysrc.aux_fuction.scripts.PlotGrids import plot_grids
-    from pysrc.aux_fuction.aux_tool.FileTool import FileTool
+    from pysrc.ancillary.scripts.PlotGrids import plot_grids
+    from pysrc.ancillary.aux_tool.FileTool import FileTool
 
     grid_space = 0.5
 

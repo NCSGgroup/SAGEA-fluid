@@ -3,7 +3,7 @@ import copy
 import numpy as np
 
 from pysrc.data_class.DataClass import SHC
-from pysrc.aux_fuction.aux_tool.TimeTool import TimeTool
+from pysrc.ancillary.aux_tool.TimeTool import TimeTool
 
 
 class GIACorrectionSpectralConfig:

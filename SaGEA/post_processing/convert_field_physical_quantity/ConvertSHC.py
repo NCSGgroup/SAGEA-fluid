@@ -2,8 +2,8 @@ import numpy as np
 
 from SaGEA.auxiliary.preference.EnumClasses import PhysicalDimensions, match_string,LLN_variable,LLN_Data,Frame
 from SaGEA.auxiliary.preference.Constants import GeoConstants
-# from pysrc.aux_fuction.LoveNumber import LoveNumber
-from pysrc.aux_fuction.geotools.LLN import LoveNumber
+# from pysrc.ancillary.LoveNumber import LoveNumber
+from pysrc.ancillary.geotools.LLN import LoveNumber
 
 
 class ConvertSHCConfig:

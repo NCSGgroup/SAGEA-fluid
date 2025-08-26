@@ -247,8 +247,8 @@ def quick_fig(grid,lat=None,lon=None,maxvalue=2,savefile=None,unit="cm"):
     fig.show()
 
 def demo1():
-    from pysrc.aux_fuction.load_file.LoadCS import LoadCS
-    from pysrc.aux_fuction.load_file.DataClass import SHC
+    from pysrc.ancillary.load_file.LoadCS import LoadCS
+    from pysrc.ancillary.load_file.DataClass import SHC
 
     resolution = 1
 

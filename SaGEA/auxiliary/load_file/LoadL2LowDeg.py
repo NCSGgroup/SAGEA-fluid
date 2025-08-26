@@ -37,7 +37,7 @@ class LoadLowDegreeConfig:
 
 class LoadLowDegree:
     """
-    This class is to load aux_fuction low-degree GSM products.
+    This class is to load ancillary low-degree GSM products.
 
     self.results is supposed to be a dict, including:
         'c10': list in shape (2, length). dimension 1: datetime.date; dimension 2: values.

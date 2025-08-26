@@ -314,7 +314,7 @@ def load_CovMatrix(filepath, lmax: int, lmin: int = 0, get_dates=False):
 
 
 def demo():
-    from pysrc.aux_fuction.aux_tool.FileTool import FileTool
+    from pysrc.auxiliary.aux_tool.FileTool import FileTool
 
     filepath = FileTool.get_project_dir("data/L2_SH_products/VarGSM/ITSG/Grace2018/2009/ITSG-Grace2018_n96_2009-06.snx")
     covmat, date_begin, date_end = load_CovMatrix(filepath, lmax=60, get_dates=True)

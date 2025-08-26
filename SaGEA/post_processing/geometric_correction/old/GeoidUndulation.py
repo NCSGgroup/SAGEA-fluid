@@ -79,8 +79,8 @@ class GeoidUndulation:
         :return:
         """
         self.__Nmax = 160
-        self.__SH = Gif48().load(FileTool.get_project_dir('data/aux_fuction/GIF48.gfc'))
-        # self.__SH = Gif48().load('../data/aux_fuction/ITG-Grace2010s.gfc')
+        self.__SH = Gif48().load(FileTool.get_project_dir('data/ancillary/GIF48.gfc'))
+        # self.__SH = Gif48().load('../data/ancillary/ITG-Grace2010s.gfc')
         pass
 
 
