@@ -37,6 +37,7 @@ class EOP:
         return chi
 
     def PM_vertical_integral(self,u_speed,v_speed,pressure):
+
         dp = np.zeros_like(pressure)
         dp[0] = pressure[0] - (pressure[0] + pressure[1]) / 2
         for k in np.arange(1, len(pressure) - 1):
@@ -52,7 +53,29 @@ class EOP:
         V = np.sum(dV, axis=1)
         # print(f"shape:{U.shape}")
         return U,V
-    def PM_motion_term(self,U,V,lat,lon,pressure=None,isMas=True):
+
+    def __compute_dp(self,lp,sp,lev):
+        sp = sp[0].flatten()
+        iso_pres = []
+
+        for i in np.arange(len(lp)):
+            pres_level = np.ones(len(sp))*lp[i]
+            if (lp[i]-sp<0).all():
+                iso_pres.append(pres_level)
+                continue
+            index = lp[i]-sp >0
+            pres_level[index] = sp[index]
+            iso_pres.append(pres_level)
+
+        iso_pres = np.array(iso_pres)
+        level_number = len(iso_pres)
+
+        if lev == (level_number-1):
+            return sp-iso_pres[lev]
+        else:
+            return iso_pres[lev+1]-iso_pres[lev]
+
+    def PM_motion_term(self,u_speed,v_speed,lat,lon,multi_press,surf_press,isMas=True):
         """
         :param u_speed: eastward along latitude (also known as zonal wind)
         :param v_speed: northward along longitude (also known as meridional wind)
@@ -67,8 +90,17 @@ class EOP:
         if isMas:
             rad_to_mas = (180 / np.pi) * 3600 * 1000
 
-        if pressure is not None:
-            U,V = self.PM_vertical_integral(u_speed=U,v_speed=V,pressure=pressure)
+        dp_g = []
+        for lev in np.arange(len(multi_press)):
+            temp_dp_g = self.__compute_dp(lev=lev,lp=multi_press,sp=surf_press)/PMConstant.grav
+            dp_g.append(temp_dp_g)
+        dp_g = np.array(dp_g)
+        dp_g = dp_g.reshape(len(dp_g),len(lat),len(lon))
+
+        dU = u_speed*dp_g[None,:,:,:]
+        dV = v_speed*dp_g[None,:,:,:]
+
+        U,V = np.sum(dU,axis=1),np.sum(dV,axis=1)
 
         phi = np.deg2rad(lat)
         lam = np.deg2rad(lon)
@@ -87,15 +119,11 @@ class EOP:
         u_sin_lam, u_cos_lam = U * sin_lam, U * cos_lam
         v_sin_lam, v_cos_lam = V * sin_lam, V * cos_lam
 
-
-
         L1 = (u_sin_lam + v_cos_lam) * cos_phi_4d
         L2 = (u_cos_lam - v_sin_lam) * cos_phi_4d
 
-
         H1 = (PMConstant.radius ** 3) * np.sum(L1 * dA[None, :, :], axis=(1, 2))
         H2 = (PMConstant.radius ** 3) * np.sum(L2 * dA[None, :, :], axis=(1, 2))
-
 
         chi1 = H1 / self.factor_PM_motion
         chi2 = H2 / self.factor_PM_motion
@@ -140,18 +168,24 @@ class EOP:
         chi3 = chi3*rad_to_mas
         LOD = {"chi3":chi3,"LOD":delta_LOD}
         return LOD
-    def LOD_motion_term(self,u_speed,lat,lon,pressure,isMas=True):
+    def LOD_motion_term(self,u_speed,lat,lon,multi_press,surf_press,isMas=True):
         rad_to_mas = 1
         if isMas:
             rad_to_mas = 180 * 3600 * 1000 / np.pi
 
-
-
-        dp = np.zeros_like(pressure)
-        dp[0] = pressure[0] - (pressure[0] + pressure[1]) / 2
-        for k in np.arange(1, len(pressure) - 1):
-            dp[k] = (pressure[k - 1] - pressure[k + 1]) / 2
-        dp[-1] = (pressure[-2] + pressure[-1]) / 2 - pressure[-1]
+        dp_g = []
+        for lev in np.arange(len(multi_press)):
+            dp_g_single = self.__compute_dp(lp=multi_press,sp=surf_press,lev=lev)/PMConstant.grav
+            dp_g.append(dp_g_single)
+        dp_g = np.array(dp_g)
+        dp_g = dp_g.reshape(len(multi_press),len(lat),len(lon))
+        dp_g = dp_g[None,:,:,:]
+        # dp = np.zeros_like(multi_press)
+        # dp[0] = multi_press[0] - (multi_press[0] + multi_press[1]) / 2
+        # for k in np.arange(1, len(multi_press) - 1):
+        #     dp[k] = (multi_press[k - 1] - multi_press[k + 1]) / 2
+        # dp[-1] = (multi_press[-2] + multi_press[-1]) / 2 - multi_press[-1]
+        # dp_g = (dp/PMConstant.grav)[None,:,None,None]
 
         phi,lam = np.deg2rad(lat),np.deg2rad(lon)
         dphi,dlam = np.abs(phi[1]-phi[0]),np.abs(lam[1]-lam[0])
@@ -160,7 +194,7 @@ class EOP:
         cos_phi = np.cos(phi_grid)
         dA = cos_phi*dphi*dlam
 
-        dp_g = (dp/PMConstant.grav)[None,:,None,None]
+
         cos_phi_4d = cos_phi[None,None,:,:]
 
         dL3 = u_speed*cos_phi_4d*dp_g
@@ -489,40 +523,66 @@ def demo2():
     import xarray as xr
     import pandas as pd
     from tqdm import tqdm
-    # u_set = xr.open_dataset("I:\ERA5\MAD/2010/u_wind-201001.nc")
-    # v_set = xr.open_dataset("I:\ERA5\MAD/2010/v_wind-201001.nc")
-    u_set, v_set = [], []
+    u_set, v_set ,sp_set = [], [],[]
     date_range = pd.date_range(start='2009-01-01', end='2009-12-31', freq="MS").strftime("%Y%m").tolist()
     for i in tqdm(date_range):
+        sp_temp = xr.open_dataset(f"I:\ERA5\MAD/2009/sp-{i}.nc")
         u_temp = xr.open_dataset(f"I:\ERA5\MAD/2009/u_wind-{i}.nc")
         v_temp = xr.open_dataset(f"I:\ERA5\MAD/2009/v_wind-{i}.nc")
         u_set.append(u_temp['u'].values[0])
         v_set.append(v_temp['v'].values[0])
+        sp_set.append(sp_temp['sp'].values[0])
     # u_wind = u_set['u'].values
     # v_wind = v_set['v'].values
-    pressure = u_temp['pressure_level'].values * 100
+    pressure = u_temp['pressure_level'].values[::-1] * 100
     lats = u_temp['latitude'].values
     lons = u_temp['longitude'].values
 
-    u_set = np.array(u_set)
-    v_set = np.array(v_set)
+    sp_set = np.array(sp_set)
+    u_set = np.array(u_set)[:,::-1,:,:]
+    v_set = np.array(v_set)[:,::-1,:,:]
     u_mean = np.mean(u_set, axis=0)
     v_mean = np.mean(v_set, axis=0)
 
     u_set = u_set - u_mean[None, :, :, :]
     v_set = v_set - v_mean[None, :, :, :]
 
-    # print(v_set['v'].values.max())
-    # print(u_set['u'].values.max())
-
-    print(pressure[0])
-    print(pressure[-1])
-    print(pressure[-2])
-    chi = EOP().PM_motion_term(U=u_set, V=v_set, lat=lats, lon=lons, pressure=pressure, isMas=True,)
+    chi = EOP().PM_motion_term(u_speed=u_set, v_speed=v_set, lat=lats, lon=lons,
+                               multi_press=pressure,surf_press=sp_set, isMas=True)
     print(chi['chi1'])
 
+def demo3():
+    import xarray as xr
+    import pandas as pd
+    from tqdm import tqdm
+    u_set,  sp_set = [], []
+    date_range = pd.date_range(start='2009-01-01', end='2009-12-31', freq="MS").strftime("%Y%m").tolist()
+    for i in tqdm(date_range):
+        sp_temp = xr.open_dataset(f"I:\ERA5\MAD/2009/sp-{i}.nc")
+        u_temp = xr.open_dataset(f"I:\ERA5\MAD/2009/u_wind-{i}.nc")
+        u_set.append(u_temp['u'].values[0])
+        sp_set.append(sp_temp['sp'].values[0])
 
+    pressure = u_temp['pressure_level'].values[::-1] * 100
+
+    lats = u_temp['latitude'].values
+    lons = u_temp['longitude'].values
+
+    sp_set = np.array(sp_set)
+    u_set = np.array(u_set)[:, ::-1, :, :]
+
+    u_set = np.array(u_set)
+
+    u_mean = np.mean(u_set, axis=0)
+
+
+    u_set = u_set - u_mean[None, :, :, :]
+
+
+    chi = EOP().LOD_motion_term(u_speed=u_set,lat=lats, lon=lons,
+                                multi_press=pressure, surf_press=sp_set, isMas=True)
+    print(chi['chi3'])
 
 
 if __name__ =="__main__":
-    demo2()
+    demo3()
