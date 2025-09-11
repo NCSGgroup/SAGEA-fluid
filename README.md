@@ -4,7 +4,7 @@
 
 SAGEA-fluid is an open-source Python solver for evaluating the self-attraction and loading effect, geocenter motion, and Earth orientation parameters (polar motion and length-of-day variation) excited by Earth’s surface fluids. Building on the strengths of SAGEA (Liu et., al. 2025) with a great variety of data post-processing options, SAGEA-fluid enables the integration of multi-source surface fluid for geophysical effect estimation. This capability makes it possible for users who are not experts in geodesy to independently investigate surface fluid process. The below figure illustrates the overall workflow and interconnections within SAGEA-fluid. The innermost circle represents the specific fluid sources ingested by the toolbox, while adjacent light-grey ring provides a simple classification of the data types associated with these sources, including storage, pressure, and flux. The outermost ring depicts the main functional modules and processing mechanisms of SAGEA-fluid. The integrated design highlights the flexibility of SAGEA-fluid in accommodating multi-source datasets and generating harmonized geophysical diagnostics.
 
-<img src="image/SAGEA-fluid structure.png" style="zoom: 12%;" />
+<img src="image/SAGEA-fluid structure.png" style="zoom: 5%;" />
 
 SAGEA-fluid provides an accessible and extensible toolset for both geodesy specialists and non-specialists, supporting research on a wide range of Earth system processes. Potential applications include regional sea-level budget assessments under climate change, monitoring ice-sheet mass loss with satellite gravimetry, investigating atmosphere–ocean–hydrosphere–solid Earth interactions, and contributing to the establishment and maintenance of modern high-precision terrestrial reference frames.
 
