@@ -10,6 +10,12 @@
 from enum import Enum
 
 
+class EAMType(Enum):
+    AAM = 1
+    OAM = 2
+    HAM = 3
+    SLAM = 4
+
 class ForceFields(Enum):
     ERAinterim = 0
     ERA5 = 1
