@@ -1,5 +1,6 @@
 import numpy as np
 from SaGEA.auxiliary.aux_tool.MathTool import MathTool
+from pysrc.ancillary.geotools.GeoMathKit import GeoMathKit
 from pysrc.ancillary.load_file.DataClass import SHC,GRID
 import SaGEA.auxiliary.preference.EnumClasses as Enums
 from pysrc.sealevel_equation.SeaLevelEquation import PseudoSpectralSLE
@@ -77,10 +78,11 @@ class J2:
         self.LLN_method = method
         self.frame = frame
         return self
-    def I_Matrix_Term(self, mask=None):
+    def __I_Matrix_Term(self, mask=None,buffer=0):
         N = len(self.GRACE.value)
         I = np.zeros((N, 5, 5))
         ocean_mask = self.setOcean(ocean_mask=mask)
+        ocean_mask = GeoMathKit.leakage(ocean_mask=ocean_mask,lats=self.lat,buffer_width_km=buffer)
         theta, phi = MathTool.get_colat_lon_rad(lat=self.lat, lon=self.lon)
         Pilm = MathTool.get_Legendre(lat=theta, lmax=self.lmax, option=0)
 
@@ -119,12 +121,14 @@ class J2:
         I = I
         # print("-------------Finished I Matrix computation-------------")
         return I
-    def G_Matrix_Term(self,mask=None):
+    def __G_Matrix_Term(self,mask=None,buffer=0):
         GRACE_SH = self.GRACE.value
         GRACE_SH[:, 0:4] = 0
         GRACE_SH[:, 6] = 0
         GRACE_SH[:, 12] = 0
-        kernal = (SHC(c=GRACE_SH).to_grid(self.res).value) * (self.setOcean(ocean_mask=mask))
+        ocean_mask = self.setOcean(ocean_mask=mask)
+        ocean_mask = GeoMathKit.leakage(ocean_mask=ocean_mask, lats=self.lat, buffer_width_km=buffer)
+        kernal = (SHC(c=GRACE_SH).to_grid(self.res).value) * ocean_mask
         G_SH = GRID(grid=kernal, lat=self.lat, lon=self.lon).to_SHC(self.lmax).value
         G = np.zeros((len(GRACE_SH), 5))
         G[:, 0] = G_SH[:, 2]
@@ -135,7 +139,7 @@ class J2:
         G = G
         # print("-------------Finished G Matrix computation-------------")
         return G
-    def Ocean_Model_Term(self,C10,C11,S11,C20,C30):
+    def __Ocean_Model_Term(self,C10,C11,S11,C20,C30):
         GAD_Correct = self.GAD.value
         OM_SH = self.OceanSH.value
         OM = np.zeros((len(OM_SH),5))
@@ -146,7 +150,7 @@ class J2:
         OM[:,3] = OM_SH[:,6]-GAD_Correct[:,6]+C20
         OM[:,4] = OM_SH[:,12]-GAD_Correct[:,12]+C30
         return OM
-    def GRD_Term(self,C10=None,C11=None,S11=None,C20=None,C30=None,mask=None,GRD=False,rotation=True):
+    def __GRD_Term(self,C10=None,C11=None,S11=None,C20=None,C30=None,mask=None,GRD=False,rotation=True):
         GRACE_SH = self.GRACE.value
         GRACE_SH[:,1] = S11
         GRACE_SH[:,2] = C10
@@ -170,7 +174,7 @@ class J2:
             UpdateTerm = GRID(grid=uniform_mask,lat=self.lat,lon=self.lon).to_SHC(self.lmax).value
         UpdateTerm = SHC(c=UpdateTerm).convert_type(from_type=Enums.PhysicalDimensions.EWH,to_type=Enums.PhysicalDimensions.Density).value
         return UpdateTerm[:,2],UpdateTerm[:,3],UpdateTerm[:,1],UpdateTerm[:,6],UpdateTerm[:, 12]
-    def Low_Degree_Term(self,mask=None,GRD=False,rotation=True):
+    def Low_Degree_Term(self,mask=None,GRD=False,rotation=True,buffer=0):
         """
         the series of Stokes coefficients follow: C10, C11, S11, C20, C21, S21
         that means, index 0->C10, 1->C11, 2->S11, 3->C20, 4->C21, 5->S21
@@ -179,20 +183,20 @@ class J2:
         start_time = time.time()
         GRACE_SH = self.GRACE.value
         I_C10,I_C11,I_S11,I_C20,I_C30 = [np.zeros(len(GRACE_SH))]*5
-        OM = self.Ocean_Model_Term(C10=I_C10,C11=I_C11,S11=I_S11,C20=I_C20,C30=I_C30)
-        I = self.I_Matrix_Term(mask=mask)
-        G = self.G_Matrix_Term(mask=mask)
+        OM = self.__Ocean_Model_Term(C10=I_C10,C11=I_C11,S11=I_S11,C20=I_C20,C30=I_C30)
+        I = self.__I_Matrix_Term(mask=mask,buffer=buffer)
+        G = self.__G_Matrix_Term(mask=mask,buffer=buffer)
 
         I_inv = np.linalg.inv(I)
         # print(f"I and I_inv:\n{I[0]}\n\n{I_inv[0]}")
         # print(f"verfiy: {I[0]@I_inv[0]}")
         C = np.einsum('nij,nj->ni',I_inv,OM-G)
 
-        GRD_Ocean_Term = self.GRD_Term(C10=C[:,0],C11=C[:,1],S11=C[:,2],C20=C[:,3],C30=C[:,4],
-                                       mask=mask,GRD=GRD,rotation=rotation)
+        GRD_Ocean_Term = self.__GRD_Term(C10=C[:,0],C11=C[:,1],S11=C[:,2],C20=C[:,3],C30=C[:,4],
+                                         mask=mask,GRD=GRD,rotation=rotation)
         for iter in np.arange(100):
-            OM_new = self.Ocean_Model_Term(C10=GRD_Ocean_Term[0],C11=GRD_Ocean_Term[1],S11=GRD_Ocean_Term[2],
-                                           C20=GRD_Ocean_Term[3],C30=GRD_Ocean_Term[4])
+            OM_new = self.__Ocean_Model_Term(C10=GRD_Ocean_Term[0],C11=GRD_Ocean_Term[1],S11=GRD_Ocean_Term[2],
+                                             C20=GRD_Ocean_Term[3],C30=GRD_Ocean_Term[4])
             C_new = np.einsum('nij,nj->ni', I_inv, OM_new - G)
             delta = np.abs(C_new-C).flatten()
             if np.max(delta) < 10e-4:
@@ -229,17 +233,17 @@ class J2:
         print('%-20s%-20s ' % ('Time-consuming:', f'{end_time - start_time:.4f} s'))
         print(f"---------------------------------------------------")
         return SH
-    def GSM_Like(self,mask=None,GRD=False,rotation=True):
-        SH = self.Low_Degree_Term(mask=mask,GRD=GRD,rotation=rotation)
+    def GSM_Like(self,mask=None,GRD=False,rotation=True,buffer=0):
+        SH = self.Low_Degree_Term(mask=mask,GRD=GRD,rotation=rotation,buffer=buffer)
         C = SH['Mass']
         Coordinate = Convert_Mass_to_Coordinates(C10=C["C10"],C11=C["C11"],S11=C["S11"])
         print("-------------Finished GSM-like computation-------------\n"
               "==========================================================")
         return Coordinate
-    def Full_Geocenter(self,GAC=None,mask=None,GRD=False,rotation=True):
+    def Full_Geocenter(self,GAC=None,mask=None,GRD=False,rotation=True,buffer=0):
         GAC = SHC(c=GAC)
         GAC_Coordinate = Convert_Stokes_to_Coordinates(C10=GAC.value[:,2],C11=GAC.value[:,3],S11=GAC.value[:,1])
-        SH = self.Low_Degree_Term(mask=mask,GRD=GRD,rotation=rotation)
+        SH = self.Low_Degree_Term(mask=mask,GRD=GRD,rotation=rotation,buffer=buffer)
         C = SH['Mass']
         GSM_Coordinate = Convert_Mass_to_Coordinates(C10=C["C10"], C11=C["C11"], S11=C["S11"])
         X = GAC_Coordinate['X']+GSM_Coordinate['X']
