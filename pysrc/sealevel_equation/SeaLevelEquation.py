@@ -233,13 +233,13 @@ class PseudoSpectralSLE:
                  "GHC_SH":GHC_SH}
         return SL_SH
 
-    def SLE(self,mask=None,rotation=None,isOnlyTWS=True):
+    def SLE(self,mask=None,rotation=None,isLand=True):
         start_time = time.time()
         print(f"=========Begin Spectral SLE computing==========")
         ocean_function = self.setOcean(ocean_mask=mask)
         ocean_mask = ocean_function['Grid']
         Mask_SH = ocean_function['SH']
-        if isOnlyTWS:
+        if isLand:
             input_Grid = self.shc.to_grid(self.res).value * (1 - ocean_mask)
             input_SH = GRID(grid=input_Grid, lat=self.lat, lon=self.lon).to_SHC(self.lmax).value
         else:

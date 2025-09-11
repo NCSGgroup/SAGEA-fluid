@@ -231,7 +231,7 @@ class PseudoSpectralSLE:
                  "GHC_SH":GHC_SH}
         return SL_SH
 
-    def SLE(self,mask=None,rotation=None,Gaunt=None,Psudo=True,isOnlyTWS=True):
+    def SLE(self,mask=None,rotation=None,Gaunt=None,Psudo=True,isLand=True):
         print(f"=========Begin Spectral SLF computing==========")
         start_time = time.time()
         ocean_function = self.setOcean(ocean_mask=mask)
