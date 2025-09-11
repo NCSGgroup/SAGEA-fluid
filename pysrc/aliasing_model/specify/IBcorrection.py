@@ -103,12 +103,12 @@ class LandSeaMask:
         :return:
         """
         lmax = 360
-        SHC, SHS = SimpleSH().load('H:/Paper3/paper_data/ancillary/ocean360_grndline.sh').getCS(lmax)
+        SHC, SHS = SimpleSH().load('../../../data/auxiliary/ocean360_grndline.sh').getCS_old(lmax)
 
         # lat = np.arange(89.75, -90, -0.5)
         # lon = np.arange(0.25, 360, 0.5)
 
-        LN = LoveNumber('H:/Paper3/paper_data/ancillary/')
+        LN = LoveNumber('../../../data/LLN/')
         hm = Harmonic(LN).setLoveNumMethod(LoveNumberType.Wang)
         PnmMat = GeoMathKit.getPnmMatrix(self.__lat, lmax, 2)
         grids = hm.synthesis(Cqlm=SHC, Sqlm=SHS, lat=self.__lat, lon=self.__lon, Nmax=lmax, PnmMat=PnmMat,kind=SynthesisType.synthesis)
@@ -116,8 +116,6 @@ class LandSeaMask:
         self.__ocean = grids > 0.5
 
         pass
-
-
 class IBcorrection(LandSeaMask):
 
     def __init__(self, lat, lon, method: int = 3):
@@ -154,5 +152,19 @@ class IBcorrection(LandSeaMask):
         grids[ocean.flatten()] = tot / area
 
         return grids
+
+def demo1():
+    import xarray as xr
+    lmax = 180
+    shift_amount = -360
+    temp_atmos = xr.open_dataset(f"I:\ERA5\MAD/2010/sp-201001.nc")
+    temp_asp = np.roll(temp_atmos['sp'].values, shift=shift_amount, axis=2)
+    temp_lat, temp_lon = temp_atmos['latitude'].values, temp_atmos['longitude'].values - 180
+    print(f"load sp is:{temp_asp.shape}")
+    ib = IBcorrection(lat=temp_lat, lon=temp_lon)
+    sp_ib = ib.correct(grids=temp_asp.flatten())
+    sp_correct = sp_ib.reshape(len(temp_asp[:, 0, 0]), len(temp_asp[0, :, 0]), len(temp_asp[0, 0, :]))
+    print(sp_ib.shape)
+    print(sp_correct.shape)
 
 
