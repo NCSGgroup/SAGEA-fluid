@@ -129,7 +129,7 @@ class LoadFields:
             data_TEMP = []
             for i in range(len(ft['t'][0,:,0,0])):
                 data_TEMP.append(ft['t'].values[0,i].flatten())
-            data_TEMP = np.array(data_TEMP)
+            data_TEMP = np.array(data_TEMP[::-1])
             self.__epoch_data[DataType.TEMP] = data_TEMP
         else:
             flag_t = 'TEM-' + sstr2 + '.grib'
@@ -154,7 +154,7 @@ class LoadFields:
             data_SHUM = []
             for i in range(len(fs['q'][0,:,0,0])):
                 data_SHUM.append(fs['q'].values[0,i].flatten())
-            data_SHUM = np.array(data_SHUM)
+            data_SHUM = np.array(data_SHUM[::-1])
             self.__epoch_data[DataType.SHUM] = data_SHUM
         else:
             flag_q = 'SHM-' + sstr2 + '.grib'
