@@ -56,7 +56,7 @@ Several demo programs are under the direction `./demo/` allow users to quickly b
 1. `demo_PM_mass_term()` in `./demo/earth_orientation/demoEOP.py` shows estimation of mass term of polar motion by SAGEA-fluid, taking the numerical models and calculation of AAM and OAM as an example.
 2. `demo_PM_motion_term()` in `./demo/earth_orientation/demoEOP.py` shows estimation of motion term of polar motion by SAGEA-fluid, taking the numerical models and calculation of AAM and OAM as an example.
 3. `demo_LOD_mass_term()` in `./demo/earth_orientation/demoEOP.py` shows estimation of mass term of length-of-day variation by SAGEA-fluid, taking   the GRACE GSM and calculation of HIAM and SLAM as an example.
-4. demo_LOD_motion_term() in `./demo/earth_orientation/demoEOP.py` shows estimation of motion term of length-of-day variation by SAGEA-fluid, taking the numerical models and calculation of AAM and OAM as an example.
+4. `demo_LOD_motion_term()` in `./demo/earth_orientation/demoEOP.py` shows estimation of motion term of length-of-day variation by SAGEA-fluid, taking the numerical models and calculation of AAM and OAM as an example.
 
 ## Reference
 
