@@ -289,9 +289,20 @@ class EOP:
         #     return PMConstant.grav * PMConstant.rho_water * (ssh_flatten[:, :] - multi_pres[:, lev, :])
         # else:
         #     return PMConstant.grav * PMConstant.rho_water * (multi_pres[:, lev - 1, :] - multi_pres[:, lev, :])
-    def __compute_dp_aam(self, lp, sp, lev):
+    def __compute_dp_aam(self, lp, sp, lev,geopotential=None):
         sp_flatten = sp.flatten()
         iso_pres = []
+        grav = PMConstant.grav
+        radius = PMConstant.radius*(np.ones(len(sp_flatten)))
+
+        geoheight = geopotential.reshape(len(geopotential), -1)
+        geoheight = geoheight/grav
+        iso_R = geoheight+radius
+        print(f"geopotential shape:{geopotential.shape}")
+
+
+
+
         for j in np.arange(len(lp)):
             pres_level = np.ones(len(sp_flatten)) * lp[j]
             if (lp[j] - sp_flatten <= 0).all():
@@ -300,21 +311,95 @@ class EOP:
             index = lp[j] - sp_flatten > 0
             pres_level[index] = sp_flatten[index]
             iso_pres.append(pres_level)
+            # iso_pres.append(pres_level)
 
+
+        iso_R = np.array(iso_R)
         iso_pres = np.array(iso_pres)
-        # level_number = len(iso_pres)
+        print(iso_R.shape,iso_pres.shape)
 
-        if lev == 0:
-            return sp_flatten - iso_pres[lev]
+        top_pres = np.zeros(len(sp_flatten))
+
+        if lev == len(lp)-1:
+            return (iso_pres[lev]-top_pres)*iso_R[lev]
         else:
-            return iso_pres[lev-1] - iso_pres[lev]
+            return (iso_pres[lev]-iso_pres[lev+1])*iso_R[lev]
 
-        # if lev == (level_number - 1):
-        #     return sp_flatten - iso_pres[lev]
+        # if lev == 0:
+        #     return (sp_flatten - iso_pres[lev])*iso_R[lev]
         # else:
-        #     return iso_pres[lev + 1] - iso_pres[lev]
+        #     return (iso_pres[lev-1] - iso_pres[lev])*iso_R[lev]
 
-    def PM_motion_term(self, u_speed, v_speed, lat, lon, layer, surf, type=EAMType.AAM, isMas=True):
+
+
+    # def PM_motion_term(self, u_speed, v_speed, lat, lon, layer, surf, type=EAMType.AAM, isMas=True):
+    #     """
+    #     :param u_speed: eastward along latitude (also known as zonal wind)
+    #     :param v_speed: northward along longitude (also known as meridional wind)
+    #     Notes: both u and v shape is (time,layer,lat,lon)
+    #     :param lat: the range is from 90--90
+    #     :param lon: the range is from 0-360
+    #     :param pressure: multi-layer pressure data, make sure the unit is Pa (not hPa)
+    #     :param isMas: False means results are rad, True means results are mas
+    #     :return:
+    #     """
+    #     rad_to_mas = 1
+    #     if isMas:
+    #         rad_to_mas = (180 / np.pi) * 3600 * 1000
+    #     R = PMConstant.radius
+    #     chi1_series,chi2_series = [],[]
+    #     for i in np.arange(len(u_speed)):
+    #         dp_g = []
+    #         if type == EAMType.AAM:
+    #             for lev in np.arange(len(layer)):
+    #                 temp_dp_g = self.__compute_dp_aam(lev=lev, lp=layer, sp=surf[i]) / PMConstant.grav
+    #                 dp_g.append(temp_dp_g)
+    #             dp_g = np.array(dp_g)
+    #             dp_g = dp_g.reshape(len(dp_g), len(lat), len(lon))
+    #         else:
+    #             for lev in np.arange(len(layer)):
+    #                 temp_dp_g = self.__compute_dp_oam(lev=lev, z_depth=layer, ssh=surf[i]) / PMConstant.grav
+    #                 dp_g.append(temp_dp_g)
+    #             dp_g = np.array(dp_g)
+    #             dp_g = dp_g.reshape(len(dp_g), len(lat), len(lon))
+    #
+    #         dU = u_speed[i] * dp_g
+    #         dV = v_speed[i] * dp_g
+    #
+    #         U, V = np.sum(dU, axis=0), np.sum(dV, axis=0)
+    #
+    #         phi = np.deg2rad(lat)
+    #         lam = np.deg2rad(lon)
+    #         dphi = np.abs(phi[1] - phi[0])
+    #         dlam = np.abs(lam[1] - lam[0])
+    #
+    #         phi_grid, lam_grid = np.meshgrid(phi, lam, indexing="ij")
+    #         cos_phi, sin_phi = np.cos(phi_grid), np.sin(phi_grid)
+    #         cos_lam, sin_lam = np.cos(lam_grid), np.sin(lam_grid)
+    #
+    #         dA = cos_phi * dlam * dphi
+    #
+    #         # L1 = (-U * sin_phi * cos_lam + V * sin_lam)
+    #         # L2 = (-U * sin_phi * sin_lam - V * cos_lam)
+    #         L1 = (U * sin_phi * cos_lam - V * sin_lam)
+    #         L2 = (U * sin_phi * sin_lam + V * cos_lam)
+    #
+    #         H1 = R * (PMConstant.radius ** 2) * np.sum(L1 * dA, axis=(0, 1))
+    #         H2 = R * (PMConstant.radius ** 2) * np.sum(L2 * dA, axis=(0, 1))
+    #
+    #         chi1 = H1 / self.factor_PM_motion
+    #         chi2 = H2 / self.factor_PM_motion
+    #
+    #         chi1 = chi1 * rad_to_mas
+    #         chi2 = chi2 * rad_to_mas
+    #         chi1_series.append(chi1)
+    #         chi2_series.append(chi2)
+    #
+    #     chi1_series,chi2_series = np.array(chi1_series),np.array(chi2_series)
+    #     chi = {"chi1": chi1_series, "chi2": chi2_series}
+    #     return chi
+
+    def PM_motion_term(self, u_speed, v_speed,lat, lon, layer, surf,geopotential=None, type=EAMType.AAM, isMas=True):
         """
         :param u_speed: eastward along latitude (also known as zonal wind)
         :param v_speed: northward along longitude (also known as meridional wind)
@@ -328,13 +413,16 @@ class EOP:
         rad_to_mas = 1
         if isMas:
             rad_to_mas = (180 / np.pi) * 3600 * 1000
-        R = PMConstant.radius
+        print(f"origin geopotential shape:{geopotential.shape}")
+
         chi1_series,chi2_series = [],[]
         for i in np.arange(len(u_speed)):
+            # print(f"{i} th u_speed:\n")
             dp_g = []
             if type == EAMType.AAM:
                 for lev in np.arange(len(layer)):
-                    temp_dp_g = self.__compute_dp_aam(lev=lev, lp=layer, sp=surf[i]) / PMConstant.grav
+                    # print(f"{lev} layer:{self.__compute_dp_aam(lev=lev, lp=layer, sp=surf[i])}")
+                    temp_dp_g = self.__compute_dp_aam(lev=lev, lp=layer, sp=surf[i],geopotential=geopotential[i]) / PMConstant.grav
                     dp_g.append(temp_dp_g)
                 dp_g = np.array(dp_g)
                 dp_g = dp_g.reshape(len(dp_g), len(lat), len(lon))
@@ -359,16 +447,21 @@ class EOP:
             cos_phi, sin_phi = np.cos(phi_grid), np.sin(phi_grid)
             cos_lam, sin_lam = np.cos(lam_grid), np.sin(lam_grid)
 
-            dA = cos_phi * dlam * dphi
+            dA = dlam * dphi
 
-            L1 = (-U * sin_phi * cos_lam + V * sin_lam)
-            L2 = (-U * sin_phi * sin_lam - V * cos_lam)
 
-            H1 = R * (PMConstant.radius ** 2) * np.sum(L1 * dA, axis=(0, 1))
-            H2 = R * (PMConstant.radius ** 2) * np.sum(L2 * dA, axis=(0, 1))
+            L1 = (U * sin_phi * cos_lam * cos_phi - V * sin_lam*cos_phi)
+            L2 = (U * sin_phi * sin_lam * cos_phi + V * cos_lam*cos_phi)
 
-            chi1 = H1 / self.factor_PM_motion
-            chi2 = H2 / self.factor_PM_motion
+            h1 = np.sum(L1*dA,axis=(0,1))
+            h2 = np.sum(L2*dA,axis=(0,1))
+
+            coef_down = PMConstant.omega*(PMConstant.Cm-PMConstant.Am)
+            coef_upper = -1.5913*(PMConstant.radius**2)
+
+            chi1 = h1*coef_upper/coef_down
+            chi2 = h2*coef_upper/coef_down
+
 
             chi1 = chi1 * rad_to_mas
             chi2 = chi2 * rad_to_mas
@@ -379,28 +472,27 @@ class EOP:
         chi = {"chi1": chi1_series, "chi2": chi2_series}
         return chi
 
-    def LOD_mass_term(self, SH, isMas=False):
+    def LOD_mass_term(self, SH, isMs=False):
         """
         :param SH: Different with PM EWH term, the type of LOD is Stokes coefficients.
         :param isMas: the same follow before.
         :return: chi3 with unit mas or rad, the unit of (Delta)LOD is seconds (s).
         """
-        rad_to_mas = 1
-        if isMas:
-            rad_to_mas = 180 * 3600 * 1000 / np.pi
+        rad_to_ms = 1
+        if isMs:
+            rad_to_ms = 1000
 
         C00 = SH[:, 0]
         C20 = SH[:, 6]
         chi3 = self.factor_LOD_mass * (C00 - np.sqrt(5) * C20)
-        delta_LOD = chi3 * PMConstant.LOD
-        chi3 = rad_to_mas * chi3
+        delta_LOD = chi3 * PMConstant.LOD* rad_to_ms
         LOD = {"chi3": chi3, "LOD": delta_LOD}
         return LOD
 
-    def LOD_mass_term_grid(self, Pressure, lat, lon, isMas=True):
-        rad_to_mas = 1
-        if isMas:
-            rad_to_mas = 180 * 3600 * 1000 / np.pi
+    def LOD_mass_term_grid(self, Pressure, lat, lon, isMs=True):
+        rad_to_ms = 1
+        if isMs:
+            rad_to_ms = 1000
 
         phi, lam = np.deg2rad(lat), np.deg2rad(lon)
         dphi, dlam = np.abs(phi[1] - phi[0]), np.abs(lam[1] - lam[2])
@@ -411,15 +503,14 @@ class EOP:
 
         kernal = Pressure * cos_phi * cos_phi * dA
         chi3 = np.sum(self.factor_LOD_mass_grid * kernal, axis=(1, 2))
-        delta_LOD = chi3 * PMConstant.LOD
-        chi3 = chi3 * rad_to_mas
+        delta_LOD = chi3 * PMConstant.LOD* rad_to_ms
         LOD = {"chi3": chi3, "LOD": delta_LOD}
         return LOD
 
-    def LOD_motion_term(self, u_speed, lat, lon, layer, surf, type=EAMType.AAM, isMas=True):
-        rad_to_mas = 1
-        if isMas:
-            rad_to_mas = 180 * 3600 * 1000 / np.pi
+    def LOD_motion_term(self, u_speed, lat, lon, layer, surf, type=EAMType.AAM, isMs=True):
+        rad_to_ms = 1
+        if isMs:
+            rad_to_ms = 1000
 
         R = PMConstant.radius
         chi3_series,LOD_series = [],[]
@@ -452,14 +543,16 @@ class EOP:
 
             h3 = (PMConstant.radius ** 3) * np.sum(U * dA, axis=(0, 1))
             chi3 = self.factor_LOD_motion * h3
-            delta_LOD = chi3 * PMConstant.LOD
-            chi3 = rad_to_mas * chi3
+            delta_LOD = chi3 * PMConstant.LOD*rad_to_ms
             chi3_series.append(chi3)
             LOD_series.append(delta_LOD)
         chi3_series,LOD_series = np.array(chi3_series),np.array(LOD_series)
         LOD = {"chi3": chi3_series, "LOD": LOD_series}
         return LOD
 
+class EOP_Massive:
+    def __init__(self):
+        pass
 
 
 class GRACE_Exciatation:
