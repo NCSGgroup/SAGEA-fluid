@@ -194,8 +194,8 @@ def demo_LOD_mass_term():
     GSM_Stokes = GSM_SH.convert_type(from_type=Enums.PhysicalDimensions.EWH,to_type=Enums.PhysicalDimensions.Dimensionless)
 
 
-    HIAM_LOD_GRACE = EOP().LOD_mass_term(SH=GSM_Stokes.value,isMas=False)
-    SLAM_LOD = EOP().LOD_mass_term(SH=RSL_SH.value,isMas=False)
+    HIAM_LOD_GRACE = EOP().LOD_mass_term(SH=GSM_Stokes.value,isMs=False)
+    SLAM_LOD = EOP().LOD_mass_term(SH=RSL_SH.value,isMs=False)
 
     print(f"==============Mass term of Polar motion==============\n\n"
           f"HIAM chi3 (mas):\n{HIAM_LOD_GRACE['chi3']}\n"
@@ -243,12 +243,12 @@ def demo_LOD_motion_term():
     u_mean = np.mean(ATM_U)
     ATM_U = ATM_U - u_mean
     AAM_motion_term = EOP().LOD_motion_term(u_speed=ATM_U, surf=ATM_SP, layer=pressure,
-                                        lat=atm_lat, lon=atm_lon, type=EAMType.AAM, isMas=False)
+                                        lat=atm_lat, lon=atm_lon, type=EAMType.AAM, isMs=False)
     OCN_U, OCN_SSH = np.array(OCN_U), np.array(OCN_SSH)
     ocn_u_mean= np.mean(OCN_U, axis=0)
     OCN_U= OCN_U - ocn_u_mean
     OAM_motion_term = EOP().LOD_motion_term(u_speed=OCN_U, lat=ocn_lat, lon=ocn_lon,
-                                            type=EAMType.OAM, layer=z_length, surf=OCN_SSH, isMas=False)
+                                            type=EAMType.OAM, layer=z_length, surf=OCN_SSH, isMs=False)
 
     print(f"==============Motion term of Polar motion==============\n\n"
           f"AAM chi3 (mas):\n{AAM_motion_term['chi3']}\n"
