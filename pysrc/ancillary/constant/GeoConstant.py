@@ -1,3 +1,4 @@
+import numpy as np
 
 
 class SLEConstant:
@@ -21,8 +22,7 @@ class GCMConstant:
     # Cm = 8.01736e37  #(3,3) component mantle tensor of inertia, unit is (kg m^2)
     # Am = 8.01014e37  #(1,1) component mantle tensor of inertia, unit is (kg m^2)
 
-
-class PMConstant:
+class EOPConstant:
     # radius = 6371000 # Earth mean radius, unit is m
     radius = 6378136.3
     rho_water = 1025.0  #water density, unit is (kg/m^3)
@@ -41,6 +41,14 @@ class PMConstant:
     # Cm = 8.01736e37  #(3,3) component mantle tensor of inertia, unit is (kg m^2)
     # Am = 8.01014e37  #(1,1) component mantle tensor of inertia, unit is (kg m^2)
     LOD = 86400 # 24h=1440min=86400s
+    rad_to_ms = 86400*1000
+
+    PM_motion_coef = -1.5913
+    PM_mass_coef = -1.098
+    LOD_mass_coef = 0.753
+    LOD_motion_coef = 0.998
+
+    rad_to_mas = 180 * 3600 * 1000 / np.pi
 
 class ADConstant:
     """gas constant for dry air"""
