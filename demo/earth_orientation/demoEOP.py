@@ -15,7 +15,7 @@ import SaGEA.auxiliary.preference.EnumClasses as Enums
 from pysrc.aliasing_model.specify.IBcorrection import IBcorrection
 from pysrc.ancillary.load_file.DataClass import GRID, SHC
 from pysrc.earth_rotation.EarthOrientaition import EOP
-from pysrc.ancillary.constant.Setting import EAMType
+from pysrc.ancillary.constant.Setting import EAMtype
 from tqdm import tqdm
 
 from pysrc.sealevel_equation.SeaLevelEquation import PseudoSpectralSLE
@@ -48,13 +48,13 @@ def demo_PM_mass_term():
 
         har = Harmonic(lat=atmos_lat,lon=atmos_lon,lmax=lmax,option=1)
         C,S = har.analysis(gqij=asp_ib)
-        sh_asp = SHC(c=C,s=S).convert_type(from_type=Enums.PhysicalDimensions.Pressure,to_type=Enums.PhysicalDimensions.EWH)
+        sh_asp = SHC(c=C,s=S).convert_type(from_type=Enums.PhysicalDimensions.Pressure,to_type=Enums.PhysicalDimensions.Dimensionless)
         ASP_SH.append(sh_asp.value[0])
 
     ASP_SH = np.array(ASP_SH)
     ASP_SH = SHC(c=ASP_SH)
     ASP_SH.de_background()
-    AAM_ERA5 = EOP().PM_mass_term(SH=ASP_SH.value,isMas=False)
+    AAM_ERA5 = EOP().PM_mass_term_SH(SH=ASP_SH.value,isMas=True)
 
 
     OBP_SH_N = np.array(OBP_SH)
@@ -62,7 +62,7 @@ def demo_PM_mass_term():
     OBP_SH_N.de_background()
     OBP_SH = OBP_SH_N.value
     OBP_SH[:,0] = 0
-    OAM_ECCO = EOP().PM_mass_term(SH=OBP_SH,isMas=False)
+    OAM_ECCO = EOP().PM_mass_term_EWHSH(EWH_SH=OBP_SH,isMas=True)
 
     print(f"==============Mass term of Polar motion==============\n\n"
           f"AAM chi1 (mas):\n{AAM_ERA5['chi1']}\n"
@@ -119,14 +119,14 @@ def demo_PM_motion_term():
     ATM_U,ATM_V,ATM_SP = np.array(ATM_U),np.array(ATM_V),np.array(ATM_SP)
     atm_u_mean,atm_v_mean = np.mean(ATM_U,axis=0),np.mean(ATM_V,axis=0)
     ATM_U,ATM_V = ATM_U-atm_u_mean,ATM_V-atm_v_mean
-    AAM_motion_term = EOP().PM_motion_term(u_speed=ATM_U,v_speed=ATM_V,layer=pressure,surf=ATM_SP,
-                                           lat=atm_lat,lon=atm_lon,type=EAMType.AAM,isMas=False)
+    AAM_motion_term = EOP().PM_motion_term(Us=ATM_U,Vs=ATM_V,levPres=pressure,Ps=ATM_SP,
+                                           lat=atm_lat,lon=atm_lon,type=EAMtype.AAM,isMas=True)
 
     OCN_U, OCN_V, OCN_SSH = np.array(OCN_U), np.array(OCN_V), np.array(OCN_SSH)
     ocn_u_mean, ocn_v_mean = np.mean(OCN_U, axis=0), np.mean(OCN_V, axis=0)
     OCN_U, OCN_V = OCN_U - ocn_u_mean, OCN_V - ocn_v_mean
-    OAM_motion_term = EOP().PM_motion_term(u_speed=OCN_U, v_speed=OCN_V, lat=ocn_lat, lon=ocn_lon,
-                                           type=EAMType.OAM, layer=z_length, surf=OCN_SSH, isMas=False)
+    OAM_motion_term = EOP().PM_motion_term(Us=OCN_U, Vs=OCN_V, lat=ocn_lat, lon=ocn_lon,
+                                           type=EAMtype.OAM, levPres=z_length, Ps=OCN_SSH, isMas=True)
 
     print(f"==============Motion term of Polar motion==============\n"
           f"AAM chi1 (mas):\n{AAM_motion_term['chi1']}\n"
@@ -194,18 +194,18 @@ def demo_LOD_mass_term():
     GSM_Stokes = GSM_SH.convert_type(from_type=Enums.PhysicalDimensions.EWH,to_type=Enums.PhysicalDimensions.Dimensionless)
 
 
-    HIAM_LOD_GRACE = EOP().LOD_mass_term(SH=GSM_Stokes.value,isMs=False)
-    SLAM_LOD = EOP().LOD_mass_term(SH=RSL_SH.value,isMs=False)
+    HIAM_LOD_GRACE = EOP().LOD_mass_term_SH(SH=GSM_Stokes.value,isMs=True)
+    SLAM_LOD = EOP().LOD_mass_term_SH(SH=RSL_SH.value,isMs=True)
 
     print(f"==============Mass term of Polar motion==============\n\n"
-          f"HIAM chi3 (mas):\n{HIAM_LOD_GRACE['chi3']}\n"
-          f"SLAM chi3 (mas):\n{SLAM_LOD['chi3']}\n")
+          f"HIAM chi3 (ms):\n{HIAM_LOD_GRACE['chi3']}\n"
+          f"SLAM chi3 (ms):\n{SLAM_LOD['chi3']}\n")
 
     save_path = '../../result/EOP/'
     os.makedirs(os.path.dirname(save_path), exist_ok=True)
 
-    np.savez(f"{save_path}/LOD_HIAM_mass_term.npz", chi3=HIAM_LOD_GRACE['chi3'], LOD=HIAM_LOD_GRACE['LOD'])
-    np.savez(f"{save_path}/LOD_SLAM_mass_term.npz", chi3=SLAM_LOD['chi3'], LOD=SLAM_LOD['LOD'])
+    np.savez(f"{save_path}/LOD_HIAM_mass_term.npz", chi3=HIAM_LOD_GRACE['chi3'])
+    np.savez(f"{save_path}/LOD_SLAM_mass_term.npz", chi3=SLAM_LOD['chi3'])
 
 def demo_LOD_motion_term():
     """this demo shows estimation of motion term of length of day by SAGEA-fluid,
@@ -242,24 +242,24 @@ def demo_LOD_motion_term():
     ATM_U, ATM_SP = np.array(ATM_U), np.array(ATM_SP)
     u_mean = np.mean(ATM_U)
     ATM_U = ATM_U - u_mean
-    AAM_motion_term = EOP().LOD_motion_term(u_speed=ATM_U, surf=ATM_SP, layer=pressure,
-                                        lat=atm_lat, lon=atm_lon, type=EAMType.AAM, isMs=False)
+    AAM_motion_term = EOP().LOD_motion_term(Us=ATM_U, Ps=ATM_SP, levPres=pressure,
+                                            lat=atm_lat, lon=atm_lon, type=EAMtype.AAM, isMs=True)
     OCN_U, OCN_SSH = np.array(OCN_U), np.array(OCN_SSH)
     ocn_u_mean= np.mean(OCN_U, axis=0)
     OCN_U= OCN_U - ocn_u_mean
-    OAM_motion_term = EOP().LOD_motion_term(u_speed=OCN_U, lat=ocn_lat, lon=ocn_lon,
-                                            type=EAMType.OAM, layer=z_length, surf=OCN_SSH, isMs=False)
+    OAM_motion_term = EOP().LOD_motion_term(Us=OCN_U, lat=ocn_lat, lon=ocn_lon,
+                                            type=EAMtype.OAM, levPres=z_length, Ps=OCN_SSH, isMs=True)
 
     print(f"==============Motion term of Polar motion==============\n\n"
-          f"AAM chi3 (mas):\n{AAM_motion_term['chi3']}\n"
-          f"OAM chi3 (mas):\n{OAM_motion_term['chi3']}\n")
+          f"AAM chi3 (ms):\n{AAM_motion_term['chi3']}\n"
+          f"OAM chi3 (ms):\n{OAM_motion_term['chi3']}\n")
 
 
     save_path = '../../result/EOP/'
     os.makedirs(os.path.dirname(save_path), exist_ok=True)
 
-    np.savez(f"{save_path}/LOD_AAM_motion_term.npz", chi3=AAM_motion_term['chi3'], LOD=AAM_motion_term['LOD'])
-    np.savez(f"{save_path}/LOD_OAM_motion_term.npz", chi3=OAM_motion_term['chi3'], LOD=OAM_motion_term['LOD'])
+    np.savez(f"{save_path}/LOD_AAM_motion_term.npz", chi3=AAM_motion_term['chi3'])
+    np.savez(f"{save_path}/LOD_OAM_motion_term.npz", chi3=OAM_motion_term['chi3'])
 
 
 

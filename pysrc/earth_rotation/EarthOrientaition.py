@@ -10,7 +10,7 @@ from SaGEA.auxiliary.load_file.LoadL2SH import load_SHC
 from pysrc.sealevel_equation.SeaLevelEquation import PseudoSpectralSLE
 from pysrc.ancillary.geotools.LLN import LoveNumber
 from pysrc.ancillary.constant.Setting import EAMtype
-
+from tqdm import tqdm
 class EOP:
     def __init__(self):
         self.rad_to_mas = EOPConstant.rad_to_mas
@@ -86,7 +86,7 @@ class EOP:
         :return:
         """
         chi1_series, chi2_series = [], []
-        for i in np.arange(len(Us)):
+        for i in tqdm(np.arange(len(Us))):
             dp_g = []
             if type == EAMtype.AAM:
                 for lev in np.arange(len(levPres)):
@@ -195,7 +195,7 @@ class EOP:
         coef_denominator = EOPConstant.Cm*EOPConstant.omega
 
         chi3_series = []
-        for i in np.arange(len(Us)):
+        for i in tqdm(np.arange(len(Us))):
             dp_g = []
             if type == EAMtype.AAM:
                 for lev in np.arange(len(levPres)):
@@ -235,7 +235,7 @@ class EOP:
             cos_phi = np.cos(phi_grid)
             dA = cos_phi * dphi * dlam
 
-            h3 = (EOPConstant.radius ** 2) * np.sum(U * dA*cos_phi, axis=(0, 1))
+            h3 = np.sum(U * dA*cos_phi, axis=(0, 1))
             chi3 = (coef_numerator/coef_denominator)* h3
             if isMs:
                 chi3 = chi3*self.rad_to_ms
