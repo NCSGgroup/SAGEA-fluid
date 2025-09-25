@@ -198,11 +198,10 @@ class PolarMotion:
             iso_pres = np.array(iso_pres)
             top_pres = np.zeros(len(sample_arr))
 
-
-            if lev == len(levDepth) - 1:
-                return (iso_pres[lev] - top_pres) * iso_R[lev]
+            if lev == 0:
+                return (top_pres - iso_pres[lev]) * iso_R[lev]
             else:
-                return (iso_pres[lev] - iso_pres[lev + 1]) * iso_R[lev]
+                return (iso_pres[lev - 1] - iso_pres[lev]) * iso_R[lev]
 
         else:
             ssh_flatten = surSeaHeight.flatten()
