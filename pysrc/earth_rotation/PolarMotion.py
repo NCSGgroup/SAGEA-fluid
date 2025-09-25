@@ -1,118 +1,235 @@
 import numpy as np
 from SaGEA.auxiliary.aux_tool.MathTool import MathTool
+from pysrc.ancillary.constant.Setting import EAMtype
 from pysrc.ancillary.load_file.DataClass import SHC,GRID
 import SaGEA.auxiliary.preference.EnumClasses as Enums
 from pysrc.sealevel_equation.SeaLevelEquation import PseudoSpectralSLE
 # from SaGEA.auxiliary.preference.Constants import PMConstant
-from pysrc.ancillary.constant.GeoConstant import PMConstant
+from pysrc.ancillary.constant.GeoConstant import EOPConstant
 from SaGEA.auxiliary.aux_tool.FileTool import FileTool
 from SaGEA.auxiliary.load_file.LoadL2SH import load_SHC
 from pysrc.ancillary.geotools.LLN import LoveNumber
 import time
 
-def mass_term(C21,S21,isMas=False):
-    """
-    :param C21: EWH Stoke coefficient
-    :param S21: EWH Stoke coefficient
-    :return: unit is mas (1 mas = 3 cm)
-    """
-    # unit_scale = 1
-    rad_to_mas = 1
-    if isMas:
-        rad_to_mas = 180 * 3600 * 1000 / np.pi
-    C = PMConstant.Cm
-    A = PMConstant.Am
-    factor = -4*np.pi*(PMConstant.radius**4)*PMConstant.rho_water/(np.sqrt(15))
-    I13 = factor*C21
-    I23 = factor*S21
-    chi1 = rad_to_mas*I13/(C-A)
-    chi2 = rad_to_mas*I23/(C-A)
-    chi = {"chi1":chi1,"chi2":chi2}
-    return chi
-def motion_term(u,v,lat,lon,dp,isMas=False):
-    radius = PMConstant.radius
-    grav = PMConstant.grav
-    Omega = PMConstant.omega
-    k2,ks = PMConstant.k2,PMConstant.ks
-    Cm,Am = PMConstant.Cm,PMConstant.Am
 
-    rad_to_mas = 1
-    if isMas:
-        rad_to_mas = (180 / np.pi) * 3600 * 1000
-    # the colat is based on range of lat is from 90 to -90
-    
+class PolarMotion:
+    def __init__(self):
+        self.rad_to_mas = EOPConstant.rad_to_mas
+
+    def Mass_term(self,Ps,lat,lon,isMas=True):
+        phi, lam = np.deg2rad(lat), np.deg2rad(lon)
+        dphi, dlam = np.abs(phi[1] - phi[0]), np.abs(lam[1] - lam[0])
+        phi_2D, lam_2D = np.meshgrid(phi, lam, indexing='ij')
+
+        sin_phi, cos_phi = np.sin(phi_2D), np.cos(phi_2D)
+        sin_lam, cos_lam = np.sin(lam_2D), np.cos(lam_2D)
+
+        dA = (EOPConstant.radius ** 2) * cos_phi * dphi * dlam
+
+        dI13 = Ps * sin_phi * cos_phi * cos_lam * dA
+        dI23 = Ps * sin_phi * cos_phi * sin_lam * dA
+
+        I13 = np.sum(dI13, axis=(1, 2))
+        I23 = np.sum(dI23, axis=(1, 2))
+
+        coef = (-1.098 * (EOPConstant.radius ** 2)) / ((EOPConstant.Cm - EOPConstant.Am) * EOPConstant.grav)
+
+        chi1 = coef * I13
+        chi2 = coef * I23
+        if isMas:
+            chi1 = chi1*self.rad_to_mas
+            chi2 = chi2*self.rad_to_mas
+
+        PM = {"chi1": chi1, "chi2": chi2}
+        return PM
+
+    def Mass_term_SH(self,SH,isMas=False):
+        coef_numerator = -1.098*np.sqrt(5)*(EOPConstant.radius**2)*EOPConstant.Mass
+        coef_denominator = np.sqrt(3)*(1+EOPConstant.k2_load)*(EOPConstant.Cm-EOPConstant.Am)
+
+        chi1 = SH[:,7]*(coef_numerator/coef_denominator)
+        chi2 = SH[:,5]*(coef_numerator/coef_denominator)
+        if isMas:
+            chi1 = chi1*self.rad_to_mas
+            chi2 = chi2*self.rad_to_mas
+        chi = {"chi1": chi1, "chi2": chi2}
+        return chi
+
+    def Mass_term_EWHSH(self,EWH_SH,isMas=True):
+
+        coef = (-4*np.pi*(EOPConstant.radius**4)*EOPConstant.rho_water)/(np.sqrt(15))
+
+        I13 = coef * EWH_SH[:, 7]
+        I23 = coef * EWH_SH[:, 5]
+
+        chi1 = (-1.098*I13) / (EOPConstant.Cm - EOPConstant.Am)
+        chi2 = (-1.098*I23) / (EOPConstant.Cm - EOPConstant.Am)
+        if isMas:
+            chi1 = chi1*self.rad_to_mas
+            chi2 = chi2*self.rad_to_mas
+        chi = {"chi1": chi1, "chi2": chi2}
+        return chi
+
+    def Motion_term(self,Us,Vs,levPres,lat,lon,Ps=None,Zth=None,type=EAMtype.AAM,isMas=False):
+        chi1_series,chi2_series = [],[]
+        for i in np.arange(len(Us)):
+            dp_g = []
+            if type == EAMtype.AAM:
+                for lev in np.arange(len(levPres)):
+                    if Zth is None:
+                        if Ps is None:
+                            temp_dp_g = self.__dp_AAM(levPres=levPres,lev=lev,lat=lat,lon=lon)/EOPConstant.grav
+                        else:
+                            temp_dp_g = self.__dp_AAM(levPres=levPres,lev=lev,lat=lat,lon=lon,surPres=Ps[i])/EOPConstant.grav
+                    else:
+                        if Ps is None:
+                            temp_dp_g = self.__dp_AAM(levPres=levPres, lev=lev, lat=lat, lon=lon,geoHeight=Zth[i]) / EOPConstant.grav
+                        else:
+                            temp_dp_g = self.__dp_AAM(levPres=levPres, lev=lev, lat=lat, lon=lon,geoHeight=Zth[i],surPres=Ps[i]) / EOPConstant.grav
+                    temp_dp_g = temp_dp_g.reshape((len(lat),len(lon)))
+                    dp_g.append(temp_dp_g)
+            else:
+                for lev in np.arange(len(levPres)):
+                    if Ps is None:
+                        temp_dp_g = self.__dp_OAM(levDepth=levPres,lev=lev,lat=lat,lon=lon)/EOPConstant.grav
+                    else:
+                        temp_dp_g = self.__dp_OAM(levDepth=levPres,lev=lev,lat=lat,lon=lon,surSeaHeight=Ps[i])/EOPConstant.grav
+                    temp_dp_g = temp_dp_g.reshape((len(lat), len(lon)))
+                    dp_g.append(temp_dp_g)
+            dp_g = np.array(dp_g)
+
+            dU = Us[i]*dp_g
+            dV = Vs[i]*dp_g
+
+            U,V = np.sum(dU,axis=0),np.sum(dV,axis=0)
+
+            phi, lam = np.deg2rad(lat),np.deg2rad(lon)
+            dphi, dlam = np.abs(phi[1]-phi[0]),np.abs(lam[1]-lam[0])
+
+            phi_grid, lam_grid = np.meshgrid(phi, lam, indexing="ij")
+            cos_phi, sin_phi = np.cos(phi_grid), np.sin(phi_grid)
+            cos_lam, sin_lam = np.cos(lam_grid), np.sin(lam_grid)
+
+            dA = dlam * dphi
+
+            L1 = (U * sin_phi * cos_lam * cos_phi - V * sin_lam * cos_phi)
+            L2 = (U * sin_phi * sin_lam * cos_phi + V * cos_lam * cos_phi)
+
+            h1 = np.sum(L1 * dA, axis=(0, 1))
+            h2 = np.sum(L2 * dA, axis=(0, 1))
+
+            coef_numerator = -1.5913*(EOPConstant.radius**2)
+            coef_denominator = EOPConstant.omega*(EOPConstant.Cm-EOPConstant.Am)
+
+            chi1 = (coef_numerator/coef_denominator)*h1
+            chi2 = (coef_numerator/coef_denominator)*h2
+
+            if isMas:
+                chi1 = chi1*self.rad_to_mas
+                chi2 = chi2*self.rad_to_mas
+
+            chi1_series.append(chi1)
+            chi2_series.append(chi2)
+        chi1_series,chi2_series = np.array(chi1_series),np.array(chi2_series)
+
+        chi = {"chi1":chi1_series,"chi2":chi2_series}
+        return chi
 
 
-    pass
-def AAM_motion_term(u,v,lat,lon,pl,isMas=False):
-    """
-    :param u: latitude velocity (also known as zonal velocity)
-    :param v: longitude velocity. Notes: both u and v shape is (time,layer,lat,lon)
-    :param lat: the range is from 90--90
-    :param lon: the range is from 0-360
-    :param pl: pl means the pressure of every layer
-    :param isMas: False means results are rad, True means results are mas
-    :return:
-    """
-    radius = PMConstant.radius
-    grav = PMConstant.grav
-    Omega = PMConstant.omega
-    k2,ks = PMConstant.k2,PMConstant.ks
-    Cm,Am = PMConstant.Cm,PMConstant.Am
-    rad_to_mas = 1
-    if isMas:
-        rad_to_mas = (180 / np.pi) * 3600 * 1000
+    def __dp_AAM(self, levPres, lev,lat,lon, surPres=None, geoHeight=None):
+        sampe_arr = np.ones((len(lat), len(lon))).flatten()
+        iso_pres = []
+        Radius, grav = EOPConstant.radius, EOPConstant.grav
 
-    dp = np.zeros_like(pl)
-    dp[0] = pl[0]-(pl[0]+pl[1])/2
-    for k in np.arange(1,len(pl)-1):
-        dp[k] = (pl[k-1]-pl[k+1])/2
-    dp[-1] = (pl[-2]+pl[-1])/2- pl[-1]
+        if geoHeight is None:
+            iso_R = np.ones((len(levPres), len(sampe_arr))) * Radius
 
-    phi = np.deg2rad(lat)
-    lam = np.deg2rad(lon)
-    dphi = np.abs(phi[1]-phi[0])
-    dlam = np.abs(lam[1]-lam[0])
+        else:
+            R_sets = Radius * sampe_arr
+            geo_height = geoHeight.reshape(len(geoHeight), -1) / grav
+            iso_R = geo_height + R_sets
 
-    phi_grid, lam_grid = np.meshgrid(phi, lam, indexing="ij")
+        if surPres is None:
+            for i in np.arange(len(levPres)):
+                pres_level = levPres[i] * sampe_arr
+                iso_pres.append(pres_level)
 
-    cos_phi = np.cos(phi_grid)
+            iso_R = np.array(iso_R)
+            iso_pres = np.array(iso_pres)
+            top_pres = np.zeros(len(sampe_arr))
 
-    sin_lam = np.sin(lam)
-    cos_lam = np.cos(lam)
+            if lev == len(levPres) - 1:
+                return (iso_pres[lev] - top_pres) * iso_R[lev]
+            else:
+                return (iso_pres[lev] - iso_pres[lev + 1]) * iso_R[lev]
 
-    dA = cos_phi*dlam*dphi
+        else:
+            sp_flatten = surPres.flatten()
+            for i in np.arange(len(levPres)):
+                pres_level = levPres[i] * sampe_arr
+                if (levPres[i] - sp_flatten <= 0).all():
+                    iso_pres.append(pres_level)
+                    continue
+                index = levPres[i] - sp_flatten > 0
+                pres_level[index] = sp_flatten[index]
+                iso_pres.append(pres_level)
+            iso_R = np.array(iso_R)
+            iso_pres = np.array(iso_pres)
+
+            if lev == 0:
+                return (sp_flatten - iso_pres[lev]) * iso_R[lev]
+            else:
+                return (iso_pres[lev - 1] - iso_pres[lev]) * iso_R[lev]
+
+    def __dp_OAM(self,levDepth,lev,lat,lon,surSeaHeight=None):
+        sample_arr = np.ones((len(lat),len(lon))).flatten()
+        iso_pres,iso_R = [],[]
+        Radius = EOPConstant.radius
+
+        if surSeaHeight is None:
+            for i in np.arange(len(levDepth)):
+                depth_level = levDepth[i] * sample_arr
+                pres_level = EOPConstant.grav*EOPConstant.rho_water*depth_level
+                radius_level = sample_arr * Radius + depth_level
+                iso_R.append(radius_level)
+                iso_pres.append(pres_level)
+
+            iso_R = np.array(iso_R)
+            iso_pres = np.array(iso_pres)
+            top_pres = np.zeros(len(sample_arr))
 
 
-    u_sin_lam = u*sin_lam
-    u_cos_lam = u*cos_lam
+            if lev == len(levDepth) - 1:
+                return (iso_pres[lev] - top_pres) * iso_R[lev]
+            else:
+                return (iso_pres[lev] - iso_pres[lev + 1]) * iso_R[lev]
 
-    v_sin_lam = v*sin_lam
-    v_cos_lam = v*cos_lam
+        else:
+            ssh_flatten = surSeaHeight.flatten()
+            for i in np.arange(len(levDepth)):
+                depth_level = sample_arr*levDepth[i]
+                radius_level = sample_arr * Radius + depth_level
+                iso_R.append(radius_level)
+                if (depth_level[i]-ssh_flatten<=0).all():
+                    pres_level = EOPConstant.grav*EOPConstant.rho_water*depth_level
+                    iso_pres.append(pres_level)
+                    continue
+                index = depth_level[i]-ssh_flatten>0
+                depth_level[index] = ssh_flatten[index]
+                pres_level = EOPConstant.grav*EOPConstant.rho_water*depth_level
+                iso_pres.append(pres_level)
+            iso_pres = np.array(iso_pres)
+            iso_R = np.array(iso_R)
 
-    dp_g = (dp/grav)[np.newaxis,:,np.newaxis,np.newaxis]
-    cos_phi_4d = cos_phi[None,None,:,:]
+            if lev == 0:
+                return (ssh_flatten - iso_pres[lev]) * iso_R[lev]
+            else:
+                return (iso_pres[lev - 1] - iso_pres[lev]) * iso_R[lev]
 
-    dL1 = (u_sin_lam+v_cos_lam)*cos_phi_4d*dp_g
-    dL2 = (u_cos_lam-v_sin_lam)*cos_phi_4d*dp_g
 
-    L1_vert = np.sum(dL1,axis=1)
-    L2_vert = np.sum(dL2,axis=1)
-
-    H1 = (radius**3)*np.sum(L1_vert*dA[None,:,:],axis=(1,2))
-    H2 = (radius**3)*np.sum(L2_vert*dA[None,:,:],axis=(1,2))
-
-    factors = (Cm-Am)*Omega*(1-k2/ks)
-    chi1 = H1/factors
-    chi2 = H2/factors
-
-    chi1 = chi1*rad_to_mas
-    chi2 = chi2*rad_to_mas
-    chi = {"chi1":chi1,"chi2":chi2}
-    return chi
 def Convert_Mass_to_Coordinates(C10, C11, S11):
     k1 = 0.021
-    rho_earth = PMConstant.rho_earth
+    rho_earth = EOPConstant.rho_earth
     X = np.sqrt(3) * (1 + k1) * C11 / rho_earth
     Y = np.sqrt(3) * (1 + k1) * S11 / rho_earth
     Z = np.sqrt(3) * (1 + k1) * C10 / rho_earth
@@ -120,13 +237,13 @@ def Convert_Mass_to_Coordinates(C10, C11, S11):
     return Coordinate
 
 def Convert_Stokes_to_Coordinates(C10, C11, S11):
-    X = np.sqrt(3) * PMConstant.radius * C11
-    Y = np.sqrt(3) * PMConstant.radius * S11
-    Z = np.sqrt(3) * PMConstant.radius * C10
+    X = np.sqrt(3) * EOPConstant.radius * C11
+    Y = np.sqrt(3) * EOPConstant.radius * S11
+    Z = np.sqrt(3) * EOPConstant.radius * C10
     Coordinate = {"X": X, "Y": Y, "Z": Z}
     return Coordinate
 
-class PolarMotion:
+class GRACE_PM:
     def __init__(self,GRACE,OceanSH,GAD,lmax):
         """
         :param GRACE: GRACE here is the SH of mass coefficients;
@@ -326,16 +443,16 @@ class PolarMotion:
         lln.convert(target=self.frame)
         k = lln.LLN[Enums.LLN_variable.k]
 
-        factor = 1.021/(PMConstant.rho_earth*PMConstant.radius)
-        factor2 = (3+3*k[2])/(5*PMConstant.rho_earth*PMConstant.radius)
+        factor = 1.021/(EOPConstant.rho_earth*EOPConstant.radius)
+        factor2 = (3+3*k[2])/(5*EOPConstant.rho_earth*EOPConstant.radius)
         # factor3 = (3+3*k[3])/(7*EarthConstant.rhoear*EarthConstant.radiusm)
 
         print(f"Love numbers degree-1:{k[1]},degre-2:{k[2]},degree-3:{k[3]}")
         Mass_Coef = {"C10":C[:,0],"C11":C[:,1],"S11":C[:,2],"C20":C[:,3],"C21":C[:,4],"S21":C[:,5]}
         Stokes_Coef = {"C10":C[:,0]*factor,"C11":C[:,1]*factor,"S11":C[:,2]*factor,
                        "C20":C[:,3]*factor2,"C21":C[:,4]*factor2,"S21":C[:,5]*factor2}
-        EWH_Coef = {"C10":C[:,0]/PMConstant.rho_water,"C11":C[:,1]/PMConstant.rho_water,"S11":C[:,2]/PMConstant.rho_water,
-                    "C20":C[:,3]/PMConstant.rho_water,"C21":C[:,4]/PMConstant.rho_water,"S21":C[:,5]/PMConstant.rho_water}
+        EWH_Coef = {"C10":C[:,0]/EOPConstant.rho_water,"C11":C[:,1]/EOPConstant.rho_water,"S11":C[:,2]/EOPConstant.rho_water,
+                    "C20":C[:,3]/EOPConstant.rho_water,"C21":C[:,4]/EOPConstant.rho_water,"S21":C[:,5]/EOPConstant.rho_water}
 
         SH = {"Mass":Mass_Coef,"Stokes":Stokes_Coef,"EWH":EWH_Coef}
         end_time = time.time()
