@@ -10,7 +10,11 @@
 from enum import Enum
 
 
-class EAMType(Enum):
+class EOPtype(Enum):
+    Mass = 0
+    Motion = 1
+
+class EAMtype(Enum):
     AAM = 1
     OAM = 2
     HAM = 3
