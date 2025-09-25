@@ -56,7 +56,7 @@ class EOP:
         return chi
 
     def PM_mass_term_EWHSH(self,EWH_SH,isMas=False):
-        coef = (-4 * np.pi * (EOPConstant.radius ** 4) * EOPConstant.rho_water) / (np.sqrt(15))
+        coef = (4 * np.pi * (EOPConstant.radius ** 4) * EOPConstant.rho_water) / (np.sqrt(15))
 
         I13 = coef * EWH_SH[:, 7]
         I23 = coef * EWH_SH[:, 5]
