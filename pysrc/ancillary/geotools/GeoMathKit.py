@@ -85,3 +85,5 @@ class GeoMathKit:
         else:
             coeffs = np.einsum('ij,jk->ik',inv_matrix,y,optimize=True)
         return coeffs
+
+
