@@ -1,40 +1,63 @@
 import numpy as np
 import pandas as pd
-
-
 from pysrc.ancillary.constant.GeoConstant import EOPConstant
+from pysrc.ancillary.constant.Setting import EAMtype
 import time
-import SaGEA.auxiliary.preference.EnumClasses as Enums
-from SaGEA.auxiliary.aux_tool.FileTool import FileTool
-from pysrc.ancillary.load_file.DataClass import SHC,GRID
-from SaGEA.auxiliary.aux_tool.MathTool import MathTool
-from SaGEA.auxiliary.load_file.LoadL2SH import load_SHC
-from pysrc.sealevel_equation.SeaLevelEquation import PseudoSpectralSLE
-from pysrc.ancillary.geotools.LLN import LoveNumber
-from pysrc.ancillary.constant.Setting import EAMtype,EOPtype
-
-
-
-
 class EOP_Massive:
-    def __init__(self):
-        # self.temp_path = FileTool.get_project_dir("result/EOP/temp/")
+    def __init__(self,date='2010-01-01',epoch='00:00:00',type=EAMtype.AAM):
         self.lat,self.lon = None,None
+        self.date = date
+        self.epoch = epoch
+        self.mjd = f"{(pd.to_datetime(date + ' ' + epoch).to_julian_date() - 2400000.5):.3f}"
+        self.mass_term = {"chi1":0,"chi2":0,"chi3":0}
+        self.motion_term = {"chi1":0,"chi2":0,"chi3":0}
+        self.EOP = {}
+        self.MeanFiled = {"mass_chi1":0,"mass_chi2":0,"mass_chi3":0,
+                          "motion_chi1":0,"motion_chi2":0,"motion_chi3":0}
+        self.EAMtype = type
+        self.start_time = time.time()
+    def GetCurrentEOP(self):
+        str_date = self.date.split('-')
+        str_epoch = self.epoch.split(':')
+        self.EOP['YYYY'],self.EOP['MM'],self.EOP['DD'],self.EOP['HH']= \
+            str_date[0],str_date[1],str_date[2],str_epoch[0]
+
+        self.EOP['MJD'] = self.mjd
+
+        self.EOP['mass_chi1'],self.EOP['mass_chi2'],self.EOP['mass_chi3'] = \
+            self.mass_term['chi1'],self.mass_term['chi2'],self.mass_term['chi3']
+
+        self.EOP['motion_chi1'], self.EOP['motion_chi2'], self.EOP['motion_chi3'] = \
+            self.motion_term['chi1'], self.motion_term['chi2'], self.motion_term['chi3']
+
+        end_time = time.time()
+        print(f"-------------------------------------------------------\n"
+              f"Finished {self.EAMtype.name} at {self.epoch} on {self.date}\n"
+              f"Time consumption: {end_time - self.start_time:.4f} s\n"
+              f"-------------------------------------------------------")
+
+        return self.EOP
+
+    def GetMeanFiled(self,mass_chi1,mass_chi2,mass_chi3,motion_chi1,motion_chi2,motion_chi3):
+        self.MeanFiled["mass_chi1"],self.MeanFiled["mass_chi2"],self.MeanFiled["mass_chi3"]=mass_chi1,mass_chi2,mass_chi3
+        self.MeanFiled["motion_chi1"], self.MeanFiled["motion_chi2"], self.MeanFiled["motion_chi3"] = motion_chi1, motion_chi2, motion_chi3
+        return self.MeanFiled
+
+    def GetMeanFiled_dict(self, EOP_Mean:dict):
+        self.MeanFiled["mass_chi1"], self.MeanFiled["mass_chi2"], self.MeanFiled[
+            "mass_chi3"] = EOP_Mean['mass_chi1'], EOP_Mean['mass_chi2'],EOP_Mean['mass_chi3']
+        self.MeanFiled["motion_chi1"], self.MeanFiled["motion_chi2"], self.MeanFiled[
+            "motion_chi3"] = EOP_Mean['motion_chi1'], EOP_Mean['motion_chi2'], EOP_Mean['motion_chi3']
+        return self.MeanFiled
+
 
     def setlatlon(self,lat,lon):
         self.lat = lat
         self.lon = lon
         return self
 
-    def Get_PM(self,type:EOPtype):
-        if type == EOPtype.Mass:
-            pass
-        pass
-
-    def Get_LOD(self,type:EOPtype):
-        pass
-
     def PM_mass_term_SH(self,SH):
+
         coef_numerator = -1.098 * np.sqrt(5) * (EOPConstant.radius ** 2) * EOPConstant.Mass
         coef_denominator = np.sqrt(3) * (1 + EOPConstant.k2_load) * (EOPConstant.Cm - EOPConstant.Am)
 
@@ -42,6 +65,9 @@ class EOP_Massive:
         chi2 = SH[5] * (coef_numerator / coef_denominator)
 
         chi = {"chi1": chi1, "chi2": chi2}
+        self.mass_term['chi1'] = chi1-self.MeanFiled['mass_chi1']
+        self.mass_term['chi2'] = chi2-self.MeanFiled['mass_chi2']
+
         return chi
 
     def PM_mass_term(self, Ps):
@@ -49,6 +75,7 @@ class EOP_Massive:
         :param Ps: Ps is fluid expressed as Pa, shape is (lat,lon)
         :return:
         """
+
         phi, lam = np.deg2rad(self.lat), np.deg2rad(self.lon)
         dphi, dlam = np.abs(phi[1] - phi[0]), np.abs(lam[1] - lam[0])
         phi_2D, lam_2D = np.meshgrid(phi, lam, indexing='ij')
@@ -69,9 +96,12 @@ class EOP_Massive:
         chi1 = coef * I13
         chi2 = coef * I23
         PM = {"chi1": chi1, "chi2": chi2}
+        self.mass_term['chi1'] = chi1-self.MeanFiled['mass_chi1']
+        self.mass_term['chi2'] = chi2-self.MeanFiled['mass_chi2']
+
         return PM
 
-    def PM_motion_term(self,Us,Vs,levPres,Ps=None,Zth=None,type=EAMtype.AAM):
+    def PM_motion_term(self,Us,Vs,levPres,Ps=None,Zth=None):
         """
 
         :param Us: unit is m/s, shape is (lev,lat,lon)
@@ -85,15 +115,14 @@ class EOP_Massive:
 
         phi, lam = np.deg2rad(self.lat), np.deg2rad(self.lon)
         dphi, dlam = np.abs(phi[1] - phi[0]), np.abs(lam[1] - lam[0])
-        print(f"dphi:{dphi}")
-        print(f"dlam:{dlam}")
+
         phi_2D, lam_2D = np.meshgrid(phi, lam, indexing="ij")
 
         sin_phi, cos_phi = np.sin(phi_2D), np.cos(phi_2D)
         sin_lam, cos_lam = np.sin(lam_2D), np.cos(lam_2D)
 
         dp_g = []
-        if type == EAMtype.AAM:
+        if self.EAMtype == EAMtype.AAM:
             for lev in np.arange(len(levPres)):
                 temp_dp_g = self.__dp_AAM(levPres=levPres, lev=lev, surPres=Ps, geoHeight=Zth) / EOPConstant.grav
                 temp_dp_g = temp_dp_g.reshape((len(self.lat), len(self.lon)))
@@ -105,16 +134,11 @@ class EOP_Massive:
                 temp_dp_g = temp_dp_g.reshape((len(self.lat), len(self.lon)))
                 dp_g.append(temp_dp_g)
         dp_g = np.array(dp_g)
-        print(f"dp_g shape is:{dp_g.shape}")
-        print(f"Us Vs:{Us.shape,Vs.shape}")
+
         dU = Us*dp_g
         dV = Vs*dp_g
 
-        print(f"dU dV:{dU.shape}{dV.shape}")
-
         U,V = np.sum(dU,axis=0),np.sum(dV,axis=0)
-
-
 
         dA = (EOPConstant.radius ** 2) * cos_phi * dphi * dlam
         # dA = dlam * dphi
@@ -132,9 +156,13 @@ class EOP_Massive:
         chi2 = coef*h2
 
         PM = {'chi1':chi1,'chi2':chi2}
+        self.motion_term['chi1'] = chi1-self.MeanFiled['motion_chi1']
+        self.motion_term['chi2'] = chi2-self.MeanFiled['motion_chi2']
+
         return PM
 
     def LOD_mass_term_SH(self,SH):
+
         coef_numerator = 0.753 * (EOPConstant.radius ** 2) * EOPConstant.Mass * 2
         coef_denominator = (1 + EOPConstant.k2_load) * EOPConstant.Cm * 3
 
@@ -142,12 +170,15 @@ class EOP_Massive:
         C20 = SH[6]
         chi3 = (coef_numerator / coef_denominator) * (C00 - np.sqrt(5) * C20)
         LOD = {"chi3": chi3}
+        self.mass_term['chi3'] = chi3-self.MeanFiled['mass_chi3']
+
         return LOD
     def LOD_mass_term(self,Ps):
         """
         :param Ps: Ps is fluid expressed as Pa, shape is (lat,lon)
         :return:
         """
+
         phi, lam = np.deg2rad(self.lat), np.deg2rad(self.lon)
         dphi, dlam = np.abs(phi[1] - phi[0]), np.abs(lam[1] - lam[2])
         phi_2D, lam_2D = np.meshgrid(phi, lam, indexing="ij")
@@ -164,9 +195,11 @@ class EOP_Massive:
 
         chi3 = coef * I33
         LOD = {'chi3': chi3}
+        self.mass_term['chi3'] = chi3-self.MeanFiled['mass_chi3']
+
         return LOD
 
-    def LOD_motion_term(self,Us,levPres,Ps=None,Zth=None,type=EAMtype.AAM):
+    def LOD_motion_term(self,Us,levPres,Ps=None,Zth=None):
 
         phi, lam = np.deg2rad(self.lat), np.deg2rad(self.lon)
         dphi, dlam = np.abs(phi[1] - phi[0]), np.abs(lam[1] - lam[2])
@@ -176,7 +209,7 @@ class EOP_Massive:
         sin_lam, cos_lam = np.sin(lam_2D), np.cos(lam_2D)
 
         dp_g = []
-        if type == EAMtype.AAM:
+        if self.EAMtype == EAMtype.AAM:
             for lev in np.arange(len(levPres)):
                 temp_dp_g = self.__dp_AAM(levPres=levPres,lev=lev,surPres=Ps,geoHeight=Zth)/EOPConstant.grav
                 temp_dp_g = temp_dp_g.reshape((len(self.lat),len(self.lon)))
@@ -199,6 +232,8 @@ class EOP_Massive:
 
         chi3 = coef*h3
         LOD = {'chi3':chi3}
+        self.motion_term['chi3'] = chi3-self.MeanFiled['motion_chi3']
+
         return LOD
 
     def __dp_AAM(self,levPres,lev,surPres=None,geoHeight=None):
@@ -230,8 +265,9 @@ class EOP_Massive:
                 return (iso_pres[lev]-iso_pres[lev+1])*iso_R[lev]
 
         else:
+            sp_flatten = surPres.flatten()
             for i in np.arange(len(levPres)):
-                sp_flatten = surPres.flatten()
+
                 pres_level = levPres[i]*sampe_arr
                 if (levPres[i]-sp_flatten<=0).all():
                     iso_pres.append(pres_level)
@@ -265,17 +301,15 @@ class EOP_Massive:
             top_pres = np.zeros(len(sample_arr))
 
 
-            if lev == len(levDepth) - 1:
-                return (iso_pres[lev] - top_pres) * iso_R[lev]
+            if lev == 0:
+                return (top_pres-iso_pres[lev]) * iso_R[lev]
             else:
-                return (iso_pres[lev] - iso_pres[lev + 1]) * iso_R[lev]
+                return (iso_pres[lev-1] - iso_pres[lev]) * iso_R[lev]
 
         else:
+            ssh_flatten = surSeaHeight.flatten()
             for i in np.arange(len(levDepth)):
-                ssh_flatten = surSeaHeight.flatten()
                 depth_level = sample_arr*levDepth[i]
-
-
                 radius_level = sample_arr * Radius + depth_level
                 iso_R.append(radius_level)
                 if (depth_level[i]-ssh_flatten<=0).all():
@@ -294,44 +328,97 @@ class EOP_Massive:
             else:
                 return (iso_pres[lev - 1] - iso_pres[lev]) * iso_R[lev]
 
-    def mean_field(self,begin='2005-01-01',end='2006-01-31',freq='D'):
-        date_range = pd.date_range(start=begin,end=end,freq=freq).strftime("%Y%m%d").tolist()
-        date_year = pd.date_range(start=begin,end=end,freq='YE').strftime("%Y").tolist()
-        print(self.temp_path)
-        print(date_range)
-        print(date_year)
 
-
-
-def demo1():
+def demo_LoadForm():
     import xarray as xr
-    from pysrc.aliasing_model.specify.IBcorrection import IBcorrection
-    sp_file = xr.open_dataset("I:/ERA5/MAD_SL/2000/sp-200001.nc")
-    u_file = xr.open_dataset("I:/ERA5/MAD_PL/2000/u_wind-200001.nc")
-    v_file = xr.open_dataset("I:/ERA5/MAD_PL/2000/v_wind-200001.nc")
-    geo_file = xr.open_dataset("I:/ERA5/MAD_PL/2000/geop-200001.nc")
+    from SaGEA.auxiliary.aux_tool.MathTool import MathTool
 
-    sp,u,v,levPres = sp_file['sp'].values,u_file['u'].values,v_file['v'].values,u_file['pressure_level'].values*100
-    print(f"sp/u/v/levPres shapes:{sp.shape,u.shape,v.shape,levPres.shape}")
-    lat,lon = sp_file['latitude'].values,sp_file['longitude'].values
-    a = EOP_Massive()
+    from pysrc.ancillary.storage_file.StorageEOP import StorageEOP
+
+    lat,lon = MathTool.get_global_lat_lon_range(resolution=0.5)
+    sp_arr = np.random.uniform(-100,100,(len(lat),len(lon)))
+    v_arr = np.random.uniform(-10,10,(len(lat),len(lon)))
+    u_arr = np.random.uniform(-10,10,(len(lat),len(lon)))
+    lev_pressure = np.random.uniform(0,100000,37)
+    date_str,time_str = '2020-01-01',"06:00:00"
+
+    a = EOP_Massive(date=date_str,epoch=time_str,type=EAMtype.AAM)
     a.setlatlon(lat=lat,lon=lon)
+    a.PM_mass_term(Ps=sp_arr)
+    a.PM_motion_term(Us=u_arr,Vs=v_arr,levPres=lev_pressure)
+    a.LOD_mass_term(Ps=sp_arr)
+    a.LOD_motion_term(Us=u_arr,levPres=lev_pressure)
+    eop_data = a.GetCurrentEOP()
+    print(eop_data.keys())
 
-    PM_motion = a.PM_motion_term(Us=u[0],Vs=v[0],levPres=levPres,Ps=sp[0])
-    print(f"PM motion: {PM_motion}")
+    EOP_list = [eop_data]
+    b = StorageEOP()
+    b.setRootDir(fileDir='I:/')
+    b.setEAM_Information(EAM=EOP_list,type=EAMtype.AAM)
+    b.setSource_Information(source='Random data')
+    b.EOPstyle_ByProduct()
 
-    ib = IBcorrection(lat=lat, lon=lon)
-    asp_ib_f = ib.correct(grids=sp.flatten())
-    sp_ib = asp_ib_f.reshape((len(lat),len(lon)))
-    PM_mass = a.PM_mass_term_grid(Ps=sp_ib)
-    print(f"PM mass: {PM_mass}")
 
-    LOD_motion = a.LOD_motion_term(Us=u[0],levPres=levPres,Ps=sp)
-    print(f"LOD motion:{LOD_motion}")
+def demo_LoadTrue():
+    import xarray as xr
 
-    LOD_mass = a.LOD_mass_term_grid(Ps=sp[0])
-    print(f"LOD mass:{LOD_mass}")
+    sp_file = xr.open_dataset("I:\ERA5\MAD_SL/2005/sp-200501.nc")
+    u_file = xr.open_dataset("I:\ERA5\MAD_PL/2005/u_wind-200501.nc")
+    v_file =xr.open_dataset("I:\ERA5\MAD_PL/2005/v_wind-200501.nc")
 
+    sp = sp_file['sp'].values[0]
+    u_wind = u_file['u'].values[0]
+    v_wind = v_file['v'].values[0]
+    lev_pressure = v_file['pressure_level'].values
+    lat,lon = v_file['latitude'].values,v_file['longitude'].values
+    time_epoch = v_file['valid_time'].values[0]
+    date,full_time = str(time_epoch).split('T')
+    epoch = full_time.split('.')[0]
+    print(sp.shape,u_wind.shape,v_wind.shape)
+    print(date,epoch)
+
+    a = EOP_Massive(date=date,epoch=epoch,type=EAMtype.AAM)
+    a.setlatlon(lat=lat,lon=lon)
+    a.PM_mass_term(Ps=sp)
+    a.PM_motion_term(Us=u_wind,Vs=v_wind,levPres=lev_pressure)
+    a.LOD_mass_term(Ps=sp)
+    a.LOD_motion_term(Us=u_wind,levPres=lev_pressure)
+    eop_data = a.GetCurrentEOP()
+    print(eop_data)
+
+
+def demo_SaveFile():
+    import xarray as xr
+    from SaGEA.auxiliary.aux_tool.MathTool import MathTool
+    # from tqdm import tqdm
+    begin_date,end_date = '2000-01-01','2005-12-31'
+    date_year = pd.date_range(start=begin_date,end=end_date,freq='YE').strftime("%Y").tolist()
+    date_month = pd.date_range(start=begin_date,end=end_date,freq='MS').strftime("%Y-%m").tolist()
+    date_day = pd.date_range(start=begin_date,end=end_date,freq="D").strftime("%Y-%m-%d").tolist()
+    date_hour = pd.date_range(start='00:00:00', end='23:59:59', freq='24h').strftime('%H:%M:%S').tolist()
+
+    for year in date_year:
+        EOP_dateset = []
+        date_month = pd.date_range(start=f"{year}-01-01",end=f"{year}-12-31",freq='MS').strftime("%Y-%m-%d").tolist()
+        date_day = pd.date_range(start=f"{year}-01-01",end=f"{year}-12-31",freq="D").strftime("%Y-%m-%d").tolist()
+        for date_str in date_month:
+            # print(date_str)
+            for epoch_str in date_hour:
+                lat, lon = MathTool.get_global_lat_lon_range(resolution=0.5)
+                sp_arr = np.random.uniform(-100, 100, (len(lat), len(lon)))
+                v_arr = np.random.uniform(-10, 10, (len(lat), len(lon)))
+                u_arr = np.random.uniform(-10, 10, (len(lat), len(lon)))
+                lev_pressure = np.random.uniform(0, 100000, 37)
+
+                a = EOP_Massive(date=date_str, epoch=epoch_str, type=EAMtype.AAM)
+                a.setlatlon(lat=lat, lon=lon)
+                a.PM_mass_term(Ps=sp_arr)
+                a.PM_motion_term(Us=u_arr, Vs=v_arr, levPres=lev_pressure)
+                a.LOD_mass_term(Ps=sp_arr)
+                a.LOD_motion_term(Us=u_arr, levPres=lev_pressure)
+                eop_data = a.GetCurrentEOP()
+                EOP_dateset.append(eop_data)
+        print(len(EOP_dateset))
 
 if __name__ =="__main__":
-    demo1()
+    demo_LoadForm()
