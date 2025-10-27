@@ -88,8 +88,6 @@ class GeocenterMotion:
         CoreI11S = Pilm[:, 1, 1][:, None] * ocean_mask * sinS11[None, :]
 
 
-        # CoreI30C = Pilm[:, 3, 0][:, None] * ocean_mask * cosC30[None, :]
-
         I_10C = GRID(grid=CoreI10C, lat=self.lat, lon=self.lon).to_SHC(self.lmax)
         I_11C = GRID(grid=CoreI11C, lat=self.lat, lon=self.lon).to_SHC(self.lmax)
         I_11S = GRID(grid=CoreI11S, lat=self.lat, lon=self.lon).to_SHC(self.lmax)
@@ -130,10 +128,7 @@ class GeocenterMotion:
         GRACE_SH[:,1]=S11
         GRACE_SH[:,2]=C10
         GRACE_SH[:,3]=C11
-        # GRACE_SH[:,6]=C20
-        # GRACE_SH[:,7]=C21
-        # GRACE_SH[:,5]=S21
-        # GRACE_SH[:,]
+
         GRACE_SH = SHC(c=GRACE_SH).convert_type(from_type=Enums.PhysicalDimensions.Density,to_type=Enums.PhysicalDimensions.EWH)
         GRACE_GRID = GRACE_SH.to_grid(self.res)
         if GRD:
