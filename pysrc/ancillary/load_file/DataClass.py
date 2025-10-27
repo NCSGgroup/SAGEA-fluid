@@ -87,7 +87,7 @@ class SHC(CoreSHC):
             to_type = match_string(to_type, Enums.PhysicalDimensions, ignore_case=True)
         lmax = self.get_lmax()
         LN = LoveNumber().config(lmax=lmax,method=Enums.LLN_Data.Wang).get_Love_number()
-        LN.convert(target=Enums.Frame.CF)
+        LN.convert(target=Enums.Frame.CE)
         ln = LN.LLN[Enums.LLN_variable.k]
         # LN = LoveNumber()
         # LN.configuration.set_lmax(lmax)
