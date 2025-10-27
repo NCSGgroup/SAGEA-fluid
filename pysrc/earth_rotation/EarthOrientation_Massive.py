@@ -236,7 +236,7 @@ class EOP_Massive:
 
         return LOD
 
-    def __dp_AAM(self,levPres,lev,surPres=None,geoHeight=None):
+    def __dp_AAM_full(self,levPres,lev,surPres=None,geoHeight=None):
         sampe_arr = np.ones((len(self.lat), len(self.lon))).flatten()
         iso_pres = []
         Radius,grav = EOPConstant.radius,EOPConstant.grav
@@ -283,7 +283,7 @@ class EOP_Massive:
             else:
                 return (iso_pres[lev - 1] - iso_pres[lev]) * iso_R[lev]
 
-    def __dp_OAM(self,levDepth,lev,surSeaHeight=None):
+    def __dp_OAM_full(self,levDepth,lev,surSeaHeight=None):
         sample_arr = np.ones((len(self.lat),len(self.lon))).flatten()
         iso_pres,iso_R = [],[]
         Radius = EOPConstant.radius
@@ -327,6 +327,60 @@ class EOP_Massive:
                 return (ssh_flatten - iso_pres[lev]) * iso_R[lev]
             else:
                 return (iso_pres[lev - 1] - iso_pres[lev]) * iso_R[lev]
+
+    def __dp_AAM(self,levPres,lev,lat,lon,surPres=None,geoHeight=None):
+        iso_pres = self.__get_lev(levs=levPres,lat=lat,lon=lon,surface=surPres)
+        # print(f"iso pres:{iso_pres.shape}")
+        # print(f"levPres:{levPres.shape}")
+        sample_arr = np.ones((len(lat), len(lon))).flatten()
+        Radius, grav = EOPConstant.radius, EOPConstant.grav
+
+        if geoHeight is None:
+            iso_R = np.ones((len(levPres), len(sample_arr))) * Radius
+
+        else:
+            R_sets = Radius * sample_arr
+            geo_height = geoHeight.reshape(len(geoHeight), -1) / grav
+            iso_R = geo_height + R_sets
+
+        return (iso_pres[lev]-iso_pres[lev+1])*iso_R[lev]
+
+    def __dp_OAM(self,levDepth,lev,lat,lon,surSeaHeight=None,geoHeight=None):
+        sample_arr = np.ones((len(lat), len(lon))).flatten()
+        Radius, grav = EOPConstant.radius, EOPConstant.grav
+        iso_pres = self.__get_lev(levs=levDepth,lat=lat,lon=lon,surface=surSeaHeight)*EOPConstant.grav * EOPConstant.rho_water
+
+        if geoHeight is None:
+            iso_R = np.ones((len(levDepth), len(sample_arr))) * Radius
+        else:
+            iso_R = []
+            for i in np.arange(len(levDepth)):
+                depth_level = sample_arr * levDepth[i]
+                radius_level = sample_arr * Radius + depth_level
+                iso_R.append(radius_level)
+
+        return (iso_pres[lev]-iso_pres[lev+1])*iso_R[lev]
+
+
+
+    def __get_lev(self,levs,lat,lon,surface=None):
+        sample_arr = np.ones((len(lat),len(lon))).flatten()
+        iso_levs = np.ones((len(levs)+1,len(sample_arr)))
+
+        for i in np.arange(1,len(levs)):
+            iso_levs[i] = 0.5*(levs[i]+levs[i-1])*sample_arr
+
+        iso_levs[0] = 2*levs[0]*sample_arr-iso_levs[1]
+        iso_levs[-1] = 2*levs[-1]*sample_arr-iso_levs[-2]
+        if surface is not None:
+            sur_arr = surface.flatten()
+            for i in np.arange(len(iso_levs)):
+                if (iso_levs[i]-sur_arr<=0).all():
+                    continue
+                index = iso_levs[i]-sur_arr>0
+                iso_levs[i][index] = sur_arr[index]
+        return iso_levs
+
 
 
 def demo_LoadForm():

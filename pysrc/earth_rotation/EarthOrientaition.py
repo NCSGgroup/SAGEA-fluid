@@ -47,6 +47,14 @@ class EOP:
         coef_numerator = -1.098 * np.sqrt(5) * (EOPConstant.radius ** 2) * EOPConstant.Mass
         coef_denominator = np.sqrt(3) * (1 + EOPConstant.k2_load) * (EOPConstant.Cm - EOPConstant.Am)
 
+        '''Dobslaw 2010 coefs'''
+        # ks,K2 = EOPConstant.ks,EOPConstant.k2
+        # Cm,Am = EOPConstant.Cm,EOPConstant.Am
+        # R, M = EOPConstant.radius,EOPConstant.Mass
+        # coef_numerator = -ks*np.sqrt(5)*(R**2)*M
+        # coef_denominator = (ks-K2)*(Cm-Am)*np.sqrt(3)
+
+
         chi1 = SH[:, 7] * (coef_numerator / coef_denominator)
         chi2 = SH[:, 5] * (coef_numerator / coef_denominator)
         if isMas:
@@ -135,6 +143,10 @@ class EOP:
 
             h1 = np.sum(L1 * dA, axis=(0, 1))
             h2 = np.sum(L2 * dA, axis=(0, 1))
+
+            # '''Dobslaw 2010 coefficients'''
+            # coef_numerator = -EOPConstant.ks*(EOPConstant.radius**2)
+            # coef_denominator = (EOPConstant.ks-EOPConstant.k2)*(EOPConstant.Cm-EOPConstant.Am)*EOPConstant.omega
 
             coef_numerator = -1.5913 * (EOPConstant.radius ** 2)
             coef_denominator = EOPConstant.omega * (EOPConstant.Cm - EOPConstant.Am)
@@ -244,7 +256,7 @@ class EOP:
         chi3_series = np.array(chi3_series)
         LOD = {"chi3": chi3_series}
         return LOD
-    def __dp_AAM(self, levPres, lev, lat, lon, surPres=None, geoHeight=None):
+    def __dp_AAM_full(self, levPres, lev, lat, lon, surPres=None, geoHeight=None):
         sampe_arr = np.ones((len(lat), len(lon))).flatten()
         iso_pres = []
         Radius, grav = EOPConstant.radius, EOPConstant.grav
@@ -289,7 +301,7 @@ class EOP:
             else:
                 return (iso_pres[lev - 1] - iso_pres[lev]) * iso_R[lev]
 
-    def __dp_OAM(self, levDepth, lev, lat, lon, surSeaHeight=None):
+    def __dp_OAM_full(self, levDepth, lev, lat, lon, surSeaHeight=None):
         sample_arr = np.ones((len(lat), len(lon))).flatten()
         iso_pres, iso_R = [], []
         Radius = EOPConstant.radius
@@ -332,6 +344,60 @@ class EOP:
                 return (ssh_flatten - iso_pres[lev]) * iso_R[lev]
             else:
                 return (iso_pres[lev - 1] - iso_pres[lev]) * iso_R[lev]
+
+    def __dp_AAM(self,levPres,lev,lat,lon,surPres=None,geoHeight=None):
+        iso_pres = self.__get_lev(levs=levPres,lat=lat,lon=lon,surface=surPres)
+        # print(f"iso pres:{iso_pres.shape}")
+        # print(f"levPres:{levPres.shape}")
+        sample_arr = np.ones((len(lat), len(lon))).flatten()
+        Radius, grav = EOPConstant.radius, EOPConstant.grav
+
+        if geoHeight is None:
+            iso_R = np.ones((len(levPres), len(sample_arr))) * Radius
+
+        else:
+            R_sets = Radius * sample_arr
+            geo_height = geoHeight.reshape(len(geoHeight), -1) / grav
+            iso_R = geo_height + R_sets
+
+        return (iso_pres[lev]-iso_pres[lev+1])*iso_R[lev]
+
+    def __dp_OAM(self,levDepth,lev,lat,lon,surSeaHeight=None,geoHeight=None):
+        sample_arr = np.ones((len(lat), len(lon))).flatten()
+        Radius, grav = EOPConstant.radius, EOPConstant.grav
+        iso_pres = self.__get_lev(levs=levDepth,lat=lat,lon=lon,surface=surSeaHeight)*EOPConstant.grav * EOPConstant.rho_water
+
+        if geoHeight is None:
+            iso_R = np.ones((len(levDepth), len(sample_arr))) * Radius
+        else:
+            iso_R = []
+            for i in np.arange(len(levDepth)):
+                depth_level = sample_arr * levDepth[i]
+                radius_level = sample_arr * Radius + depth_level
+                iso_R.append(radius_level)
+
+        return (iso_pres[lev]-iso_pres[lev+1])*iso_R[lev]
+
+
+
+    def __get_lev(self,levs,lat,lon,surface=None):
+        sample_arr = np.ones((len(lat),len(lon))).flatten()
+        iso_levs = np.ones((len(levs)+1,len(sample_arr)))
+
+        for i in np.arange(1,len(levs)):
+            iso_levs[i] = 0.5*(levs[i]+levs[i-1])*sample_arr
+
+        iso_levs[0] = 2*levs[0]*sample_arr-iso_levs[1]
+        iso_levs[-1] = 2*levs[-1]*sample_arr-iso_levs[-2]
+        if surface is not None:
+            sur_arr = surface.flatten()
+            for i in np.arange(len(iso_levs)):
+                if (iso_levs[i]-sur_arr<=0).all():
+                    continue
+                index = iso_levs[i]-sur_arr>0
+                iso_levs[i][index] = sur_arr[index]
+        return iso_levs
+
 
 
 class GRACE_Exciatation:
