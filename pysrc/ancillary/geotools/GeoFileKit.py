@@ -97,10 +97,17 @@ def demo_pdf_png():
     a.pdf_to_png(
         pdf_path="D:\Reference/1_Manuscripts\HUST-CRA, submit to Advances in Atmospheric Sciences\HUST-CRA\Figures/Figure3.pdf",
         output_folder="D:\Reference/1_Manuscripts\HUST-CRA, submit to Advances in Atmospheric Sciences\HUST-CRA\Figures/Fig3.png")
-
+def demo_png_pdf():
+    a = GeoFileKit()
+    a.png_to_pdf(
+        input_png="I:\Eassy\SaGEA_fluid/figure/Figure1.png",
+        output_pdf="I:/Eassy/SaGEA_fluid/Figure1_1.pdf",
+        dpi=500,
+    )
 def demo_delete_file():
     a = GeoFileKit()
     a.simple_delete_files_by_extension('/path/to/directory', '.tmp')
 
 if __name__ == "__main__":
-    demo_pdf_png()
+    # demo_pdf_png()
+    demo_png_pdf()
