@@ -1,9 +1,9 @@
 import numpy as np
 from scipy.special import sph_harm
 from scipy.linalg import eigh
-from SaGEA.auxiliary.aux_tool.FileTool import FileTool
-from SaGEA.auxiliary.aux_tool.MathTool import MathTool
-from SaGEA.auxiliary.load_file.LoadL2SH import load_SHC
+from lib.SaGEA.auxiliary.aux_tool.FileTool import FileTool
+from lib.SaGEA.auxiliary.aux_tool.MathTool import MathTool
+from lib.SaGEA.auxiliary.load_file.LoadL2SH import load_SHC
 from tqdm import tqdm
 import pygmt
 import xarray as xr

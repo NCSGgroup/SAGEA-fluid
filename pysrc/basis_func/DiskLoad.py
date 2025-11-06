@@ -2,9 +2,9 @@ import numpy as np
 
 from pysrc.ancillary.geotools.LLN import LoveNumber, LLN_Data, LLN_variable
 from pysrc.basis_func.Legendre import Legendre_polynomial
-from SaGEA.auxiliary.preference.Constants import EarthConstant
-from SaGEA.auxiliary.aux_tool.MathTool import MathTool
-from SaGEA.auxiliary.preference.EnumClasses import Displacement
+from lib.SaGEA.auxiliary.preference.Constants import EarthConstant
+from lib.SaGEA.auxiliary.aux_tool.MathTool import MathTool
+from lib.SaGEA.auxiliary.preference.EnumClasses import Displacement
 from tqdm import tqdm
 
 class DiskLoad:
@@ -259,7 +259,7 @@ def grid2radius(lat_center, grid_size):
     :param grid_size: equal-distance grid, grid interval, e.g., 1 degree
     :return: theta_radius [degree], length_radius [m]
     """
-    from SaGEA.auxiliary.preference.Constants import EarthConstant
+    from lib.SaGEA.auxiliary.preference.Constants import EarthConstant
     example = 30  # longitude, but indeed the choice could be arbitrary.
 
     a = MathTool.angular_distance(point1_lat=lat_center + grid_size / 2, point1_lon=example,
@@ -281,7 +281,7 @@ def grid2radius_type2(lat_center, grid_size):
     :param grid_size: equal-distance grid, grid interval, e.g., 1 degree
     :return: theta_radius [degree], length_radius [m]
     """
-    from SaGEA.auxiliary.preference.Constants import EarthConstant
+    from lib.SaGEA.auxiliary.preference.Constants import EarthConstant
 
     area = np.cos(np.deg2rad(lat_center)) * np.deg2rad(grid_size) ** 2
 
@@ -300,7 +300,7 @@ def Mass(r, thickness):
     :param grid_size: equal-distance grid, grid interval, e.g., 1 degree
     :return: theta_radius [degree], length_radius [m]
     """
-    from SaGEA.auxiliary.preference.Constants import EarthConstant
+    from lib.SaGEA.auxiliary.preference.Constants import EarthConstant
 
     M1 = 2 * np.pi * EarthConstant.radiusm ** 2 * (
                 1 - np.cos(r / EarthConstant.radiusm)) * EarthConstant.rhow * thickness

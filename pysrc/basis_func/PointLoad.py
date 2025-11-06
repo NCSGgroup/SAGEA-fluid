@@ -1,9 +1,9 @@
 import numpy as np
 from pysrc.ancillary.geotools.LLN import LoveNumber, LLN_variable
 from pysrc.basis_func.Legendre import Legendre_polynomial
-from SaGEA.auxiliary.preference.Constants import EarthConstant
-from SaGEA.auxiliary.preference.EnumClasses import Displacement
-from SaGEA.auxiliary.aux_tool.MathTool import MathTool
+from lib.SaGEA.auxiliary.preference.Constants import EarthConstant
+from lib.SaGEA.auxiliary.preference.EnumClasses import Displacement
+from lib.SaGEA.auxiliary.aux_tool.MathTool import MathTool
 from tqdm import tqdm
 
 

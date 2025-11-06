@@ -1,10 +1,10 @@
 import numpy as np
 # from scipy.linalg import eigh
-from SaGEA.auxiliary.aux_tool.FileTool import FileTool
-from SaGEA.auxiliary.aux_tool.MathTool import MathTool
-from SaGEA.auxiliary.load_file.LoadL2SH import load_SHC
+from lib.SaGEA.auxiliary.aux_tool.FileTool import FileTool
+from lib.SaGEA.auxiliary.aux_tool.MathTool import MathTool
+from lib.SaGEA.auxiliary.load_file.LoadL2SH import load_SHC
 from tqdm import tqdm
-from SaGEA.post_processing.harmonic.Harmonic import Harmonic
+from lib.SaGEA.post_processing.harmonic.Harmonic import Harmonic
 
 class Slepian:
     def __init__(self):

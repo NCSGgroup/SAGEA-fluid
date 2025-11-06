@@ -1,9 +1,9 @@
 import numpy as np
 import scipy.io as scio
 
-from SaGEA.auxiliary.aux_tool.FileTool import FileTool
+from lib.SaGEA.auxiliary.aux_tool.FileTool import FileTool
 
-from SaGEA.auxiliary.preference.EnumClasses import LLN_Data, LLN_variable, Frame
+from lib.SaGEA.auxiliary.preference.EnumClasses import LLN_Data, LLN_variable, Frame
 
 
 class LoveNumber:
