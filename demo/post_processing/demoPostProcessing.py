@@ -3,14 +3,14 @@ from datetime import date
 
 import numpy as np
 
-import SaGEA.auxiliary.preference.EnumClasses as Enums
+import lib.SaGEA.auxiliary.preference.EnumClasses as Enums
 
-from SaGEA.auxiliary.aux_tool.FileTool import FileTool
-from SaGEA.auxiliary.aux_tool.TimeTool import TimeTool
-from SaGEA.auxiliary.load_file.LoadL2LowDeg import load_low_degs
-from SaGEA.auxiliary.load_file.LoadL2SH import load_SHC
-from SaGEA.auxiliary.load_file.LoadNoah import load_GLDAS_TWS
-from SaGEA.auxiliary.load_file.LoadShp import LoadShp
+from lib.SaGEA.auxiliary.aux_tool.FileTool import FileTool
+from lib.SaGEA.auxiliary.aux_tool.TimeTool import TimeTool
+from lib.SaGEA.auxiliary.load_file.LoadL2LowDeg import load_low_degs
+from lib.SaGEA.auxiliary.load_file.LoadL2SH import load_SHC
+from lib.SaGEA.auxiliary.load_file.LoadNoah import load_GLDAS_TWS
+from lib.SaGEA.auxiliary.load_file.LoadShp import LoadShp
 
 
 def demo_mask():

@@ -5,7 +5,7 @@
 # @File    : de_aliasing.py
 import matplotlib.pyplot as plt
 import numpy as np
-from SaGEA.auxiliary.aux_tool.MathTool import MathTool
+from lib.SaGEA.auxiliary.aux_tool.MathTool import MathTool
 
 def fit_function(x,a,b,c,d,e,f):
     return a + b * x + c * np.sin(2 * np.pi*x) + d * np.cos(2*np.pi*x) + e * np.sin(4*np.pi*x) + f*np.cos(4*np.pi*x)
