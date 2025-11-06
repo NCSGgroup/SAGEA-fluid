@@ -1,7 +1,7 @@
 import numpy as np
 from pysrc.ancillary.constant.GeoConstant import EOPConstant
-from SaGEA.auxiliary.aux_tool.FileTool import FileTool
-from SaGEA.auxiliary.load_file.LoadL2SH import load_SHC
+from lib.SaGEA.auxiliary.aux_tool.FileTool import FileTool
+from lib.SaGEA.auxiliary.load_file.LoadL2SH import load_SHC
 from pysrc.ancillary.constant.Setting import EAMtype
 
 
