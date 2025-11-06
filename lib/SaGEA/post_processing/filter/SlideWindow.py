@@ -2,8 +2,8 @@ from enum import Enum
 
 import numpy as np
 
-from SaGEA.auxiliary.aux_tool.MathTool import MathTool
-from SaGEA.post_processing.filter.Base import get_poly_func, SHCFilter
+from lib.SaGEA.auxiliary.aux_tool.MathTool import MathTool
+from lib.SaGEA.post_processing.filter.Base import get_poly_func, SHCFilter
 
 
 class SlideWindowMode(Enum):
