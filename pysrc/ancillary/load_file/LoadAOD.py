@@ -3,9 +3,9 @@ import os
 import warnings
 import numpy as np
 
-from SaGEA.auxiliary.preference.EnumClasses import AODtype,TidesType
-from pysrc.ancillary.load_file.DataClass import SHC
-from SaGEA.post_processing.geometric_correction.old.GeoMathKit import GeoMathKit
+from lib.SaGEA.auxiliary.preference.EnumClasses import AODtype,TidesType
+from lib.SaGEA.data_class.DataClass import SHC
+from lib.SaGEA.post_processing.geometric_correction.old.GeoMathKit import GeoMathKit
 
 
 

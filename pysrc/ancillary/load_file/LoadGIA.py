@@ -3,11 +3,11 @@ import warnings
 
 import numpy as np
 
-from SaGEA.auxiliary.aux_tool.TimeTool import TimeTool
-from SaGEA.data_class.CoreSHC import CoreSHC
-from SaGEA.auxiliary.load_file.LoadL2SH import load_SHC
-from SaGEA.auxiliary.preference.EnumClasses import GIAModel
-from SaGEA.auxiliary.aux_tool.FileTool import FileTool
+from lib.SaGEA.auxiliary.aux_tool.TimeTool import TimeTool
+from lib.SaGEA.data_class.CoreSHC import CoreSHC
+from lib.SaGEA.auxiliary.load_file.LoadL2SH import load_SHC
+from lib.SaGEA.auxiliary.preference.EnumClasses import GIAModel
+from lib.SaGEA.auxiliary.aux_tool.FileTool import FileTool
 
 
 class LoadGIAConfig:

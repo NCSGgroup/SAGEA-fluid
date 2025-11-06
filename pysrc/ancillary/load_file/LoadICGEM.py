@@ -6,11 +6,11 @@ from pathlib import Path, WindowsPath
 import numpy as np
 from datetime import date
 
-from SaGEA.auxiliary.preference.EnumClasses import L2ProductType, L2InstituteType, L2Release
-from SaGEA.auxiliary.scripts.MatchConfigWithEnums import match_config
-from SaGEA.auxiliary.aux_tool.FileTool import FileTool
-from SaGEA.auxiliary.aux_tool.TimeTool import TimeTool
-from pysrc.ancillary.load_file.DataClass import SHC
+from lib.SaGEA.auxiliary.preference.EnumClasses import L2ProductType, L2InstituteType, L2Release
+from lib.SaGEA.auxiliary.scripts.MatchConfigWithEnums import match_config
+from lib.SaGEA.auxiliary.aux_tool.FileTool import FileTool
+from lib.SaGEA.auxiliary.aux_tool.TimeTool import TimeTool
+from lib.SaGEA.data_class.DataClass import SHC
 
 def match_dates_from_filename(filename):
     match_flag = False
@@ -343,7 +343,7 @@ def load_ITSG(*filepath, key: str, lmax: int, lmcs_in_queue=None, get_dates=Fals
             mat_shape = (lmax + 1, lmax + 1)
             clm, slm = np.zeros(mat_shape), np.zeros(mat_shape)
 
-            with open(filepath[0]) as f:
+            with open(filepath[0],encoding='utf-8') as f:
                 txt_list = f.readlines()
                 for i in range(len(txt_list)):
                     if txt_list[i].replace(" ", "").startswith(key):
@@ -388,7 +388,7 @@ def load_ITSG(*filepath, key: str, lmax: int, lmcs_in_queue=None, get_dates=Fals
                 # if this_begin_date >= begin_date and this_end_date <= end_date:
                 #     files_to_load.append(file_list[i])
 
-            return load_HUSTGRACE(*files_to_load, key=key, lmax=lmax, lmcs_in_queue=lmcs_in_queue,
+            return load_ITSG(*files_to_load, key=key, lmax=lmax, lmcs_in_queue=lmcs_in_queue,
                                   get_dates=get_dates, daylist=daylist)
 
     else:
@@ -396,7 +396,7 @@ def load_ITSG(*filepath, key: str, lmax: int, lmcs_in_queue=None, get_dates=Fals
         dates_begin, dates_end = [], []
 
         for i in range(len(filepath)):
-            load = load_HUSTGRACE(filepath[i], key=key, lmax=lmax, lmcs_in_queue=lmcs_in_queue,
+            load = load_ITSG(filepath[i], key=key, lmax=lmax, lmcs_in_queue=lmcs_in_queue,
                                  get_dates=get_dates, daylist=daylist)
 
             if type(load) is tuple:
@@ -1011,7 +1011,7 @@ def demo():
     print(shc.value[0][0:10])
 
 def demo1():
-    from SaGEA.post_processing.geometric_correction.old.GeoMathKit import GeoMathKit
+    from lib.SaGEA.post_processing.geometric_correction.old.GeoMathKit import GeoMathKit
 
     daylist = GeoMathKit.monthListByMonth(begin='2002-01',end='2003-12')
     daylist = [str(d.strftime("%Y%m")) for d in daylist]
