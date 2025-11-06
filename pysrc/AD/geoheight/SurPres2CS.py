@@ -7,11 +7,11 @@
 """
 import numpy as np
 
-from SaGEA.post_processing.geometric_correction.old.GeoMathKit import GeoMathKit
-from pysrc.aliasing_model.specify.Harmonic import Harmonic
-from SaGEA.post_processing.geometric_correction.old.LoveNumber import LoveNumber
-from SaGEA.post_processing.geometric_correction.old.RefEllipsoid import RefEllipsoid
-from SaGEA.post_processing.geometric_correction.old.Setting import LoveNumberType, Constants, HarAnalysisType
+from lib.SaGEA.post_processing.geometric_correction.old.GeoMathKit import GeoMathKit
+from pysrc.AD.specify.Harmonic import Harmonic
+from lib.SaGEA.post_processing.geometric_correction.old.LoveNumber import LoveNumber
+from lib.SaGEA.post_processing.geometric_correction.old.RefEllipsoid import RefEllipsoid
+from lib.SaGEA.post_processing.geometric_correction.old.Setting import LoveNumberType, Constants, HarAnalysisType
 
 
 class SurPres2CS:

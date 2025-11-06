@@ -4,22 +4,22 @@ import numpy as np
 
 sys.path.append('../Configure')
 import os
-from pysrc.aliasing_model.specify.GeoMathKit import GeoMathKit
+from pysrc.AD.specify.GeoMathKit import GeoMathKit
 from pysrc.ancillary.storage_file.StorageAOD import CnmSnm, FormatWrite
-from pysrc.aliasing_model.specify.Harmonic import Harmonic, LoveNumber, LoveNumberType
+from pysrc.AD.specify.Harmonic import Harmonic, LoveNumber, LoveNumberType
 # from Configure.IntegralMethods import innerIn, InnerIntegral, InterpOption
 from pysrc.ancillary.load_file.LoadFields_Model import LoadFields,DataType
 from pysrc.ancillary.constant.Setting import AODtype, Constants, EllipsoidType, HarAnalysisType
-from pysrc.aliasing_model.geoheight.GeoHight_Model import GeopotentialHeight
-from pysrc.aliasing_model.geoheight.InnerIntegral import InnerIntegral
+from pysrc.AD.geoheight.GeoHight_Model import GeopotentialHeight
+from pysrc.AD.geoheight.InnerIntegral import InnerIntegral
 import time as ti
 import json
-from pysrc.aliasing_model.geoheight.RefEllipsoid import RefEllipsoid
-from pysrc.aliasing_model.geoheight.GeoidUndulation import GeoidUndulation
-from pysrc.aliasing_model.geoheight.SurPres2CS import SurPres2CS
-from pysrc.aliasing_model.geoheight.IntegralMethods import innerIn
-from pysrc.aliasing_model.specify.IBcorrection import IBcorrection
-from pysrc.aliasing_model.tidefit.TideFit import Detide,TideFit
+from pysrc.AD.geoheight.RefEllipsoid import RefEllipsoid
+from pysrc.AD.geoheight.GeoidUndulation import GeoidUndulation
+from pysrc.AD.geoheight.SurPres2CS import SurPres2CS
+from pysrc.AD.geoheight.IntegralMethods import innerIn
+from pysrc.AD.specify.IBcorrection import IBcorrection
+from pysrc.AD.tidefit.TideFit import Detide,TideFit
 import calendar
 import datetime
 

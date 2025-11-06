@@ -8,7 +8,7 @@
 # usage of this file:
 import numpy as np
 
-from pysrc.aliasing_model.specify.GeoMathKit import GeoMathKit
+from pysrc.AD.specify.GeoMathKit import GeoMathKit
 from pysrc.ancillary.constant.Setting import EllipsoidType
 
 
