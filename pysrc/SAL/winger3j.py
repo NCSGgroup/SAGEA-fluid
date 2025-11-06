@@ -1,7 +1,7 @@
 from sympy.physics.wigner import wigner_3j
 import numpy as np
-from SaGEA.auxiliary.aux_tool.FileTool import FileTool
-from SaGEA.auxiliary.load_file.LoadL2SH import load_SHC
+from lib.SaGEA.auxiliary.aux_tool.FileTool import FileTool
+from lib.SaGEA.auxiliary.load_file.LoadL2SH import load_SHC
 from datetime import date
 from tqdm import tqdm
 

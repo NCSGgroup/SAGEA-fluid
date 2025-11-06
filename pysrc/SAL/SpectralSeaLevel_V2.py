@@ -1,10 +1,10 @@
-from SaGEA.auxiliary.aux_tool.FileTool import FileTool
-from SaGEA.auxiliary.aux_tool.MathTool import MathTool
-from SaGEA.auxiliary.load_file.LoadL2SH import load_SHC
-from SaGEA.auxiliary.preference.Constants import GeoConstants,EarthConstant
+from lib.SaGEA.auxiliary.aux_tool.FileTool import FileTool
+from lib.SaGEA.auxiliary.aux_tool.MathTool import MathTool
+from lib.SaGEA.auxiliary.load_file.LoadL2SH import load_SHC
+from lib.SaGEA.auxiliary.preference.Constants import GeoConstants,EarthConstant
 from pysrc.ancillary.geotools.LLN import LoveNumber,LLN_Data,LLN_variable,Frame
 import numpy as np
-from pysrc.ancillary.load_file.DataClass import SHC,GRID
+from lib.SaGEA.data_class.DataClass import SHC,GRID
 import time
 
 
@@ -323,7 +323,7 @@ def quick_fig(grid,lat=None,lon=None,maxvalue=2,savefile=None,unit="EWH (cm)"):
 def demo1():
     import netCDF4 as nc
     from datetime import date
-    import SaGEA.auxiliary.preference.EnumClasses as Enums
+    import lib.SaGEA.auxiliary.preference.EnumClasses as Enums
     res=0.5
     ocean_mask = nc.Dataset("../../data/ref_sealevel/ocean_mask.nc")['ocean_mask'][:]
     filepath = FileTool.get_project_dir('data/ref_sealevel/SLFsh_coefficients/GFZOP/CM/WOUTrotation/')

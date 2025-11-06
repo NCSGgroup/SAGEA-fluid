@@ -1,10 +1,10 @@
-from SaGEA.auxiliary.aux_tool.FileTool import FileTool
-from SaGEA.auxiliary.aux_tool.MathTool import MathTool
-from SaGEA.auxiliary.load_file.LoadL2SH import load_SHC
-from SaGEA.auxiliary.preference.Constants import GeoConstants,EarthConstant
+from lib.SaGEA.auxiliary.aux_tool.FileTool import FileTool
+from lib.SaGEA.auxiliary.aux_tool.MathTool import MathTool
+from lib.SaGEA.auxiliary.load_file.LoadL2SH import load_SHC
+from lib.SaGEA.auxiliary.preference.Constants import GeoConstants,EarthConstant
 from pysrc.ancillary.geotools.LLN import LoveNumber,LLN_Data,LLN_variable,Frame
 import numpy as np
-from pysrc.ancillary.load_file.DataClass import SHC,GRID
+from lib.SaGEA.data_class.DataClass import SHC,GRID
 import time
 
 
@@ -336,7 +336,7 @@ def demo1():
     quick_fig(grid=(Load_Grid),lat=lat,lon=lon,maxvalue=1,unit="EWH (m)")
 
 def demo2():
-    from pysrc.sealevel_equation.SeaLevelEquation_Old import SpectralSLE
+    from pysrc.SAL.SeaLevelEquation_Old import SpectralSLE
     from pysrc.ancillary.load_file.LoadCS import LoadCS
     import netCDF4 as nc
     from datetime import date

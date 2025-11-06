@@ -1,13 +1,13 @@
-from SaGEA.auxiliary.aux_tool.FileTool import FileTool
-from SaGEA.auxiliary.aux_tool.MathTool import MathTool
-from SaGEA.auxiliary.load_file.LoadL2SH import load_SHC
-from SaGEA.auxiliary.preference.Constants import GeoConstants,EarthConstant
+from lib.SaGEA.auxiliary.aux_tool.FileTool import FileTool
+from lib.SaGEA.auxiliary.aux_tool.MathTool import MathTool
+from lib.SaGEA.auxiliary.load_file.LoadL2SH import load_SHC
+from lib.SaGEA.auxiliary.preference.Constants import GeoConstants,EarthConstant
 from pysrc.ancillary.geotools.LLN import LoveNumber,LLN_Data,LLN_variable,Frame
 import numpy as np
-from pysrc.ancillary.load_file.DataClass import SHC,GRID
+from lib.SaGEA.data_class.DataClass import SHC,GRID
 import time
-from SaGEA.post_processing.harmonic.Harmonic import Harmonic
-from SaGEA.auxiliary.preference.EnumClasses import Displacement,GreenFunction
+from lib.SaGEA.post_processing.harmonic.Harmonic import Harmonic
+from lib.SaGEA.auxiliary.preference.EnumClasses import Displacement,GreenFunction
 from pysrc.basis_func import PointLoad,DiskLoad
 
 
