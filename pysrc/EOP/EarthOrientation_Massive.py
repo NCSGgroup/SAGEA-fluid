@@ -384,8 +384,7 @@ class EOP_Massive:
 
 
 def demo_LoadForm():
-    import xarray as xr
-    from SaGEA.auxiliary.aux_tool.MathTool import MathTool
+    from lib.SaGEA.auxiliary.aux_tool.MathTool import MathTool
 
     from pysrc.ancillary.storage_file.StorageEOP import StorageEOP
 
@@ -442,8 +441,7 @@ def demo_LoadTrue():
 
 
 def demo_SaveFile():
-    import xarray as xr
-    from SaGEA.auxiliary.aux_tool.MathTool import MathTool
+    from lib.SaGEA.auxiliary.aux_tool.MathTool import MathTool
     # from tqdm import tqdm
     begin_date,end_date = '2000-01-01','2005-12-31'
     date_year = pd.date_range(start=begin_date,end=end_date,freq='YE').strftime("%Y").tolist()
