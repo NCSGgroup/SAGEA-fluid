@@ -1,12 +1,12 @@
 import numpy as np
 from pysrc.ancillary.constant.GeoConstant import GCMConstant
 from pysrc.ancillary.geotools.GeoMathKit import GeoMathKit
-from SaGEA.auxiliary.aux_tool.MathTool import MathTool
-from pysrc.ancillary.load_file.DataClass import SHC,GRID
-import SaGEA.auxiliary.preference.EnumClasses as Enums
-from pysrc.sealevel_equation.SeaLevelEquation import PseudoSpectralSLE
-from SaGEA.auxiliary.aux_tool.FileTool import FileTool
-from SaGEA.auxiliary.load_file.LoadL2SH import load_SHC
+from lib.SaGEA.auxiliary.aux_tool.MathTool import MathTool
+from lib.SaGEA.data_class.DataClass import SHC,GRID
+import lib.SaGEA.auxiliary.preference.EnumClasses as Enums
+from pysrc.SAL.SeaLevelEquation import PseudoSpectralSLE
+from lib.SaGEA.auxiliary.aux_tool.FileTool import FileTool
+from lib.SaGEA.auxiliary.load_file.LoadL2SH import load_SHC
 from pysrc.ancillary.geotools.LLN import LoveNumber
 import time
 
@@ -46,7 +46,7 @@ class GeocenterMotion:
         self.lat,self.lon = MathTool.get_global_lat_lon_range(self.res)
 
         self.LLN_method = Enums.LLN_Data.PREM
-        self.frame = Enums.Frame.CM
+        self.frame = Enums.Frame.CE
     def setResolution(self,resolution):
         self.res = resolution
         self.lat,self.lon = MathTool.get_global_lat_lon_range(resolution)
