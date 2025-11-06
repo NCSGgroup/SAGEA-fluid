@@ -1,7 +1,7 @@
 import os
 import numpy as np
 from datetime import date
-from pysrc.ancillary.load_file.DataClass import SHC
+from lib.SaGEA.data_class.DataClass import SHC
 
 
 class CnmSnm:

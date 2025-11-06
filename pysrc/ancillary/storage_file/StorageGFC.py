@@ -1,7 +1,7 @@
 import os
 import numpy as np
 from datetime import date
-from pysrc.ancillary.load_file.DataClass import SHC
+from lib.SaGEA.data_class.DataClass import SHC
 
 
 class CnmSnm:
@@ -134,10 +134,10 @@ class StorageGFC:
 
 def demo_SLE():
     import netCDF4 as nc
-    from SaGEA.auxiliary.aux_tool.FileTool import FileTool
+    from lib.SaGEA.auxiliary.aux_tool.FileTool import FileTool
     from pysrc.ancillary.load_file.LoadCS import LoadCS
-    from SaGEA.auxiliary.aux_tool.MathTool import MathTool
-    from pysrc.sealevel_equation.SpectralSeaLevel import PseudoSpectralSLE
+    from lib.SaGEA.auxiliary.aux_tool.MathTool import MathTool
+    from pysrc.SAL.SpectralSeaLevel import PseudoSpectralSLE
     from pysrc.ancillary.geotools.LLN import LLN_Data,Frame
     res = 0.5
     ocean_mask = nc.Dataset("../../data/ref_sealevel/ocean_mask.nc")['ocean_mask'][:]

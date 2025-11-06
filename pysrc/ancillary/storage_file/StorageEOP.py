@@ -146,9 +146,8 @@ class StorageEOP:
 
 
 def demo_without_demean():
-    import xarray as xr
-    from pysrc.earth_rotation.EarthOrientation_Massive import EOP_Massive
-    from SaGEA.auxiliary.aux_tool.MathTool import MathTool
+    from pysrc.EOP.EarthOrientation_Massive import EOP_Massive
+    from lib.SaGEA.auxiliary.aux_tool.MathTool import MathTool
     # from tqdm import tqdm
     begin_date,end_date = '2000-01-01','2005-12-31'
     date_year = pd.date_range(start=begin_date,end=end_date,freq='YE').strftime("%Y").tolist()
@@ -185,9 +184,8 @@ def demo_without_demean():
         b.EOPstyle_ByProduct()
 
 def demo_with_demean():
-    import xarray as xr
-    from pysrc.earth_rotation.EarthOrientation_Massive import EOP_Massive
-    from SaGEA.auxiliary.aux_tool.MathTool import MathTool
+    from pysrc.EOP.EarthOrientation_Massive import EOP_Massive
+    from lib.SaGEA.auxiliary.aux_tool.MathTool import MathTool
     # from tqdm import tqdm
     begin_date,end_date = '2000-01-01','2005-12-31'
     mean_EOP = {'mass_chi1':0,'mass_chi2':0,'mass_chi3':0,
