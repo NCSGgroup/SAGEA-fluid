@@ -12,7 +12,7 @@ from multiprocessing.pool import Pool
 
 import numpy as np
 
-from pysrc.aliasing_model.geoheight.InnerIntegral import InnerIntegral, GeopotentialHeight, LoadFields
+from pysrc.AD.geoheight.InnerIntegral import InnerIntegral, GeopotentialHeight, LoadFields
 from pysrc.ancillary.constant.Setting import InterpOption, IntegralChoice, Constants
 
 

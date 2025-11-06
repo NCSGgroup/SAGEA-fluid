@@ -11,9 +11,9 @@ import json
 
 import numpy as np
 
-from pysrc.aliasing_model.geoheight.GeoidUndulation import GeoidUndulation
-from pysrc.aliasing_model.geoheight.GeopotentialHeight import GeopotentialHeight, LoadFields
-from pysrc.aliasing_model.geoheight.RefEllipsoid import RefEllipsoid
+from pysrc.AD.geoheight.GeoidUndulation import GeoidUndulation
+from pysrc.AD.geoheight.GeopotentialHeight import GeopotentialHeight, LoadFields
+from pysrc.AD.geoheight.RefEllipsoid import RefEllipsoid
 from pysrc.ancillary.constant.Setting import IntegralChoice, EllipsoidType, Constants
 
 

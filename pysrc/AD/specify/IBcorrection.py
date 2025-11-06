@@ -11,10 +11,10 @@ import numpy as np
 # import pyshtools as pysh
 # from netCDF4 import Dataset
 
-from SaGEA.post_processing.geometric_correction.old.GeoMathKit import GeoMathKit
-from pysrc.aliasing_model.specify.Harmonic import Harmonic, SynthesisType
+from lib.SaGEA.post_processing.geometric_correction.old.GeoMathKit import GeoMathKit
+from pysrc.AD.specify.Harmonic import Harmonic, SynthesisType
 from pysrc.ancillary.load_file.LoadAOD import SimpleSH
-from SaGEA.post_processing.geometric_correction.old.LoveNumber import LoveNumberType, LoveNumber
+from lib.SaGEA.post_processing.geometric_correction.old.LoveNumber import LoveNumberType, LoveNumber
 
 
 class LandSeaMask:

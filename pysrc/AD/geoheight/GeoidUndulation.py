@@ -9,12 +9,12 @@
 
 import numpy as np
 
-from pysrc.aliasing_model.specify.Harmonic import Harmonic
+from pysrc.AD.specify.Harmonic import Harmonic
 from pysrc.ancillary.load_file.LoadSH import LoadSH, Gif48
-from pysrc.aliasing_model.specify.LoveNumber import LoveNumber
-from pysrc.aliasing_model.geoheight.RefEllipsoid import EllipsoidType, RefEllipsoid
+from pysrc.AD.specify.LoveNumber import LoveNumber
+from pysrc.AD.geoheight.RefEllipsoid import EllipsoidType, RefEllipsoid
 from pysrc.ancillary.constant.Setting import SynthesisType, LoveNumberType
-from pysrc.aliasing_model.specify.GeoMathKit import GeoMathKit
+from pysrc.AD.specify.GeoMathKit import GeoMathKit
 
 
 class GeoidUndulation:
