@@ -4,21 +4,21 @@ import xarray as xr
 import pandas as pd
 from datetime import date
 
-from SaGEA.auxiliary.aux_tool.MathTool import MathTool
-from SaGEA.auxiliary.aux_tool.TimeTool import TimeTool
-from SaGEA.auxiliary.load_file.LoadL2LowDeg import load_low_degs
-from SaGEA.post_processing.harmonic.Harmonic import Harmonic
-from SaGEA.auxiliary.aux_tool.FileTool import FileTool
-from SaGEA.auxiliary.load_file.LoadL2SH import load_SHC
-import SaGEA.auxiliary.preference.EnumClasses as Enums
+from lib.SaGEA.auxiliary.aux_tool.MathTool import MathTool
+from lib.SaGEA.auxiliary.aux_tool.TimeTool import TimeTool
+from lib.SaGEA.auxiliary.load_file.LoadL2LowDeg import load_low_degs
+from lib.SaGEA.post_processing.harmonic.Harmonic import Harmonic
+from lib.SaGEA.auxiliary.aux_tool.FileTool import FileTool
+from lib.SaGEA.auxiliary.load_file.LoadL2SH import load_SHC
+import lib.SaGEA.auxiliary.preference.EnumClasses as Enums
 
-from pysrc.aliasing_model.specify.IBcorrection import IBcorrection
-from pysrc.ancillary.load_file.DataClass import GRID, SHC
-from pysrc.earth_rotation.EarthOrientaition import EOP
+from pysrc.AD.specify.IBcorrection import IBcorrection
+from lib.SaGEA.data_class.DataClass import GRID, SHC
+from pysrc.EOP.EarthOrientaition import EOP
 from pysrc.ancillary.constant.Setting import EAMtype
 from tqdm import tqdm
 
-from pysrc.sealevel_equation.SeaLevelEquation import PseudoSpectralSLE
+from pysrc.SAL.SeaLevelEquation import PseudoSpectralSLE
 
 
 def demo_PM_mass_term():

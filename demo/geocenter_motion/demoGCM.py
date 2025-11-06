@@ -2,14 +2,14 @@ import os
 import numpy as np
 import xarray as xr
 from datetime import date
-import SaGEA.auxiliary.preference.EnumClasses as Enums
-from SaGEA.auxiliary.aux_tool.FileTool import FileTool
-from SaGEA.auxiliary.aux_tool.TimeTool import TimeTool
-from SaGEA.auxiliary.load_file.LoadL2SH import load_SHC
+import lib.SaGEA.auxiliary.preference.EnumClasses as Enums
+from lib.SaGEA.auxiliary.aux_tool.FileTool import FileTool
+from lib.SaGEA.auxiliary.aux_tool.TimeTool import TimeTool
+from lib.SaGEA.auxiliary.load_file.LoadL2SH import load_SHC
 from pysrc.ancillary.geotools.GeoMathKit import GeoMathKit
-from pysrc.ancillary.load_file.DataClass import GRID
-from pysrc.geocenter_motion.GeocenterMotion import GeocenterMotion
-from pysrc.geocenter_motion.EarthOblateness import J2
+from lib.SaGEA.data_class.DataClass import GRID
+from pysrc.GCM.GeocenterMotion import GeocenterMotion
+from pysrc.GCM.EarthOblateness import J2
 
 
 def demo_GCM():

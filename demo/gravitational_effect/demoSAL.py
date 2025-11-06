@@ -3,21 +3,22 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 from datetime import date
-import SaGEA.auxiliary.preference.EnumClasses as Enums
-from SaGEA.auxiliary.aux_tool.FileTool import FileTool
-from SaGEA.auxiliary.aux_tool.TimeTool import TimeTool
-from SaGEA.auxiliary.aux_tool.MathTool import MathTool
-from SaGEA.auxiliary.load_file.LoadL2LowDeg import load_low_degs
-from SaGEA.auxiliary.load_file.LoadL2SH import load_SHC
+import lib.SaGEA.auxiliary.preference.EnumClasses as Enums
+from lib.SaGEA.auxiliary.aux_tool.FileTool import FileTool
+from lib.SaGEA.auxiliary.aux_tool.TimeTool import TimeTool
+from lib.SaGEA.auxiliary.aux_tool.MathTool import MathTool
+from lib.SaGEA.auxiliary.load_file.LoadL2LowDeg import load_low_degs
+from lib.SaGEA.auxiliary.load_file.LoadL2SH import load_SHC
 
-from pysrc.aliasing_model.specify.IBcorrection import IBcorrection
-from pysrc.ancillary.load_file.DataClass import GRID, SHC
-from pysrc.sealevel_equation.SeaLevelEquation import PseudoSpectralSLE
+from pysrc.AD.specify.IBcorrection import IBcorrection
+from lib.SaGEA.data_class.DataClass import GRID, SHC
+from pysrc.SAL.SeaLevelEquation import PseudoSpectralSLE
 from tqdm import tqdm
-from SaGEA.post_processing.harmonic.Harmonic import Harmonic
+from lib.SaGEA.post_processing.harmonic.Harmonic import Harmonic
 def demo_NM():
     """This is an example for computing SAL effect using numerical model, i.e., ERA5 surface pressure and ECCO ocean bottom pressure"""
 
+    '''Setting configuration for loading numerical models'''
     lmax, res, grace_lmax = 180, 0.5, 60
     begin_date, end_date = date(2009, 1, 1), date(2009, 12, 31)
     begin_str, end_str = begin_date.strftime("%Y-%m"), end_date.strftime("%Y-%m")
@@ -53,6 +54,8 @@ def demo_NM():
     OBP_SH_N = np.array(OBP_SH)
     OBP_SH_N = SHC(c=OBP_SH_N)
     OBP_SH_N.de_background()
+
+    '''Run SAL module'''
 
     lat, lon = MathTool.get_global_lat_lon_range(resolution=res)
     ATM_SAL = PseudoSpectralSLE(SH=ASP_SH.value, lmax=lmax)
@@ -139,6 +142,7 @@ def demo_GO():
     shc.filter(method=filter_method, param=filter_params)  # average filter
 
     lat, lon = MathTool.get_global_lat_lon_range(resolution=res)
+    '''Run SAL module'''
     SAL = PseudoSpectralSLE(SH=shc.value, lmax=lmax)
     SAL.setLoveNumber(lmax=lmax, method=Enums.LLN_Data.Wang, frame=Enums.Frame.CM)
     SAL.setLatLon(lat=lat, lon=lon)
@@ -160,4 +164,4 @@ def demo_GO():
 
 if __name__ == '__main__':
     demo_GO()
-    # demo_NM()
+    demo_NM()
