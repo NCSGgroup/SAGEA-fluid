@@ -8,6 +8,8 @@
 """
 
 import numpy as np
+
+from lib.SaGEA.auxiliary.aux_tool.FileTool import FileTool
 # import pyshtools as pysh
 # from netCDF4 import Dataset
 
@@ -103,12 +105,13 @@ class LandSeaMask:
         :return:
         """
         lmax = 360
-        SHC, SHS = SimpleSH().load('../../../data/auxiliary/ocean360_grndline.sh').getCS_old(lmax)
+        aux_path = FileTool.get_project_dir("data/")
+        SHC, SHS = SimpleSH().load(f'{aux_path}/auxiliary/ocean360_grndline.sh').getCS_old(lmax)
 
         # lat = np.arange(89.75, -90, -0.5)
         # lon = np.arange(0.25, 360, 0.5)
 
-        LN = LoveNumber('../../../data/LLN/')
+        LN = LoveNumber(f'{aux_path}/LLN/')
         hm = Harmonic(LN).setLoveNumMethod(LoveNumberType.Wang)
         PnmMat = GeoMathKit.getPnmMatrix(self.__lat, lmax, 2)
         grids = hm.synthesis(Cqlm=SHC, Sqlm=SHS, lat=self.__lat, lon=self.__lon, Nmax=lmax, PnmMat=PnmMat,kind=SynthesisType.synthesis)
