@@ -47,14 +47,7 @@ def demo_PM_mass_term():
         temp_asp = np.roll(temp_atmos['sp'].values,shift=shift_amount,axis=2)
         atmos_lat,atmos_lon = temp_atmos['latitude'].values,temp_atmos['longitude'].values-180
 
-
-        # ib_lat,ib_lon = MathTool.get_global_lat_lon_range(resolution=res)
-        # ib_lat,ib_lon = np.array(atmos_lat),np.array(atmos_lon)
-
-
-
         ib = IBcorrection(lat=atmos_lat, lon=atmos_lon)
-
         asp_ib_f = ib.correct(grids=temp_asp.flatten())
         asp_ib = asp_ib_f.reshape(len(temp_asp[:,0,0]),len(temp_asp[0,:,0]),len(temp_asp[0,0,:]))
 
