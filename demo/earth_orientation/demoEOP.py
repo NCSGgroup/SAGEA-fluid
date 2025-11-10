@@ -1,5 +1,6 @@
 import os
 import numpy as np
+# import netCDF4 as nc
 import xarray as xr
 import pandas as pd
 from datetime import date
@@ -39,10 +40,21 @@ def demo_PM_mass_term():
         OBP_SH.append(temp_obp.value[0])
 
         year,month = i.split('-')[0],i.split('-')[1]
+        # temp_atmos = nc.Dataset(f"../../data/ERA5/pressure level/sp-{year}{month}.nc")
+        # temp_asp = np.roll(temp_atmos['sp'][:],shift=shift_amount,axis=2)
+        # atmos_lat, atmos_lon = temp_atmos['latitude'][:], temp_atmos['longitude'][:] - 180
         temp_atmos = xr.open_dataset(f"../../data/ERA5/pressure level/sp-{year}{month}.nc")
         temp_asp = np.roll(temp_atmos['sp'].values,shift=shift_amount,axis=2)
         atmos_lat,atmos_lon = temp_atmos['latitude'].values,temp_atmos['longitude'].values-180
+
+
+        # ib_lat,ib_lon = MathTool.get_global_lat_lon_range(resolution=res)
+        # ib_lat,ib_lon = np.array(atmos_lat),np.array(atmos_lon)
+
+
+
         ib = IBcorrection(lat=atmos_lat, lon=atmos_lon)
+
         asp_ib_f = ib.correct(grids=temp_asp.flatten())
         asp_ib = asp_ib_f.reshape(len(temp_asp[:,0,0]),len(temp_asp[0,:,0]),len(temp_asp[0,0,:]))
 
@@ -264,7 +276,7 @@ def demo_LOD_motion_term():
 
 
 if __name__ == '__main__':
-    # demo_PM_mass_term()
-    # demo_PM_motion_term()
-    # demo_LOD_mass_term()
+    demo_PM_mass_term()
+    demo_PM_motion_term()
+    demo_LOD_mass_term()
     demo_LOD_motion_term()
