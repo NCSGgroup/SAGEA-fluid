@@ -13,7 +13,7 @@ sys.path.append('../Configure')
 
 from lib.SaGEA.post_processing.geometric_correction.old.GeoMathKit import GeoMathKit
 from scipy import signal
-from pysrc.ancillary.load_file.LoadAOD import LoadFields, DataType
+from pysrc.ancillary.load_file.LoadFields import LoadFields, DataType
 from pysrc.AD.specify.Harmonic import Harmonic, LoveNumber, LoveNumberType, HarAnalysisType
 from pysrc.ancillary.storage_file.StorageAOD import FormatWrite, CnmSnm
 from pysrc.AD.geoheight.SurPres2CS import SurPres2CS, RefEllipsoid, EllipsoidType

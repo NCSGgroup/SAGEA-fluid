@@ -11,7 +11,7 @@ from lib.SaGEA.post_processing.geometric_correction.old.GeoMathKit import GeoMat
 from pysrc.AD.specify.Harmonic import Harmonic
 from lib.SaGEA.post_processing.geometric_correction.old.LoveNumber import LoveNumber
 from lib.SaGEA.post_processing.geometric_correction.old.RefEllipsoid import RefEllipsoid
-from lib.SaGEA.post_processing.geometric_correction.old.Setting import LoveNumberType, Constants, HarAnalysisType
+from lib.SaGEA.post_processing.geometric_correction.old.Setting import LoveNumberType, Constants, HarAnalysisType,EllipsoidType
 
 
 class SurPres2CS:

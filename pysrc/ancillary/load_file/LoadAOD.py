@@ -655,10 +655,10 @@ def demo4():
     read AOD tides
     :return:
     """
-    ad = AODtides().load('../data/Products/RL06_tides').setInfo(tide=TidesType.S1, kind=AODtype.OCN, sincos='sin')
-    C, S = ad.getCS(ad.maxDegree)
+    ad = AODtides().load("I:\GFZ\AOD1B06/TIDES/").setInfo(tide=TidesType.S1, kind=AODtype.ATM, sincos='sin')
+    C, S = ad.getCS_old(ad.maxDegree)
     pass
 
 
 if __name__ == '__main__':
-    demo3()
+    demo4()
