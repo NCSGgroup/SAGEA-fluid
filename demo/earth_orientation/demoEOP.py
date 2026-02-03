@@ -8,15 +8,16 @@ from datetime import date
 from lib.SaGEA.auxiliary.aux_tool.MathTool import MathTool
 from lib.SaGEA.auxiliary.aux_tool.TimeTool import TimeTool
 from lib.SaGEA.auxiliary.load_file.LoadL2LowDeg import load_low_degs
-from lib.SaGEA.post_processing.harmonic.Harmonic import Harmonic
+from pysrc.SaKits.LoadFunc.Harmonic import Harmonic
 from lib.SaGEA.auxiliary.aux_tool.FileTool import FileTool
 from lib.SaGEA.auxiliary.load_file.LoadL2SH import load_SHC
 import lib.SaGEA.auxiliary.preference.EnumClasses as Enums
-
-from pysrc.AD.specify.IBcorrection import IBcorrection
-from lib.SaGEA.data_class.DataClass import GRID, SHC
-from pysrc.EOP.EarthOrientaition import EOP
-from pysrc.ancillary.constant.Setting import EAMtype
+import pysrc.SaKits.Setting.EnumClasses as EOPEnums
+from lib.AOD.IBcorrection.IBcorrection import IBcorrection
+from lib.SaGEA.data_class.SHC import SHC
+from lib.SaGEA.data_class.GRD import GRD
+from pysrc.EOP.EarthOrientation import EOP
+from pysrc.SaKits.Setting.EnumClasses import EAMtype
 from tqdm import tqdm
 
 from pysrc.SAL.SeaLevelEquation import PseudoSpectralSLE
@@ -36,7 +37,7 @@ def demo_PM_mass_term():
         temp_ocean = xr.open_dataset(f"../../data/ECCO/OBP/OCEAN_BOTTOM_PRESSURE_mon_mean_{i}_ECCO_V4r4b_latlon_0p50deg.nc")
         temp_obp = temp_ocean['OBP'].values
         temp_obp = np.nan_to_num(temp_obp,nan=0)
-        temp_obp = GRID(grid=temp_obp,lat=temp_ocean['latitude'].values,lon=temp_ocean['longitude'].values).to_SHC(lmax=lmax)
+        temp_obp = GRD(grid=temp_obp,lat=temp_ocean['latitude'].values,lon=temp_ocean['longitude'].values).to_SHC(lmax=lmax)
         OBP_SH.append(temp_obp.value[0])
 
         year,month = i.split('-')[0],i.split('-')[1]
@@ -180,7 +181,7 @@ def demo_LOD_mass_term():
     '''load ocean mask'''
     basin_path_SH = FileTool.get_project_dir("data/basin_mask/SH/Ocean_maskSH.dat")
     shc_basin = load_SHC(basin_path_SH, key='', lmax=grace_lmax)
-    grid_basin = shc_basin.to_grid(grid_space=res)
+    grid_basin = shc_basin.to_GRD(grid_space=res)
     grid_basin.limiter(threshold=0.5)
     mask_ocean = grid_basin.value[0]
 
@@ -188,14 +189,14 @@ def demo_LOD_mass_term():
 
     '''Get RSL'''
     SAL = PseudoSpectralSLE(SH=shc.value,lmax=lmax)
-    SAL.setLoveNumber(lmax=lmax,method=Enums.LLN_Data.Wang,frame=Enums.Frame.CM)
+    SAL.setLoveNumber(lmax=lmax,method=EOPEnums.LLN_Data.Wang,frame=EOPEnums.Frame.CM)
     SAL.setLatLon(lat=lat,lon=lon)
     RSL = SAL.SLE(mask=mask_ocean,rotation=True,isLand=True)['RSL_SH']
     RSL_SH = SHC(c=RSL).convert_type(from_type=Enums.PhysicalDimensions.EWH,to_type=Enums.PhysicalDimensions.Dimensionless)
 
-    GSM_grid = shc.to_grid(res)
+    GSM_grid = shc.to_GRD(res)
     GSM_grid = GSM_grid.value * (1-mask_ocean)
-    GSM_SH = GRID(grid=GSM_grid, lat=lat, lon=lon).to_SHC(lmax=grace_lmax)
+    GSM_SH = GRD(grid=GSM_grid, lat=lat, lon=lon).to_SHC(lmax=grace_lmax)
     GSM_Stokes = GSM_SH.convert_type(from_type=Enums.PhysicalDimensions.EWH,to_type=Enums.PhysicalDimensions.Dimensionless)
 
 

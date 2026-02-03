@@ -6,10 +6,11 @@ import lib.SaGEA.auxiliary.preference.EnumClasses as Enums
 from lib.SaGEA.auxiliary.aux_tool.FileTool import FileTool
 from lib.SaGEA.auxiliary.aux_tool.TimeTool import TimeTool
 from lib.SaGEA.auxiliary.load_file.LoadL2SH import load_SHC
-from pysrc.ancillary.geotools.GeoMathKit import GeoMathKit
-from lib.SaGEA.data_class.DataClass import GRID
+from pysrc.SaKits.Setting.GeoMathKit import GeoMathKit
+from lib.SaGEA.data_class.GRD import GRD
 from pysrc.GCM.GeocenterMotion import GeocenterMotion
 from pysrc.GCM.EarthOblateness import J2
+import pysrc.SaKits.Setting.EnumClasses as GCMEnums
 
 
 def demo_GCM():
@@ -53,7 +54,7 @@ def demo_GCM():
     oceanlat = temp['latitude'].values[int(res)::int(res*2)]
     oceanlon = temp['longitude'].values[int(res)::int(res*2)]
 
-    OceanSH = GRID(grid=OceanGrid,lat=oceanlat,lon=oceanlon).to_SHC(lmax=lmax)
+    OceanSH = GRD(grid=OceanGrid,lat=oceanlat,lon=oceanlon).to_SHC(lmax=lmax)
     OceanSH.convert_type(from_type=Enums.PhysicalDimensions.EWH,to_type=Enums.PhysicalDimensions.Density)
     '''Processing'''
     shc.subtract(shc_gia)
@@ -68,8 +69,8 @@ def demo_GCM():
 
     GCM = GeocenterMotion(GRACE=shc.value,OceanSH=OceanSH.value,GAD=shc_gac.value,lmax=lmax)
     GCM.setResolution(resolution=res)
-    GSM_like = GCM.GSM_Like(mask=mask,GRD=False,rotation=False,buffer=buffer_width)
-    full_geocenter = GCM.Full_Geocenter(GAC=shc_gad.value,mask=mask,GRD=False)
+    GSM_like = GCM.GSM_Like(mask=mask,SAL=False,rotation=False,buffer=buffer_width)
+    full_geocenter = GCM.Full_Geocenter(GAC=shc_gad.value,mask=mask,SAL=False)
 
     GCM_like_X,GCM_like_Y,GCM_like_Z = GSM_like['X']*1000,GSM_like['Y']*1000,GSM_like['Y']*1000
     GCM_full_X,GCM_full_Y,GCM_full_Z = full_geocenter['X']*1000,full_geocenter['Y']*1000,full_geocenter['Z']*1000
@@ -131,7 +132,7 @@ def demo_J2():
     oceanlat = temp['latitude'].values[int(res)::int(res * 2)]
     oceanlon = temp['longitude'].values[int(res)::int(res * 2)]
 
-    OceanSH = GRID(grid=OceanGrid, lat=oceanlat, lon=oceanlon).to_SHC(lmax=lmax)
+    OceanSH = GRD(grid=OceanGrid, lat=oceanlat, lon=oceanlon).to_SHC(lmax=lmax)
     OceanSH.convert_type(from_type=Enums.PhysicalDimensions.EWH, to_type=Enums.PhysicalDimensions.Density)
     '''Processing'''
     shc.subtract(shc_gia)
@@ -146,8 +147,8 @@ def demo_J2():
 
     LD= J2(GRACE=shc.value, OceanSH=OceanSH.value, GAD=shc_gac.value, lmax=lmax)
     LD.setResolution(resolution=res)
-    LD.setLoveNumber(method=Enums.LLN_Data.Wang,frame=Enums.Frame.CM)
-    C20 = LD.Low_Degree_Term(mask=mask, GRD=True,rotation=False ,buffer=buffer_width)['Stokes']['C20']
+    LD.setLoveNumber(method=GCMEnums.LLN_Data.Wang,frame=GCMEnums.Frame.CM)
+    C20 = LD.Low_Degree_Term(mask=mask, SAL=True,rotation=False ,buffer=buffer_width)['Stokes']['C20']
 
 
     print(f"The C20 estimated by SAGEA-fluid is:\n{C20}")

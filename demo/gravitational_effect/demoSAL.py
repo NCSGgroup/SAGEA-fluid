@@ -4,17 +4,20 @@ import pandas as pd
 import xarray as xr
 from datetime import date
 import lib.SaGEA.auxiliary.preference.EnumClasses as Enums
+import pysrc.SaKits.Setting.EnumClasses as SALEnums
 from lib.SaGEA.auxiliary.aux_tool.FileTool import FileTool
 from lib.SaGEA.auxiliary.aux_tool.TimeTool import TimeTool
 from lib.SaGEA.auxiliary.aux_tool.MathTool import MathTool
 from lib.SaGEA.auxiliary.load_file.LoadL2LowDeg import load_low_degs
 from lib.SaGEA.auxiliary.load_file.LoadL2SH import load_SHC
 
-from pysrc.AD.specify.IBcorrection import IBcorrection
-from lib.SaGEA.data_class.DataClass import GRID, SHC
+from lib.AOD.IBcorrection import IBcorrection
+from lib.SaGEA.data_class.GRD import GRD
+# from lib.SaGEA.data_class.SHC import SHC
+from pysrc.SaKits.LoadFile.SHC import SHC
 from pysrc.SAL.SeaLevelEquation import PseudoSpectralSLE
 from tqdm import tqdm
-from lib.SaGEA.post_processing.harmonic.Harmonic import Harmonic
+from pysrc.SaKits.LoadFunc.Harmonic import Harmonic
 def demo_NM():
     """This is an example for computing SAL effect using numerical model, i.e., ERA5 surface pressure and ECCO ocean bottom pressure"""
 
@@ -30,7 +33,7 @@ def demo_NM():
         temp_obp = temp_ocean['OBP'].values
         temp_obp = np.nan_to_num(temp_obp, nan=0)
         ocean_lat,ocean_lon = temp_ocean['latitude'].values,temp_ocean['longitude'].values
-        temp_obp = GRID(grid=temp_obp, lat=ocean_lat, lon=ocean_lon).to_SHC(lmax=lmax)
+        temp_obp = GRD(grid=temp_obp, lat=ocean_lat, lon=ocean_lon).to_SHC(lmax=lmax)
         OBP_SH.append(temp_obp.value[0])
 
         year, month = i.split('-')[0], i.split('-')[1]
@@ -59,24 +62,24 @@ def demo_NM():
 
     lat, lon = MathTool.get_global_lat_lon_range(resolution=res)
     ATM_SAL = PseudoSpectralSLE(SH=ASP_SH.value, lmax=lmax)
-    ATM_SAL.setLoveNumber(lmax=lmax, method=Enums.LLN_Data.PREM, frame=Enums.Frame.CM)
+    ATM_SAL.setLoveNumber(lmax=lmax, method=SALEnums.LLN_Data.Wang, frame=SALEnums.Frame.CM)
     ATM_SAL.setLatLon(lat=lat, lon=lon)
     ATM_SAL_results = ATM_SAL.SLE(mask=None, rotation=True, isLand=False)
 
     OCN_SAL = PseudoSpectralSLE(SH=OBP_SH_N.value, lmax=lmax)
-    OCN_SAL.setLoveNumber(lmax=lmax, method=Enums.LLN_Data.PREM, frame=Enums.Frame.CM)
+    OCN_SAL.setLoveNumber(lmax=lmax, method=SALEnums.LLN_Data.Wang, frame=SALEnums.Frame.CM)
     OCN_SAL.setLatLon(lat=lat, lon=lon)
     OCN_SAL_results = OCN_SAL.SLE(mask=None, rotation=True, isLand=False)
 
-    ATM_RSL = SHC(c=ATM_SAL_results['RSL_SH']).to_grid(res).value
-    ATM_GHC = SHC(c=ATM_SAL_results['GHC']).to_grid(res).value
-    ATM_VLM = SHC(c=ATM_SAL_results['VLM']).to_grid(res).value
+    ATM_RSL = SHC(c=ATM_SAL_results['RSL_SH']).to_GRD(res).value
+    ATM_GHC = SHC(c=ATM_SAL_results['GHC']).to_GRD(res).value
+    ATM_VLM = SHC(c=ATM_SAL_results['VLM']).to_GRD(res).value
 
 
 
-    OCN_RSL = SHC(c=OCN_SAL_results['RSL_SH']).to_grid(res).value
-    OCN_GHC = SHC(c=OCN_SAL_results['GHC']).to_grid(res).value
-    OCN_VLM = SHC(c=OCN_SAL_results['VLM']).to_grid(res).value
+    OCN_RSL = SHC(c=OCN_SAL_results['RSL_SH']).to_GRD(res).value
+    OCN_GHC = SHC(c=OCN_SAL_results['GHC']).to_GRD(res).value
+    OCN_VLM = SHC(c=OCN_SAL_results['VLM']).to_GRD(res).value
 
     print(f"shape of atmosphere RSL, GHC, VLM is:{ATM_RSL.shape},{ATM_GHC.shape},{ATM_VLM.shape}")
     print(f"shape of ocean RSL, GHC, VLM is:{OCN_RSL.shape},{OCN_GHC.shape},{OCN_VLM.shape}")
@@ -106,19 +109,19 @@ def demo_GO():
     '''load ocean mask'''
     basin_path_SH = FileTool.get_project_dir("data/basin_mask/SH/Ocean_maskSH.dat")
     shc_basin = load_SHC(basin_path_SH, key='', lmax=lmax)
-    grid_basin = shc_basin.to_grid(grid_space=res)
+    grid_basin = shc_basin.to_GRD(grid_space=res)
     grid_basin.limiter(threshold=0.5)
     mask_ocean = grid_basin.value[0]
     '''load Antarctica mask'''
     Antarc_path_SH = FileTool.get_project_dir("data/basin_mask/SH/Antarctica_maskSH.dat")
     shc_Antarc = load_SHC(Antarc_path_SH,key='',lmax=lmax)
-    grid_Antarc = shc_Antarc.to_grid(grid_space=res)
+    grid_Antarc = shc_Antarc.to_GRD(grid_space=res)
     grid_Antarc.limiter(threshold=0.5)
     mask_Antarc = grid_Antarc.value[0]
     '''load Greenland mask'''
     Grelan_path_SH = FileTool.get_project_dir("data/basin_mask/SH/Greenland_maskSH.dat")
     shc_Grelan = load_SHC(Grelan_path_SH,key='',lmax=lmax)
-    grid_Grelan = shc_Grelan.to_grid(grid_space=res)
+    grid_Grelan = shc_Grelan.to_GRD(grid_space=res)
     grid_Grelan.limiter(threshold=0.5)
     mask_Grelan = grid_Grelan.value[0]
 
@@ -144,13 +147,13 @@ def demo_GO():
     lat, lon = MathTool.get_global_lat_lon_range(resolution=res)
     '''Run SAL module'''
     SAL = PseudoSpectralSLE(SH=shc.value, lmax=lmax)
-    SAL.setLoveNumber(lmax=lmax, method=Enums.LLN_Data.Wang, frame=Enums.Frame.CF)
+    SAL.setLoveNumber(lmax=lmax, method=SALEnums.LLN_Data.Wang, frame=SALEnums.Frame.CM)
     SAL.setLatLon(lat=lat, lon=lon)
     SAL_results = SAL.SLE(mask=mask_ocean,rotation=True,isLand=True)
 
-    RSL = SHC(c=SAL_results['RSL_SH']).to_grid(res).value
-    GHC = SHC(c=SAL_results['GHC']).to_grid(res).value
-    VLM = SHC(c=SAL_results['VLM']).to_grid(res).value
+    RSL = SHC(c=SAL_results['RSL_SH']).to_GRD(res).value
+    GHC = SHC(c=SAL_results['GHC']).to_GRD(res).value
+    VLM = SHC(c=SAL_results['VLM']).to_GRD(res).value
     print(f"shape of RSL, GHC, VLM is:{RSL.shape},{GHC.shape},{VLM.shape}")
 
     save_path = '../../result/SAL/'
