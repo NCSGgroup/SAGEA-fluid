@@ -1,6 +1,6 @@
 import numpy as np
 
-from lib.SaGEA.data_class.DataClass import SHC
+from lib.SaGEA.data_class.SHC import SHC
 from lib.SaGEA.post_processing.filter.DDK import DDK
 
 

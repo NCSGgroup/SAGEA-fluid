@@ -179,8 +179,8 @@ class ReplaceLowDegree:
 
 
 def demo():
-    from pysrc.ancillary.load_file.LoadL2SH import LoadL2SH, TimeTool
-    from pysrc.ancillary.load_file.LoadL2LowDeg import LoadLowDegree, L2LowDegreeFileID
+    from lib.SaGEA.auxiliary.load_file.LoadL2SH import LoadL2SH, TimeTool
+    from lib.SaGEA.auxiliary.load_file.LoadL2LowDeg import LoadLowDegree, L2LowDegreeFileID
     import datetime
 
     load = LoadL2SH()

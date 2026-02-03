@@ -2,8 +2,8 @@ import copy
 
 import numpy as np
 
-from pysrc.data_class.DataClass import SHC
-from pysrc.ancillary.aux_tool.TimeTool import TimeTool
+from lib.SaGEA.data_class.SHC import SHC
+from lib.SaGEA.auxiliary.aux_tool.TimeTool import TimeTool
 
 
 class GIACorrectionSpectralConfig:

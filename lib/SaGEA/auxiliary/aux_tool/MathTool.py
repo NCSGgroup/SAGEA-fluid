@@ -1,9 +1,8 @@
 from enum import Enum
 
 import numpy as np
-from lib.SaGEA.auxiliary.preference.Constants import GeoConstants,EarthConstant
 
-import scipy.ndimage as ndi
+from lib.SaGEA.auxiliary.preference.Constants import GeoConstants
 
 
 class MathTool:
@@ -223,9 +222,9 @@ class MathTool:
             return np.array(cqlm), np.array(sqlm)
 
     @staticmethod
-    def  get_Legendre(lat, lmax: int, option=0):
+    def get_Legendre(lat, lmax: int, option=0):
         """
-        get legendre function up to degree/order lmax in Lat.
+        get associated legendre function up to degree/order lmax in Lat. Be careful that this applies the 4-pi normalizaton.
         :param lat: ndarray, co-latitude if option=0, unit[rad]; geophysical latitude if option = others, unit[degree]
         :param lmax: int, max degree
         :param option:
@@ -239,8 +238,6 @@ class MathTool:
             lsize = np.size(lat)
         else:
             lsize = 1
-
-        # print(f"input lat is: {lat}")
 
         pilm = np.zeros((lsize, lmax + 1, lmax + 1))
         pilm[:, 0, 0] = 1
@@ -318,7 +315,7 @@ class MathTool:
         :return: 3d-ndarray, indexes stand for (co-lat[rad], degree l, order m)
         """
 
-
+        # TODO Relationships can be used directly instead of recursively
 
         def a(nn, mm):
             return np.sqrt((2 * nn + 1) * (2 * nn - 1) / ((nn - mm) * (nn + mm)))
@@ -387,47 +384,10 @@ class MathTool:
         :param resolution: in unit [degree]
         :return: tuple with two elements of 1d-array, latitude and longitude range in unit [degree]
         """
-
         lat = np.arange(-90 + resolution / 2, 90 + resolution / 2, resolution)
-        # lon = np.arange(0 + resolution / 2, 360 + resolution / 2, resolution)
-
         lon = np.arange(-180 + resolution / 2, 180 + resolution / 2, resolution)
 
         return lat, lon
-    @staticmethod
-    def get_global_lat_lon_range_V2(resolution):
-        """
-        get geophysical latitude and longitude range with a given spatial resolution, i.e., the grid space.
-        :param resolution: in unit [degree]
-        :return: tuple with two elements of 1d-array, latitude and longitude range in unit [degree]
-        """
-
-        lat = np.arange(90, -90.01, -resolution)
-        lon = np.arange(0, 360, resolution)
-
-        return lat, lon
-
-
-    @staticmethod
-    def angular_distance(point1_lat, point1_lon, point2_lat, point2_lon):
-        """
-        Calculate the angular distance (degree) between two points, latitude  is not co-latitude.
-        :param point1_lat: [degree]
-        :param point1_lon: [degree]
-        :param point2_lat: [degree]
-        :param point2_lon: [degree]
-        :return: [degree]
-        """
-        beta1 = np.deg2rad(point1_lat)
-        alpha1 = np.deg2rad(point1_lon)
-        beta2 = np.deg2rad(point2_lat)
-        alpha2 = np.deg2rad(point2_lon)
-
-        m = np.cos(beta1) * np.cos(beta2) * np.cos(alpha1 - alpha2) + np.sin(beta1) * np.sin(beta2)
-        m[m > 1] = 1
-        m[m < -1] = -1
-        theta = np.arccos(m)
-        return np.rad2deg(theta)
 
     @staticmethod
     @DeprecationWarning
@@ -556,7 +516,7 @@ class MathTool:
         if len(y) == 1:
             y = y[0].reshape(-1, 1)
         else:
-            y = np.vstack(y).T
+            y = np.vstack(y)
 
         A = MathTool.get_design_matrix(function, t)
 
@@ -595,7 +555,6 @@ class MathTool:
 
         grid_shape = np.shape(grids[0])
 
-
         if lat is None:
             lat = np.linspace(-90, 90, grid_shape[0])
 
@@ -608,8 +567,6 @@ class MathTool:
         dlon = np.abs(lon_rad[1] - lon_rad[0])
 
         domega = np.sin(colat_rad) * dlat * dlon * radius_e ** 2
-        # print(np.sum(domega))
-        # print(lat)
 
         if for_square:
             integral = np.einsum('pij,i->p', grids, domega ** 2)
@@ -624,7 +581,15 @@ class MathTool:
 
     @staticmethod
     def get_acreage(basin):
-        acreage = MathTool.global_integral(np.array([basin]))[0]
+
+        assert len(basin.shape) in (2, 3)
+
+        if len(basin.shape) == 2:
+            acreage = MathTool.global_integral(np.array([basin]))[0]
+        elif len(basin.shape) == 3:
+            acreage = MathTool.global_integral(basin)
+        else:
+            assert False
 
         return acreage
 
@@ -673,6 +638,9 @@ class MathTool:
     @staticmethod
     def get_degree_rms(cqlm, sqlm):
         assert np.shape(cqlm) == np.shape(sqlm)
+        if len(np.shape(cqlm)) == 2:
+            cqlm = np.array([cqlm])
+            sqlm = np.array([sqlm])
 
         shape = np.shape(cqlm)
         lmax = np.shape(cqlm)[1] - 1
@@ -689,6 +657,9 @@ class MathTool:
     @staticmethod
     def get_degree_rss(cqlm, sqlm):
         assert np.shape(cqlm) == np.shape(sqlm)
+        if len(np.shape(cqlm)) == 2:
+            cqlm = np.array([cqlm])
+            sqlm = np.array([sqlm])
 
         shape = np.shape(cqlm)
         lmax = np.shape(cqlm)[1] - 1
@@ -703,59 +674,20 @@ class MathTool:
         return rss
 
     @staticmethod
-    def Convert_Mass_to_Coordinates(C10, C11, S11):
-        k1 = 0.021
-        rho_earth = EarthConstant.rhoear
-        X = np.sqrt(3) * (1 + k1) * C11 / rho_earth
-        Y = np.sqrt(3) * (1 + k1) * S11 / rho_earth
-        Z = np.sqrt(3) * (1 + k1) * C10 / rho_earth
-        Coordinate = {"X": X, "Y": Y, "Z": Z}
-        return Coordinate
-    @staticmethod
-    def Convert_Stokes_to_Coordinates(C10, C11, S11):
-        X = np.sqrt(3) * EarthConstant.radiusm * C11
-        Y = np.sqrt(3) * EarthConstant.radiusm * S11
-        Z = np.sqrt(3) * EarthConstant.radiusm * C10
-        Coordinate = {"X": X, "Y": Y, "Z": Z}
-        return Coordinate
+    def get_cumulative_rss(cqlm, sqlm):
+        assert np.shape(cqlm) == np.shape(sqlm)
+        rss = MathTool.get_degree_rss(cqlm, sqlm)
+        crss = np.zeros_like(rss)
+        for i in range(rss.shape[1]):
+            crss[:, i] = np.sqrt(np.sum(rss[:, :i + 1] ** 2, axis=1))
 
-    @staticmethod
-    def leakage(ocean_mask, lats, buffer_width_km):
-        """
-        parameters:
-        ocean_mask: 2D numpy (ocean=1, land=0)
-        lats: (1D)
-        lons: (1D)
-        buffer_width_km: km
+        return crss
 
-        return:
-        corrected_mask
-        """
-        if buffer_width_km <=0:
-            corrected_mask = ocean_mask
-        else:
-            # 1. compute grid resolution
-            dy = 111.32  # 1 degre of lat ≈ 111.32 km
-            dx_at_equator = 111.32  # 1 degree longitude in equator ≈ 111.32 km
-            # 2. mean grid resolution
-            mean_lat = np.mean(lats)
-            dx = dx_at_equator * np.cos(np.deg2rad(mean_lat))
-            mean_resolution_km = np.sqrt(dx ** 2 + dy ** 2) / 2  # approximately mean grid resolution
-            # 3. the points of buffer
-            buffer_cells = int(np.ceil(buffer_width_km / mean_resolution_km))
-            # 4. find the boundary
-            land = (ocean_mask == 0).astype(int)
-            structure = ndi.generate_binary_structure(2, 2)  # 8连通结构(3x3)
-            dilated_land = ndi.binary_dilation(land, structure=structure, iterations=buffer_cells)
-            # 5. correct mask
-            buffer_zone = dilated_land & (ocean_mask == 1)
-            corrected_mask = ocean_mask.copy()
-            corrected_mask[buffer_zone] = 0
-        return corrected_mask
 
-def demo():
+if __name__ == '__main__':
     def a(nn, mm):
         return np.sqrt((2 * nn + 1) * (2 * nn - 1) / ((nn - mm) * (nn + mm)))
+
 
     lat, lon = MathTool.get_global_lat_lon_range(1)
     lmax = 60
@@ -776,19 +708,3 @@ def demo():
 
     print(p1, p2)
     pass
-
-def demo_zwh():
-    lat = np.arange(90.01,-90.01,-1)
-    lmax = 1
-    a = MathTool()
-    pilm = a.get_Legendre(lat,lmax,option=2)
-    print(pilm[:,0,0],pilm.shape)
-
-
-if __name__ == '__main__':
-    # lat = np.arange(90, -90.01, -1)
-    # lon = np.arange(0, 360, 1)
-    # grid = np.ones((len(lat),len(lon)))
-    # a = MathTool()
-    # print(a.global_integral(grids=grid))
-    demo_zwh()

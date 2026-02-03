@@ -1,9 +1,8 @@
 import numpy as np
 
-from lib.SaGEA.auxiliary.preference.EnumClasses import PhysicalDimensions, match_string,LLN_variable,LLN_Data,Frame
+from lib.SaGEA.auxiliary.preference.EnumClasses import PhysicalDimensions, LoveNumberType, match_string
 from lib.SaGEA.auxiliary.preference.Constants import GeoConstants
-# from pysrc.ancillary.LoveNumber import LoveNumber
-from pysrc.ancillary.geotools.LLN import LoveNumber
+from lib.SaGEA.post_processing.Love_number.LoveNumber import LoveNumber
 
 
 class ConvertSHCConfig:
@@ -30,8 +29,6 @@ class ConvertSHCConfig:
     def set_Love_number(self, ln):
         self.ln = ln
         return self
-
-
 
 
 class ConvertSHC:
@@ -118,17 +115,6 @@ class ConvertSHC:
 
             convert_mat /= kl
 
-        # elif field_type is PhysicalDimensions.InnerIntegral:
-        #     termI = np.arange(lmax + 1)
-        #     term = 2 * termI + 1.
-        #     ln = ln[:lmax + 1]
-        #
-        #     kl = 4 * np.pi * radius_e ** 2 / GeoConstants.Mass * (1 + ln) / term
-        #
-        #     convert_mat /= kl
-
-
-
         else:
             raise Exception
 
@@ -190,20 +176,6 @@ class ConvertSHC:
 
             convert_mat *= kl
 
-        # elif field_type is PhysicalDimensions.InnerIntegral:
-        #     termI = np.arange(lmax + 1)
-        #     term = 2 * termI + 1.
-        #     ln = ln[:lmax + 1]
-        #
-        #     kl = 4 * np.pi * radius_e ** 2 / GeoConstants.Mass * (1 + ln) / term
-        #
-        #     convert_mat *= kl
-
-
-
-
-
-
         elif field_type in (
                 PhysicalDimensions.HorizontalDisplacementNorth, PhysicalDimensions.HorizontalDisplacementEast):
             lnh, lnl = self.__get_love_number_h_and_l(lmax)
@@ -218,26 +190,14 @@ class ConvertSHC:
 
         return convert_mat
 
-
-    # def __get_love_number_h_and_l(lmax):
-    #     LN = LoveNumber()
-    #
-    #     LN.configuration.set_lmax(lmax).set_type(LoveNumberType.VerticalDisplacement)  # h
-    #     ln_h = LN.get_Love_number()
-    #
-    #     LN.configuration.set_lmax(lmax).set_type(LoveNumberType.HorizontalDisplacement)  # l
-    #     ln_l = LN.get_Love_number()
-    #
-    #     return ln_h, ln_l
     @staticmethod
     def __get_love_number_h_and_l(lmax):
-        LN = LoveNumber().config(lmax=lmax,method=LLN_Data.Wang).get_Love_number()
-        LN.convert(target=Frame.CF)
-        ln_h = LN.LLN[LLN_variable.h]
-        ln_l = LN.LLN[LLN_variable.l]
+        LN = LoveNumber()
+
+        LN.configuration.set_lmax(lmax).set_type(LoveNumberType.VerticalDisplacement)  # h
+        ln_h = LN.get_Love_number()
+
+        LN.configuration.set_lmax(lmax).set_type(LoveNumberType.HorizontalDisplacement)  # l
+        ln_l = LN.get_Love_number()
+
         return ln_h, ln_l
-
-
-def demo():
-    a = ConvertSHC()
-

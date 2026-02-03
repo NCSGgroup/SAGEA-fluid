@@ -455,7 +455,8 @@ class Harmonic:
         for m in range(Nmax + 1):
             co = np.cos(m * lon)
             so = np.sin(m * lon)
-            Fout = Fout + np.mat(Am[m]).T * co + np.mat(Bm[m]).T * so
+            # Fout = Fout + np.mat(Am[m]).T * co + np.mat(Bm[m]).T * so
+            Fout = Fout + np.asmatrix(Am[m]).T * co + np.asmatrix(Bm[m]).T * so
 
         return np.array(Fout)
 

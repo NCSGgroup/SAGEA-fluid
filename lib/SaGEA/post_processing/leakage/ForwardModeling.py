@@ -4,7 +4,6 @@ import numpy as np
 
 from lib.SaGEA.auxiliary.aux_tool.MathTool import MathTool
 from lib.SaGEA.post_processing.filter.Base import SHCFilter
-from lib.SaGEA.post_processing.filter.Gaussian import Gaussian
 from lib.SaGEA.post_processing.harmonic.Harmonic import Harmonic
 from lib.SaGEA.post_processing.leakage.Base import Leakage
 
@@ -71,21 +70,6 @@ class ForwardModelingConfig:
         return self.__harmonic
 
     def set_basin_conservation(self, basin: np.ndarray):
-        # assert self.__harmonic is not None, "set harmonic before setting basin."
-        #
-        # har = self.__harmonic
-        #
-        # if type(basin) is pathlib.WindowsPath:
-        #     lmax = self.__harmonic.lmax
-        #     basin_clm, basin_slm = load_SHC(basin, key='', lmax=lmax, lmcs_in_queue=(1, 2, 3, 4))
-        #     basin = har.synthesis(SHC(basin_clm, basin_slm)).value[0]
-        #     basin[np.where(basin >= 0.5)] = 1
-        #     basin[np.where(basin < 0.5)] = 0
-        #     self.__basin_to_maintain_global_conservation = basin
-        #
-        # else:
-        #     self.__basin_to_maintain_global_conservation = har.synthesis(basin).value[0]
-
         self.__basin_to_maintain_global_conservation = basin
 
         return self
@@ -94,24 +78,6 @@ class ForwardModelingConfig:
         return self.__basin_to_maintain_global_conservation
 
     def set_basin(self, basin: np.ndarray):
-        # if type(basin) is pathlib.WindowsPath:
-        #     lmax = self.__harmonic.lmax
-        #     basin_clm, basin_slm = load_SHC(basin, key='', lmax=lmax, lmcs_in_queue=(1, 2, 3, 4))
-        #     basin = har.synthesis(SHC(basin_clm, basin_slm)).value[0]
-        #     basin[np.where(basin >= 0.5)] = 1
-        #     basin[np.where(basin < 0.5)] = 0
-        #     self.__basin = basin
-        #
-        # elif type(basin) is SHC:
-        #     self.__basin = har.synthesis(basin).value[0]
-        #
-        # elif type(basin) is np.ndarray:
-        #     self.__basin = basin
-        #
-        # else:
-        #     print('Unsupported format of basin map.')
-        #     return -1
-
         self.__basin = basin
 
         return self
@@ -178,57 +144,3 @@ class ForwardModeling(Leakage):
     def format(self):
         return 'Forward modeling'
 
-
-def demo1():
-    import time
-    from pysrc.auxiliary.load_file.LoadL2SH import load_SHC
-    from pysrc.auxiliary.aux_tool.FileTool import FileTool
-
-    '''load shc'''
-    multi_times = 220
-    lmax = 60
-    spatial_resolution = 1
-
-    cqlm, sqlm = load_SHC(
-        FileTool.get_project_dir('data/ancillary/GIF48.gfc'),
-        key='gfc',
-        lmax=lmax,
-        lmcs_in_queue=(2, 3, 4, 5)
-    ).get_cs2d()
-
-    cqlm, sqlm = np.array([cqlm[0]] * multi_times), np.array([sqlm[0]] * multi_times)
-
-    basin_path = FileTool.get_project_dir('data/basin_mask/Amazon_maskSH.dat')
-    basin_conservation_path = FileTool.get_project_dir('data/basin_mask/Ocean_maskSH.dat')
-
-    paths = [basin_path, basin_conservation_path]
-    basin_shc = load_SHC(*paths, key="", lmax=lmax, lmcs_in_queue=(1, 2, 3, 4))
-    basin_grid = basin_shc.to_grid(grid_space=spatial_resolution)
-
-    basins = basin_grid.value
-
-    gs = Gaussian()
-    gs.configuration.set_lmax(lmax)
-    gs.configuration.set_filtering_radius(300)
-
-    lat, lon = MathTool.get_global_lat_lon_range(spatial_resolution)
-    har = Harmonic(lat, lon, lmax=lmax, option=1)
-
-    gqij = har.synthesis(cqlm, sqlm)
-
-    fm = ForwardModeling()
-    fm.configuration.set_harmonic(har)
-    fm.configuration.set_basin(basins[0])
-    fm.configuration.set_basin_conservation(basins[1])
-    fm.configuration.set_filter(gs)
-
-    time1 = time.time()
-    fm.apply_to(gqij)
-    time2 = time.time()
-
-    return time2 - time1
-
-
-if __name__ == '__main__':
-    t = demo1()
-    print(t)

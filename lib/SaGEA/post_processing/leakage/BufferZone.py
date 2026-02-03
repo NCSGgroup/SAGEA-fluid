@@ -89,20 +89,20 @@ class BufferZone(Leakage):
 
 
 if __name__ == '__main__':
-    from pysrc.auxiliary.aux_tool.FileTool import FileTool
-    from pysrc.auxiliary.scripts.PlotGrids import plot_grids
-    from pysrc.post_processing.filter.Gaussian import Gaussian
+    from lib.SaGEA.auxiliary.aux_tool.FileTool import FileTool
+    from lib.SaGEA.auxiliary.scripts.PlotGrids import plot_grids
+    from lib.SaGEA.post_processing.filter.Gaussian import Gaussian
 
-    from pysrc.auxiliary.load_file.LoadL2SH import load_SHC
+    from lib.SaGEA.auxiliary.load_file.LoadL2SH import load_SHC
 
     bfz = BufferZone()
 
     grid_space = 1
     lmax = 60
 
-    basin_path = FileTool.get_project_dir('data/ancillary/ocean360_grndline.sh')
-    basin_shc = load_SHC(basin_path, key="", lmcs_in_queue=(1, 2, 3, 4), lmax=lmax)
-    basin_grid = basin_shc.to_grid(grid_space=grid_space).value[0]
+    basin_path = FileTool.get_project_dir('data/auxiliary/ocean360_grndline.sh')
+    basin_shc = load_SHC(basin_path, key="", read_rows=(1, 2, 3, 4), lmax=lmax)
+    basin_grid = basin_shc.to_GRD(grid_space=grid_space).value[0]
 
     lat, lon = MathTool.get_global_lat_lon_range(grid_space)
     har = Harmonic(lat, lon, lmax, option=1)

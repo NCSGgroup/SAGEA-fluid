@@ -7,6 +7,7 @@ from lib.SaGEA.post_processing.filter.PnMm import PnMm
 from lib.SaGEA.post_processing.filter.SlideWindow import SlideWindow
 from lib.SaGEA.post_processing.filter.VariableScale import VariableScale
 
+
 def __get_shc_decorrelation(method: Enums.SHCDecorrelationType, params: tuple, ):
     """
     :param method: SHCDecorrelationType

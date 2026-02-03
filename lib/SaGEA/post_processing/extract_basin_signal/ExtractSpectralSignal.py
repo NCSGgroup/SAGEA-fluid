@@ -1,9 +1,8 @@
-import pathlib
 from pathlib import Path
 
 import numpy as np
 
-from lib.SaGEA.data_class.DataClass import SHC
+from lib.SaGEA.data_class.SHC import SHC
 from lib.SaGEA.post_processing.extract_basin_signal.ExtractSpectralSignalConfig import ExtractSpectralSignalConfig
 
 from lib.SaGEA.auxiliary.load_file.LoadL2SH import load_SHC
@@ -34,12 +33,12 @@ class ExtractSpectral:
                         or class SHC
         """
         if len(basin) == 1:
-            assert type(basin[0]) in (pathlib.WindowsPath, SHC)
+            assert type(basin[0]) in (SHC,) or issubclass(type(basin[0]), Path)
 
-            if type(basin[0]) is pathlib.WindowsPath:
+            if issubclass(type(basin[0]), Path):
                 path = basin[0]
                 lmax = self._configuration.lmax
-                self.basin_clm, self.basin_slm = load_SHC(path, key='', lmax=lmax, lmcs_in_queue=(1, 2, 3, 4))
+                self.basin_clm, self.basin_slm = load_SHC(path, key='', lmax=lmax, read_rows=(1, 2, 3, 4))
 
             elif type(basin[0]) is SHC:
                 basin_cqlm, basin_sqlm = basin[0].get_cs2d()
@@ -84,7 +83,7 @@ class ExtractSpectral:
 
 
 if __name__ == '__main__':
-    from pysrc.ancillary.aux_tool.FileTool import FileTool
+    from lib.SaGEA.auxiliary.aux_tool.FileTool import FileTool
 
     signal_c = np.random.normal(0, 100, (61, 61))
     signal_s = np.random.normal(0, 100, (61, 61))

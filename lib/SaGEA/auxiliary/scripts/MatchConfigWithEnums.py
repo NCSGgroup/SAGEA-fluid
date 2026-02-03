@@ -1,5 +1,5 @@
 """
-This scripts is to associate the string in the configuration file with the enumeration type in the program,
+This script is to associate the string in the configuration file with the enumeration type in the program,
 and use the corresponding function in the configuration program to pass parameters.
 """
 

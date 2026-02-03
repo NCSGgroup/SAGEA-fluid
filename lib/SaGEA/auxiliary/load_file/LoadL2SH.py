@@ -1,16 +1,17 @@
+import pathlib
 import re
 import datetime
 import json
-from pathlib import Path, WindowsPath
+from pathlib import Path
 
 import numpy as np
-from datetime import date
 
 from lib.SaGEA.auxiliary.preference.EnumClasses import L2ProductType, L2InstituteType, L2Release
 from lib.SaGEA.auxiliary.scripts.MatchConfigWithEnums import match_config
 from lib.SaGEA.auxiliary.aux_tool.FileTool import FileTool
 from lib.SaGEA.auxiliary.aux_tool.TimeTool import TimeTool
-from lib.SaGEA.data_class.DataClass import SHC
+from lib.SaGEA.data_class.SHC import SHC
+
 
 def match_dates_from_filename(filename):
     match_flag = False
@@ -18,13 +19,13 @@ def match_dates_from_filename(filename):
 
     '''date format: yyyymmdd-yyyymmdd or yyyy-mm-dd-yyyy-mm-dd'''
     if not match_flag:
-        date_begin_end_pattern = r"(\d{4})-?(\d{2})-?(\d{2})-(\d{4})-?(\d{2})-?(\d{2})"
+        date_begin_end_pattern = r"(\d{4})-?(\d{2})-?(\d{2})(-|_)(\d{4})-?(\d{2})-?(\d{2})"
         date_begin_end_searched = re.search(date_begin_end_pattern, filename)
 
         if date_begin_end_searched is not None:
             date_begin_end = date_begin_end_searched.groups()
             this_date_begin = datetime.date(*list(map(int, date_begin_end[:3])))
-            this_date_end = datetime.date(*list(map(int, date_begin_end[3:])))
+            this_date_end = datetime.date(*list(map(int, date_begin_end[4:])))
 
             match_flag = True
 
@@ -42,23 +43,18 @@ def match_dates_from_filename(filename):
 
             match_flag = True
 
-    '''date format: yyyymm'''
+    '''date format: yyyy-mm'''
     if not match_flag:
-        date_begin_end_pattern = r"_(\d{4})(\d{2})_"
+        date_begin_end_pattern = r"(\d{4})(-|_|)(\d{2})"
         date_begin_end_searched = re.search(date_begin_end_pattern, filename)
 
         if date_begin_end_searched is not None:
             year_month = date_begin_end_searched.groups()
             year = int(year_month[0])
-            month = int(year_month[1])
+            month = int(year_month[2])
 
             this_date_begin = datetime.date(int(year), month, 1)
-            if month < 12:
-                this_date_end = datetime.date(year, month + 1, 1) - datetime.timedelta(days=1)
-            elif month == 12:
-                this_date_end = datetime.date(year + 1, 1, 1) + datetime.timedelta(days=1)
-            else:
-                assert False
+            this_date_end = TimeTool.get_the_final_day_of_this_month(year=year, month=month)
 
             match_flag = True
 
@@ -66,24 +62,27 @@ def match_dates_from_filename(filename):
 
     return this_date_begin, this_date_end
 
-def load_SHC(*filepath, key: str, lmax: int, lmcs_in_queue=None, get_dates=False, begin_date=None, end_date=None):
+
+def load_SHC(*filepath, key: str, lmax: int, read_rows=None, get_dates=False, begin_date=None, end_date=None,
+             dates_excluded=None):
     """
 
     :param filepath: path of SH file
     :param key: '' if there is not any key.
     :param lmax: max degree and order.
-    :param lmcs_in_queue: iter, Number of columns where degree l, order m, coefficient clm, and slm are located.
+    :param read_rows: iter, Number of columns where degree l, order m, coefficient clm, and slm are located.
     :param get_dates: bool, if True return dates.
     :param begin_date: beginning date to load
     :param end_date: ending date to load
+    :param dates_excluded: months to exclude
     :return: if get_dates:
-                cqlm, sqlm, dates_begin, dates_end
+                SHC instance, dates_begin, dates_end
             else:
-                cqlm, sqlm
+                SHC instance
     """
 
     def are_all_num(x: list):
-        for i in lmcs_in_queue:
+        for i in read_rows:
             if x[i - 1].replace('e', '').replace('E', '').replace('E', '').replace('E', '').replace('-',
                                                                                                     '').replace(
                 '+', '').replace('.', '').isnumeric():
@@ -93,23 +92,37 @@ def load_SHC(*filepath, key: str, lmax: int, lmcs_in_queue=None, get_dates=False
 
         return True
 
+    filepath_to_load = list(filepath)
+    for i in range(len(filepath_to_load)):
+        assert type(filepath_to_load[i]) in (str,) or isinstance(filepath_to_load[i], pathlib.PurePath)
+
+        if type(filepath_to_load[i]) is str:
+            filepath_to_load[i] = pathlib.Path(filepath_to_load[i])
+
+    if begin_date is None:
+        begin_date = datetime.date(1500, 1, 1)
+    if end_date is None:
+        end_date = datetime.date(2999, 12, 31)
+
     if len(filepath) == 1:
-        assert filepath[0].exists(), f"{filepath[0]} does not exist"
 
-        if filepath[0].is_file():
-            if lmcs_in_queue is None:
-                lmcs_in_queue = [1, 2, 3, 4] if key == "" else [2, 3, 4, 5]
+        assert filepath_to_load[0].exists(), f"{filepath_to_load[0]} does not exist"
 
-            l_queue = lmcs_in_queue[0]
-            m_queue = lmcs_in_queue[1]
-            c_queue = lmcs_in_queue[2]
-            s_queue = lmcs_in_queue[3]
+        if filepath_to_load[0].is_file():
+            if read_rows is None:
+                read_rows = [1, 2, 3, 4] if key == "" else [2, 3, 4, 5]
+
+            l_queue = read_rows[0]
+            m_queue = read_rows[1]
+            c_queue = read_rows[2]
+            s_queue = read_rows[3]
 
             mat_shape = (lmax + 1, lmax + 1)
             clm, slm = np.zeros(mat_shape), np.zeros(mat_shape)
 
-            with open(filepath[0]) as f:
+            with open(filepath_to_load[0]) as f:
                 txt_list = f.readlines()
+
                 for i in range(len(txt_list)):
                     if txt_list[i].replace(" ", "").startswith(key):
                         this_line = txt_list[i].split()
@@ -130,33 +143,49 @@ def load_SHC(*filepath, key: str, lmax: int, lmcs_in_queue=None, get_dates=False
 
             if get_dates:
                 this_date_begin, this_date_end = match_dates_from_filename(filepath[0].name)
-                # return clm, slm, [this_date_begin], [this_date_end]
-                return SHC(clm, slm), [this_date_begin], [this_date_end]
+                shc = SHC(clm, slm)
+
+                shc.dates = ([this_date_begin], [this_date_end])
+
+                return shc, [this_date_begin], [this_date_end]
 
             else:
                 return SHC(clm, slm)
 
-        elif filepath[0].is_dir():
-            file_list = FileTool.get_files_in_dir(filepath[0], sub=True)
+        elif filepath_to_load[0].is_dir():
+            file_list = FileTool.get_files_in_dir(filepath_to_load[0], sub=True)
             file_list.sort()
 
             files_to_load = []
+
+            if dates_excluded is not None:
+                excluded_year_month = [(dates_excluded[i].year, dates_excluded[i].month) for i in
+                                       range(len(dates_excluded))]
+            else:
+                excluded_year_month = []
+
             for i in range(len(file_list)):
                 this_begin_date, this_end_date = match_dates_from_filename(file_list[i].name)
+                this_ave_date = TimeTool.get_average_dates(this_begin_date, this_end_date)
+                if (this_ave_date.year, this_ave_date.month) in excluded_year_month:
+                    continue
+
                 if this_begin_date >= begin_date and this_end_date <= end_date:
                     files_to_load.append(file_list[i])
 
-            return load_SHC(*files_to_load, key=key, lmax=lmax, lmcs_in_queue=lmcs_in_queue,
+            return load_SHC(*files_to_load, key=key, lmax=lmax, read_rows=read_rows,
+                            get_dates=get_dates, begin_date=begin_date, end_date=end_date,
+                            dates_excluded=None)
+
+    else:
+        shc = None
+        dates_begin, dates_end = [], []
+
+        for i in range(len(filepath_to_load)):
+
+            load = load_SHC(filepath_to_load[i], key=key, lmax=lmax, read_rows=read_rows,
                             get_dates=get_dates, begin_date=begin_date, end_date=end_date)
 
-    else:
-        shc = None
-        dates_begin, dates_end = [], []
-
-        for i in range(len(filepath)):
-            load = load_SHC(filepath[i], key=key, lmax=lmax, lmcs_in_queue=lmcs_in_queue,
-                            get_dates=get_dates, begin_date=begin_date, end_date=end_date)
-
             if type(load) is tuple:
                 assert len(load) in (1, 3)
                 load_shc = load[0]
@@ -166,7 +195,11 @@ def load_SHC(*filepath, key: str, lmax: int, lmcs_in_queue=None, get_dates=False
             if shc is None:
                 shc = load_shc
             else:
-                shc.append(load_shc)
+                shc.append(
+                    load_shc,
+                    date_begin=load_shc.dates[0] if get_dates else None,
+                    date_end=load_shc.dates[1] if get_dates else None
+                )
 
             if get_dates:
                 assert len(load) == 3
@@ -175,372 +208,8 @@ def load_SHC(*filepath, key: str, lmax: int, lmcs_in_queue=None, get_dates=False
                 dates_end.append(d_end[0])
 
         if get_dates:
-            return shc, dates_begin, dates_end
-        else:
-            return shc
+            shc.dates = (dates_begin, dates_end)
 
-
-def load_HUSTGRACE(*filepath, key: str, lmax: int, lmcs_in_queue=None, get_dates=False, daylist=None):
-    """
-    This 'load' is to load the file format like -xxxxx.gfc, HUST
-    :param filepath: path of SH file
-    :param key: '' if there is not any key.
-    :param lmax: max degree and order.
-    :param lmcs_in_queue: iter, Number of columns where degree l, order m, coefficient clm, and slm are located.
-    :param get_dates: bool, if True return dates.
-    :param begin_date: beginning date to load
-    :param end_date: ending date to load
-    :return: if get_dates:
-                cqlm, sqlm, dates_begin, dates_end
-            else:
-                cqlm, sqlm
-    """
-
-    def are_all_num(x: list):
-        for i in lmcs_in_queue:
-            if x[i - 1].replace('e', '').replace('E', '').replace('E', '').replace('E', '').replace('-',
-                                                                                                    '').replace(
-                '+', '').replace('.', '').isnumeric():
-                pass
-            else:
-                return False
-
-        return True
-
-    if len(filepath) == 1:
-        assert filepath[0].exists(), f"{filepath[0]} does not exist"
-
-        if filepath[0].is_file():
-            if lmcs_in_queue is None:
-                lmcs_in_queue = [1, 2, 3, 4] if key == "" else [2, 3, 4, 5]
-
-            l_queue = lmcs_in_queue[0]
-            m_queue = lmcs_in_queue[1]
-            c_queue = lmcs_in_queue[2]
-            s_queue = lmcs_in_queue[3]
-
-            mat_shape = (lmax + 1, lmax + 1)
-            clm, slm = np.zeros(mat_shape), np.zeros(mat_shape)
-
-            with open(filepath[0]) as f:
-                txt_list = f.readlines()
-                for i in range(len(txt_list)):
-                    if txt_list[i].replace(" ", "").startswith(key):
-                        this_line = txt_list[i].split()
-
-                        # if len(this_line) == 4 and are_all_num(this_line):
-                        if are_all_num(this_line):
-                            l = int(this_line[l_queue - 1])
-                            if l > lmax:
-                                continue
-
-                            m = int(this_line[m_queue - 1])
-
-                            clm[l, m] = float(this_line[c_queue - 1])
-                            slm[l, m] = float(this_line[s_queue - 1])
-
-                        else:
-                            continue
-
-            if get_dates:
-                this_date_begin, this_date_end = match_dates_from_filename(filepath[0].name)
-                # return clm, slm, [this_date_begin], [this_date_end]
-                return SHC(clm, slm), [this_date_begin], [this_date_end]
-
-            else:
-                return SHC(clm, slm)
-
-        elif filepath[0].is_dir():
-            file_list = FileTool.get_files_in_dir(filepath[0], sub=True)
-            file_list.sort()
-            # print(f"file_list is:{file_list}")
-
-            files_to_load = []
-            for i in range(len(file_list)):
-                index = file_list[i].name.split('-')[-1].split('.')[0]
-                # print(f"file_list[i] name is:{index},{type(index)}")
-                # print(daylist)
-                # print(index in daylist)
-                if index in daylist:
-                    files_to_load.append(file_list[i])
-                # this_begin_date, this_end_date = match_dates_from_filename(file_list[i].name)
-                # if this_begin_date >= begin_date and this_end_date <= end_date:
-                #     files_to_load.append(file_list[i])
-
-            return load_HUSTGRACE(*files_to_load, key=key, lmax=lmax, lmcs_in_queue=lmcs_in_queue,
-                                  get_dates=get_dates, daylist=daylist)
-
-    else:
-        shc = None
-        dates_begin, dates_end = [], []
-
-        for i in range(len(filepath)):
-            load = load_HUSTGRACE(filepath[i], key=key, lmax=lmax, lmcs_in_queue=lmcs_in_queue,
-                                 get_dates=get_dates, daylist=daylist)
-
-            if type(load) is tuple:
-                assert len(load) in (1, 3)
-                load_shc = load[0]
-            else:
-                load_shc = load
-
-            if shc is None:
-                shc = load_shc
-            else:
-                shc.append(load_shc)
-
-            if get_dates:
-                assert len(load) == 3
-                d_begin, d_end = load[1], load[2]
-                dates_begin.append(d_begin[0])
-                dates_end.append(d_end[0])
-
-        if get_dates:
-            return shc, dates_begin, dates_end
-        else:
-            return shc
-
-
-def load_ITSG(*filepath, key: str, lmax: int, lmcs_in_queue=None, get_dates=False, daylist=None):
-    """
-    This 'load' is to load the file format like _xxxxx.gfc, including ITSG,AIUB-G3P,Tongji
-
-    :param filepath: path of SH file
-    :param key: '' if there is not any key.
-    :param lmax: max degree and order.
-    :param lmcs_in_queue: iter, Number of columns where degree l, order m, coefficient clm, and slm are located.
-    :param get_dates: bool, if True return dates.
-    :param begin_date: beginning date to load
-    :param end_date: ending date to load
-    :return: if get_dates:
-                cqlm, sqlm, dates_begin, dates_end
-            else:
-                cqlm, sqlm
-    """
-
-    def are_all_num(x: list):
-        for i in lmcs_in_queue:
-            if x[i - 1].replace('e', '').replace('E', '').replace('E', '').replace('E', '').replace('-',
-                                                                                                    '').replace(
-                '+', '').replace('.', '').isnumeric():
-                pass
-            else:
-                return False
-
-        return True
-
-    if len(filepath) == 1:
-        assert filepath[0].exists(), f"{filepath[0]} does not exist"
-
-        if filepath[0].is_file():
-            if lmcs_in_queue is None:
-                lmcs_in_queue = [1, 2, 3, 4] if key == "" else [2, 3, 4, 5]
-
-            l_queue = lmcs_in_queue[0]
-            m_queue = lmcs_in_queue[1]
-            c_queue = lmcs_in_queue[2]
-            s_queue = lmcs_in_queue[3]
-
-            mat_shape = (lmax + 1, lmax + 1)
-            clm, slm = np.zeros(mat_shape), np.zeros(mat_shape)
-
-            with open(filepath[0]) as f:
-                txt_list = f.readlines()
-                for i in range(len(txt_list)):
-                    if txt_list[i].replace(" ", "").startswith(key):
-                        this_line = txt_list[i].split()
-
-                        # if len(this_line) == 4 and are_all_num(this_line):
-                        if are_all_num(this_line):
-                            l = int(this_line[l_queue - 1])
-                            if l > lmax:
-                                continue
-
-                            m = int(this_line[m_queue - 1])
-
-                            clm[l, m] = float(this_line[c_queue - 1])
-                            slm[l, m] = float(this_line[s_queue - 1])
-
-                        else:
-                            continue
-
-            if get_dates:
-                this_date_begin, this_date_end = match_dates_from_filename(filepath[0].name)
-                # return clm, slm, [this_date_begin], [this_date_end]
-                return SHC(clm, slm), [this_date_begin], [this_date_end]
-
-            else:
-                return SHC(clm, slm)
-
-        elif filepath[0].is_dir():
-            file_list = FileTool.get_files_in_dir(filepath[0], sub=True)
-            file_list.sort()
-            # print(f"file_list is:{file_list}")
-
-            files_to_load = []
-            for i in range(len(file_list)):
-                index = file_list[i].name.split('_')[-1].split('.')[0]
-                # print(f"file_list[i] name is:{index},{type(index)}")
-                # print(daylist)
-                # print(index in daylist)
-                if index in daylist:
-                    files_to_load.append(file_list[i])
-                # this_begin_date, this_end_date = match_dates_from_filename(file_list[i].name)
-                # if this_begin_date >= begin_date and this_end_date <= end_date:
-                #     files_to_load.append(file_list[i])
-
-            return load_HUSTGRACE(*files_to_load, key=key, lmax=lmax, lmcs_in_queue=lmcs_in_queue,
-                                  get_dates=get_dates, daylist=daylist)
-
-    else:
-        shc = None
-        dates_begin, dates_end = [], []
-
-        for i in range(len(filepath)):
-            load = load_HUSTGRACE(filepath[i], key=key, lmax=lmax, lmcs_in_queue=lmcs_in_queue,
-                                 get_dates=get_dates, daylist=daylist)
-
-            if type(load) is tuple:
-                assert len(load) in (1, 3)
-                load_shc = load[0]
-            else:
-                load_shc = load
-
-            if shc is None:
-                shc = load_shc
-            else:
-                shc.append(load_shc)
-
-            if get_dates:
-                assert len(load) == 3
-                d_begin, d_end = load[1], load[2]
-                dates_begin.append(d_begin[0])
-                dates_end.append(d_end[0])
-
-        if get_dates:
-            return shc, dates_begin, dates_end
-        else:
-            return shc
-
-
-
-def load_SWPU(*filepath, key: str, lmax: int, lmcs_in_queue=None, get_dates=False, daylist=None):
-    """
-    This 'load' is to load the file format like _xxxxx_lmax.gfc, including SWPU
-
-    :param filepath: path of SH file
-    :param key: '' if there is not any key.
-    :param lmax: max degree and order.
-    :param lmcs_in_queue: iter, Number of columns where degree l, order m, coefficient clm, and slm are located.
-    :param get_dates: bool, if True return dates.
-    :param begin_date: beginning date to load
-    :param end_date: ending date to load
-    :return: if get_dates:
-                cqlm, sqlm, dates_begin, dates_end
-            else:
-                cqlm, sqlm
-    """
-
-    def are_all_num(x: list):
-        for i in lmcs_in_queue:
-            if x[i - 1].replace('e', '').replace('E', '').replace('E', '').replace('E', '').replace('-',
-                                                                                                    '').replace(
-                '+', '').replace('.', '').isnumeric():
-                pass
-            else:
-                return False
-
-        return True
-
-    if len(filepath) == 1:
-        assert filepath[0].exists(), f"{filepath[0]} does not exist"
-
-        if filepath[0].is_file():
-            if lmcs_in_queue is None:
-                lmcs_in_queue = [1, 2, 3, 4] if key == "" else [2, 3, 4, 5]
-
-            l_queue = lmcs_in_queue[0]
-            m_queue = lmcs_in_queue[1]
-            c_queue = lmcs_in_queue[2]
-            s_queue = lmcs_in_queue[3]
-
-            mat_shape = (lmax + 1, lmax + 1)
-            clm, slm = np.zeros(mat_shape), np.zeros(mat_shape)
-
-            with open(filepath[0]) as f:
-                txt_list = f.readlines()
-                for i in range(len(txt_list)):
-                    if txt_list[i].replace(" ", "").startswith(key):
-                        this_line = txt_list[i].split()
-
-                        # if len(this_line) == 4 and are_all_num(this_line):
-                        if are_all_num(this_line):
-                            l = int(this_line[l_queue - 1])
-                            if l > lmax:
-                                continue
-
-                            m = int(this_line[m_queue - 1])
-
-                            clm[l, m] = float(this_line[c_queue - 1])
-                            slm[l, m] = float(this_line[s_queue - 1])
-
-                        else:
-                            continue
-
-            if get_dates:
-                this_date_begin, this_date_end = match_dates_from_filename(filepath[0].name)
-                # return clm, slm, [this_date_begin], [this_date_end]
-                return SHC(clm, slm), [this_date_begin], [this_date_end]
-
-            else:
-                return SHC(clm, slm)
-
-        elif filepath[0].is_dir():
-            file_list = FileTool.get_files_in_dir(filepath[0], sub=True)
-            file_list.sort()
-            # print(f"file_list is:{file_list}")
-
-            files_to_load = []
-            for i in range(len(file_list)):
-                index = file_list[i].name.split('_')[-2]
-                # print(f"file_list[i] name is:{index},{type(index)}")
-                # print(daylist)
-                # print(index in daylist)
-                if index in daylist:
-                    files_to_load.append(file_list[i])
-                # this_begin_date, this_end_date = match_dates_from_filename(file_list[i].name)
-                # if this_begin_date >= begin_date and this_end_date <= end_date:
-                #     files_to_load.append(file_list[i])
-
-            return load_HUSTGRACE(*files_to_load, key=key, lmax=lmax, lmcs_in_queue=lmcs_in_queue,
-                                  get_dates=get_dates, daylist=daylist)
-
-    else:
-        shc = None
-        dates_begin, dates_end = [], []
-
-        for i in range(len(filepath)):
-            load = load_HUSTGRACE(filepath[i], key=key, lmax=lmax, lmcs_in_queue=lmcs_in_queue,
-                                 get_dates=get_dates, daylist=daylist)
-
-            if type(load) is tuple:
-                assert len(load) in (1, 3)
-                load_shc = load[0]
-            else:
-                load_shc = load
-
-            if shc is None:
-                shc = load_shc
-            else:
-                shc.append(load_shc)
-
-            if get_dates:
-                assert len(load) == 3
-                d_begin, d_end = load[1], load[2]
-                dates_begin.append(d_begin[0])
-                dates_end.append(d_end[0])
-
-        if get_dates:
             return shc, dates_begin, dates_end
         else:
             return shc
@@ -750,7 +419,7 @@ class LoadL2SHConfig:
         """
 
         # ensure that the path describes a JSON file
-        assert type(path) is WindowsPath and path.name.endswith('.json')
+        assert issubclass(type(path), Path) and path.name.endswith('.json')
 
         # load json file to a dict
         with open(path) as jsonfile:
@@ -843,6 +512,7 @@ class LoadL2SH:
             dir_up_to_year = FileTool.get_l2_SH_dir_upto_year(year, product_type, institute, release, lmax)
 
             filelist_this_year = list(Path.iterdir(dir_up_to_year))
+            filelist_this_year.sort()
 
             if begin_date.year < year < end_date.year:
                 filepath_list += filelist_this_year
@@ -881,32 +551,3 @@ class LoadL2SH:
                         filepath_list.append(this_filepath)
 
         return filepath_list
-
-def demo():
-    lmax=60
-    begin_date, end_date = date(2018, 12, 1), date(2018,12, 31)
-    gsm_dir = FileTool.get_project_dir("I:/GFZ/GSM/rl063/BA01/")
-    key='GRCOF2'
-    shc = load_SHC(gsm_dir, key=key, lmax=lmax, begin_date=begin_date, end_date=end_date,
-                   get_dates=False, )
-    print(shc.value.shape)
-    print(shc.value[0][0:10])
-
-def demo1():
-    from lib.SaGEA.post_processing.geometric_correction.old.GeoMathKit import GeoMathKit
-
-    daylist = GeoMathKit.monthListByMonth(begin='2002-01',end='2003-12')
-    daylist = [str(d.strftime("%Y%m")) for d in daylist]
-    print(type(daylist))
-    print(daylist)
-    lmax=60
-    gsm_dir = FileTool.get_project_dir("I:\HUST_GRACE\HUST_HUST-Grace2024_n60/")
-    key='GRCOF2'
-    shc = load_HUSTGRACE(gsm_dir, key=key, lmax=lmax, daylist=daylist,
-                   get_dates=False, )
-    print(shc.value.shape)
-
-
-
-if __name__ == '__main__':
-    demo1()

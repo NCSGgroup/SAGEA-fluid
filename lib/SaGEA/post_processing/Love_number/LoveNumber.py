@@ -9,7 +9,7 @@ from lib.SaGEA.auxiliary.preference.EnumClasses import LoveNumberMethod, LoveNum
 
 class LoveNumberConfig:
     def __init__(self):
-        self.method = LoveNumberMethod.Wang
+        self.method = LoveNumberMethod.PREM
         self.lmax = 60
         self.type = LoveNumberType.GravitationalPotential
 
@@ -33,7 +33,7 @@ class LoveNumber:
 
     def __init__(self):
 
-        self.__path = FileTool.get_project_dir() / 'data/ancillary'
+        self.__path = FileTool.get_project_dir() / 'data/auxiliary'
         self.configuration = LoveNumberConfig()
 
         pass
@@ -182,19 +182,13 @@ class LoveNumber:
 
 def demo():
     ln = LoveNumber()
-    ln.configuration.set_type(LoveNumberType.VerticalDisplacement)
+    ln.configuration.set_type(LoveNumberType.GravitationalPotential)
+
 
     a = ln.get_Love_number()
     print(a)
     pass
 
-def demo1():
-    LN = LoveNumber()
-    LN.configuration.set_lmax(60)
-
-    ln = LN.get_Love_number()
-    print(ln)
 
 if __name__ == '__main__':
     demo()
-    demo1()

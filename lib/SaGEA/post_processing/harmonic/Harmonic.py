@@ -1,28 +1,44 @@
+from enum import Enum
+
 import numpy as np
 
 from lib.SaGEA.auxiliary.preference.EnumClasses import PhysicalDimensions
 from lib.SaGEA.auxiliary.aux_tool.MathTool import MathTool
+from lib.SaGEA.post_processing.harmonic.Quadratures import GLQ, DH2, DH
 
 
-class Harmonic:
+class GRDType(Enum):
+    DH = 1
+    DH2 = 2
+    GLQ = 3
+
+
+class HarmonicOld:
     """
     Harmonic analysis and synthesis: Ordinary 2D integration for computing Spherical Harmonic coefficients
     """
 
-    def __init__(self, lat, lon, lmax: int, option=0):
+    def __init__(self, lat, lon, lmax: int, option=0, discrete=False):
         """
 
         :param lat: Co-latitude if option=0, unit[rad]; geophysical latitude if option = others, unit[degree]
         :param lon: If option=0, unit[rad]; else unit[degree]
         :param lmax: int, max degree/order
         :param option:
+        :param discrete: bool, if True, the given lat and lon represent each point, and should be of the same length.
+
         """
+
+        if discrete:
+            assert len(lat) == len(lon)
+
         if option != 0:
             self.lat, self.lon = MathTool.get_colat_lon_rad(lat, lon)
         else:
             self.lat, self.lon = lat, lon
 
         self.lmax = lmax
+        self.__discrete = discrete
 
         self._prepare()
 
@@ -46,91 +62,95 @@ class Harmonic:
         self.g = m[:, None] @ self.lon[None, :]
 
         self.factor1 = np.ones((self.nlat, self.lmax + 1))
-        self.factor1[:, 0] += 1
+        # self.factor1[:, 0] += 1
         self.factor1 = 1 / (self.factor1 * self.nlon)
 
         self.factor2 = np.ones((self.lmax + 1, self.lmax + 1))
-        self.factor2[:, 0] += 1
+        # self.factor2[:, 0] += 1
         self.factor2 *= np.pi / (2 * self.nlat)
 
-        self.factor3 = np.ones((self.lmax + 1, self.lmax + 1))
-        self.factor3[:, 0] += 1
-        self.factor3 /= 2
         pass
 
-    def analysis(self, gqij: np.ndarray, special_type: PhysicalDimensions = None):
+    def analysis(self, gqij: np.ndarray, special_type: PhysicalDimensions = None, lat_weight="DH"):
         assert len(gqij.shape) in (2, 3)
+        assert not self.__discrete, "not support discrete analysis yet"
+        assert lat_weight in ("DH", None)
 
-        single = (len(gqij.shape) == 2)
-        if single:
-            gqij = np.array([gqij])
+        if not self.__discrete:
+            single = (len(gqij.shape) == 2)
+            if single:
+                gqij = np.array([gqij])
 
-        assert special_type in (
-            PhysicalDimensions.HorizontalDisplacementEast, PhysicalDimensions.HorizontalDisplacementNorth, None)
+            assert special_type in (
+                PhysicalDimensions.HorizontalDisplacementEast, PhysicalDimensions.HorizontalDisplacementNorth, None)
 
-        if special_type in (
-                PhysicalDimensions.HorizontalDisplacementEast, PhysicalDimensions.HorizontalDisplacementNorth):
-            assert False, "Horizontal Displacement is not supported yet."
+            if special_type in (
+                    PhysicalDimensions.HorizontalDisplacementEast, PhysicalDimensions.HorizontalDisplacementNorth):
+                assert False, "Horizontal Displacement is not supported yet."
 
-        g = self.g
-        co = np.cos(g)  # cos(m phi)
-        so = np.sin(g)  # sin(m phi)
+            g = self.g
+            co = np.cos(g)  # cos(m phi)
+            so = np.sin(g)  # sin(m phi)
 
-        am = np.einsum('pij,mj->pim', gqij, co, optimize='greedy') * self.factor1
-        bm = np.einsum('pij,mj->pim', gqij, so, optimize='greedy') * self.factor1
+            am = np.einsum('pij,mj->pim', gqij, co, optimize='greedy') * self.factor1
+            bm = np.einsum('pij,mj->pim', gqij, so, optimize='greedy') * self.factor1
+
+            sin_lat_to_int = np.sin(self.lat)
+            if lat_weight == "DH":
+                # get latitude weights, J. Driscoll and D. Healy, 1994
+                wi_DH = np.ones((self.nlat,))
+                for j in range(len(wi_DH)):
+                    this_theta = self.lat[j]
+                    this_wi = np.sum(np.array(
+                        [np.sin((2 * l + 1) * this_theta) / (2 * l + 1) for l in range(int(self.nlat / 2 - 1))]
+                    ))
+                    wi_DH[j] = this_wi
+                wi_DH *= 4 / np.pi
+                sin_lat_to_int *= wi_DH
+
+            if special_type is None:
+                cqlm = np.einsum('pim,ilm,i->plm', am, self.pilm, sin_lat_to_int, optimize='greedy') * self.factor2
+                sqlm = np.einsum('pim,ilm,i->plm', bm, self.pilm, sin_lat_to_int, optimize='greedy') * self.factor2
 
 
-        if special_type is None:
-            cqlm = np.einsum('pim,ilm,i->plm', am, self.pilm, np.sin(self.lat), optimize='greedy') * self.factor2
-            sqlm = np.einsum('pim,ilm,i->plm', bm, self.pilm, np.sin(self.lat), optimize='greedy') * self.factor2
+            elif special_type == PhysicalDimensions.HorizontalDisplacementNorth:
+                """do NOT use this code!"""
 
-            # cqlm = np.einsum('pim,ilm,i->plm', am, self.pilm, self.wi, optimize='greedy') * self.factor3
-            # sqlm = np.einsum('pim,ilm,i->plm', bm, self.pilm, self.wi, optimize='greedy') * self.factor3
+                pilm_derivative = MathTool.get_Legendre_derivative(self.lat, self.lmax)
 
-            # cqlm[:, :, 0] = (np.einsum('pim,ilm->plm', am * self.wi[:, None], self.pilm,
-            #                               optimize='greedy') * self.factor3)[:, :, 0]
-            # sqlm[:, :, 0] = (np.einsum('pim,ilm->plm', bm * self.wi[:, None], self.pilm,
-            #                            optimize='greedy') * self.factor3)[:, :, 0]
+                cqlm = np.einsum('pim,ilm,i->plm', -am, pilm_derivative, sin_lat_to_int) * self.factor2
+                sqlm = np.einsum('pim,ilm,i->plm', -bm, pilm_derivative, sin_lat_to_int) * self.factor2
 
-            # cqlm = np.einsum('pim,ilm->plm', am * self.wi[:, None], self.pilm,
-            #                  optimize='greedy') * self.factor3
-            # sqlm = np.einsum('pim,ilm->plm', bm * self.wi[:, None], self.pilm,
-            #                  optimize='greedy') * self.factor3
+            elif special_type == PhysicalDimensions.HorizontalDisplacementEast:
+                """do NOT use this code!"""
 
-        elif special_type == PhysicalDimensions.HorizontalDisplacementNorth:
-            """do NOT use this code!"""
+                mrange = np.arange(self.lmax + 1)
+                pilm_divide_sin_theta = self.pilm / sin_lat_to_int[:, None, None]
+                m_pilm_divide_sin_theta = np.einsum("m,ilm->ilm", mrange, pilm_divide_sin_theta)
 
-            pilm_derivative = MathTool.get_Legendre_derivative(self.lat, self.lmax)
+                am_east = np.einsum('pij,mj->pim', gqij, -so, optimize='greedy') * self.factor1
+                bm_east = np.einsum('pij,mj->pim', gqij, co, optimize='greedy') * self.factor1
 
-            cqlm = np.einsum('pim,ilm,i->plm', -am, pilm_derivative, np.sin(self.lat)) * self.factor2
-            sqlm = np.einsum('pim,ilm,i->plm', -bm, pilm_derivative, np.sin(self.lat)) * self.factor2
+                cqlm = np.einsum('pim,ilm,i->plm', am_east, m_pilm_divide_sin_theta, sin_lat_to_int) * self.factor2
+                sqlm = np.einsum('pim,ilm,i->plm', bm_east, m_pilm_divide_sin_theta, sin_lat_to_int) * self.factor2
 
-        elif special_type == PhysicalDimensions.HorizontalDisplacementEast:
-            """do NOT use this code!"""
+            else:
+                assert False
 
-            mrange = np.arange(self.lmax + 1)
-            pilm_divide_sin_theta = self.pilm / np.sin(self.lat)[:, None, None]
-            m_pilm_divide_sin_theta = np.einsum("m,ilm->ilm", mrange, pilm_divide_sin_theta)
+            if single:
+                assert cqlm.shape[0] == 1 and sqlm.shape[0] == 1
+                return cqlm[0], sqlm[0]
 
-            am_east = np.einsum('pij,mj->pim', gqij, -so, optimize='greedy') * self.factor1
-            bm_east = np.einsum('pij,mj->pim', gqij, co, optimize='greedy') * self.factor1
-
-            cqlm = np.einsum('pim,ilm,i->plm', am_east, m_pilm_divide_sin_theta, np.sin(self.lat)) * self.factor2
-            sqlm = np.einsum('pim,ilm,i->plm', bm_east, m_pilm_divide_sin_theta, np.sin(self.lat)) * self.factor2
+            else:
+                return cqlm, sqlm
 
         else:
             assert False
 
-        if single:
-            assert cqlm.shape[0] == 1 and sqlm.shape[0] == 1
-            return cqlm[0], sqlm[0]
-
-        else:
-            return cqlm, sqlm
-
     def synthesis(self, cqlm: np.ndarray, sqlm: np.ndarray, special_type: PhysicalDimensions = None):
         assert cqlm.shape == sqlm.shape
         assert len(cqlm.shape) in (2, 3)
+
         single = (len(cqlm.shape) == 2)
         if single:
             cqlm = np.array([cqlm])
@@ -151,12 +171,129 @@ class Harmonic:
 
             am = np.einsum('ijk,ljk->ilk', -cqlm, pilm_derivative)
             bm = np.einsum('ijk,ljk->ilk', -sqlm, pilm_derivative)
+
         elif special_type is PhysicalDimensions.HorizontalDisplacementEast:
             pilm_divide_sin_theta = self.pilm / np.sin(self.lat)[:, None, None]
             mrange = np.arange(self.lmax + 1)
 
             am = np.einsum('ijk,k,ljk->ilk', sqlm, mrange, pilm_divide_sin_theta)
             bm = np.einsum('ijk,k,ljk->ilk', -cqlm, mrange, pilm_divide_sin_theta)
+
+        else:
+            assert False
+
+        co = np.cos(self.g)
+        so = np.sin(self.g)
+
+        if not self.__discrete:
+            gqij = am @ co + bm @ so
+        else:
+            gqij = np.einsum("qil,li->qi", am, co) + np.einsum("qil,li->qi", bm, so)
+
+        if single:
+            assert gqij.shape[0] == 1
+            return gqij[0]
+        else:
+            return gqij
+
+
+class Harmonic:
+    """
+    Spherical Harmonic Calculation under the Definition of Fixed Frame Networks (GLQ, DH, and DH2)
+    """
+
+    def __init__(self, lmax, grid_type: GRDType or None = GRDType.GLQ, grid_space=None):
+        self.lmax = lmax
+        assert (grid_type is None) ^ (grid_space is None)
+
+        if grid_space is not None:
+            self.__grid_type = None
+
+            lat_deg, lon_deg = MathTool.get_global_lat_lon_range(grid_space)
+            self.colat, self.lon = MathTool.get_colat_lon_rad(lat_deg, lon_deg)
+            # in unit radians
+
+            # simplified sin weight
+            self.analysis_weight = np.sin(self.colat)
+
+            # get latitude weights, J. Driscoll and D. Healy, 1994
+            # nlat = len(self.colat)
+            # wi_DH = np.ones_like(self.colat, )
+            # for j in range(len(wi_DH)):
+            #     this_theta = self.colat[j]
+            #     this_wi = np.sum(np.array(
+            #         [np.sin((2 * l + 1) * this_theta) / (2 * l + 1) for l in range(int(nlat / 2 - 1))]
+            #     ))
+            #     wi_DH[j] = this_wi
+            # wi_DH *= 4 / np.pi
+            # self.analysis_weight = np.sin(self.colat) * wi_DH
+
+        else:
+            self.__grid_type = grid_type
+            self.colat, self.lon, self.analysis_weight = self.__get_grid_nodes(lmax, grid_type)  # in unit radians
+
+        self.analysis_weight /= np.sum(self.analysis_weight)  # normalized 1
+
+        self.__prepare()
+
+    @staticmethod
+    def __get_grid_nodes(lmax, grid_type: GRDType or None):
+        if grid_type == GRDType.GLQ:
+            colat, lon, analysis_weight = GLQ.get_nodes(lmax)
+
+        elif grid_type == GRDType.DH2:
+            colat, lon, analysis_weight = DH2.get_nodes(lmax)
+
+        elif grid_type == GRDType.DH:
+            colat, lon, analysis_weight = DH.get_nodes(lmax)
+
+        else:
+            assert False
+
+        return colat, lon, analysis_weight
+
+    def __prepare(self):
+        """pre-process some parameters of the 'two-step' method."""
+        self.nlat, self.nlon = len(self.colat), len(self.lon)
+
+        self.pilm = MathTool.get_Legendre(self.colat, self.lmax)
+        # Associative Legendre polynomials, indexes stand for (co-lat[rad], degree l, order m)
+        # 3-d array [theta, l, m] shape: (nlat * (lmax + 1) * (lmax + 1))
+        m = np.arange(self.lmax + 1)
+        self.g = m[:, None] @ self.lon[None, :]
+
+    def synthesis(self, cqlm: np.ndarray, sqlm: np.ndarray, special_type: PhysicalDimensions = None):
+        assert cqlm.shape == sqlm.shape
+        assert len(cqlm.shape) in (2, 3)
+
+        single = (len(cqlm.shape) == 2)
+        if single:
+            cqlm = np.array([cqlm])
+            sqlm = np.array([sqlm])
+
+        assert special_type in (
+            PhysicalDimensions.HorizontalDisplacementEast, PhysicalDimensions.HorizontalDisplacementNorth, None)
+
+        cqlm = np.array(cqlm)
+        sqlm = np.array(sqlm)
+
+        if special_type is None:
+            am = np.einsum('ijk,ljk->ilk', cqlm, self.pilm)
+            bm = np.einsum('ijk,ljk->ilk', sqlm, self.pilm)
+
+        elif special_type is PhysicalDimensions.HorizontalDisplacementNorth:
+            pilm_derivative = MathTool.get_Legendre_derivative(self.lat, self.lmax)
+
+            am = np.einsum('ijk,ljk->ilk', -cqlm, pilm_derivative)
+            bm = np.einsum('ijk,ljk->ilk', -sqlm, pilm_derivative)
+
+        elif special_type is PhysicalDimensions.HorizontalDisplacementEast:
+            pilm_divide_sin_theta = self.pilm / np.sin(self.lat)[:, None, None]
+            mrange = np.arange(self.lmax + 1)
+
+            am = np.einsum('ijk,k,ljk->ilk', sqlm, mrange, pilm_divide_sin_theta)
+            bm = np.einsum('ijk,k,ljk->ilk', -cqlm, mrange, pilm_divide_sin_theta)
+
         else:
             assert False
 
@@ -164,128 +301,35 @@ class Harmonic:
         so = np.sin(self.g)
 
         gqij = am @ co + bm @ so
+
         if single:
             assert gqij.shape[0] == 1
             return gqij[0]
         else:
             return gqij
 
-    def synthesis_1D(self,cqlm: np.ndarray):
+    def analysis(self, gqij: np.ndarray):
+        assert len(gqij.shape) in (2, 3)
 
-        SHF = self.get_spherical_harmonic_function()
-        Upsilon = SHF["Upsilon"]
-        # print(f"Upsilon shape is: {Upsilon.shape},{SH.value.shape}")
-        grid = np.einsum("wjl,gl->gwj", Upsilon, cqlm)
-        return grid
+        single = (len(gqij.shape) == 2)
+        if single:
+            gqij = np.array([gqij])
 
-    def get_spherical_harmonic_function(self):
-        co = np.cos(self.g)
-        so = np.sin(self.g)
-        Upsilon_co = np.einsum("wnm,mj->wjnm", self.pilm, co)
-        Upsilon_so = np.einsum("wnm,mj->wjnm", self.pilm, so)
-        N = int((self.lmax+2)*(self.lmax+1)/2+(self.lmax)*(self.lmax+1)/2)
-        # print(N)
-        Upsilon = np.zeros((len(Upsilon_co[:,0,0,0]),len(Upsilon_co[0,:,0,0]),N))
-        index = 0
-        for n in np.arange(self.lmax+1):
-            for m in np.arange(-n,n+1):
-                if m<0:
-                    Upsilon[:,:,index] = Upsilon_so[:,:,n,np.abs(m)]
-                    index+=1
-                else:
-                    Upsilon[:,:,index] = Upsilon_co[:,:,n,m]
-                    index+=1
-        SHF = {"Upsilon":Upsilon, "Upsilon_co":Upsilon_co,
-               "Upsilon_so":Upsilon_so}
-        return SHF
+        g = self.g
+        co = np.cos(g)  # cos(m phi)
+        so = np.sin(g)  # sin(m phi)
 
+        factor1 = 1 / self.nlon  # Delta longitude
+        am = np.einsum('pij,mj->pim', gqij, co) * factor1
+        bm = np.einsum('pij,mj->pim', gqij, so) * factor1
 
-    def synthesis_steps(self,cqlm,sqlm):
-        co = np.cos(self.g)
-        so = np.sin(self.g)
-        Upsilon_co = np.einsum("wnm,mj->wjnm", self.pilm, co)
-        Upsilon_so = np.einsum("wnm,mj->wjnm", self.pilm, so)
+        sin_lat_to_int = self.analysis_weight  # weighted Delta latitude
+        cqlm = np.einsum('pim,ilm,i->plm', am, self.pilm, sin_lat_to_int)
+        sqlm = np.einsum('pim,ilm,i->plm', bm, self.pilm, sin_lat_to_int)
 
-        Am = np.einsum("inm,wjnm->iwj", cqlm, Upsilon_co)
-        Bm = np.einsum("inm,wjnm->iwj", sqlm, Upsilon_so)
+        if single:
+            assert cqlm.shape[0] == 1 and sqlm.shape[0] == 1
+            return cqlm[0], sqlm[0]
 
-        grid = Am+Bm
-        return grid
-
-
-
-def demo():
-    c = np.ones()
-    lat = np.arange(90.1,-90.1,-1)
-    lon = np.arange(0,360,0.5)
-    a = Harmonic(lat=lat,lon=lon,lmax=180,option=1)
-    gqij = np.ones((181,361,720))
-    print(gqij)
-    C,S = a.analysis(gqij=gqij)
-    # print(C)
-    print('\nSynthesis:\n')
-    print(a.synthesis(cqlm=C,sqlm=S))
-
-
-def quick_fig(grid,lat=None,lon=None,maxvalue=2,savefile=None,unit="cm"):
-    import pygmt
-    import xarray as xr
-    print(f"data of figure max/min:{np.max(grid)},{np.min(grid)}")
-
-    fig_data = xr.DataArray(data=grid, dims=['lat', 'lon'], coords={'lat': lat, 'lon': lon})
-
-    fig = pygmt.Figure()
-    pygmt.config(FONT_ANNOT_PRIMARY="15p",FONT_LABEL="15p",MAP_FRAME_TYPE="plain",MAP_TITLE_OFFSET="-0.3c")
-    pygmt.makecpt(cmap="haxby",series=[-maxvalue,maxvalue,maxvalue/10])
-    fig.grdimage(grid=fig_data,projection="Q10c",cmap=True,frame=["a60f30"])
-    fig.coast(shorelines="1/0.5p,black",resolution="f")
-    fig.colorbar(position='JBC+o0c/1c+w8c+h',
-                 frame=f"xa{maxvalue / 2}+lEWH ({unit})")
-    # fig.text(position="BR",text=f"{var}",offset='-0.1c/0.2c', font='15p,Helvetica-Bold,black')
-    if savefile:
-        fig.savefig(savefile)
-    fig.show()
-
-def demo1():
-    from pysrc.ancillary.load_file.LoadCS import LoadCS
-    from lib.SaGEA.data_class.DataClass import SHC
-
-    resolution = 1
-
-    C,S = LoadCS().get_CS().get_cs2d()
-    SH = SHC(c=C,s=S)
-    lat,lon = MathTool.get_global_lat_lon_range(resolution=resolution)
-
-    H = Harmonic(lat=lat,lon=lon,lmax=60,option=1)
-    grid1 = H.synthesis(cqlm=C,sqlm=S)
-    grid2 = H.synthesis_1D(cqlm=SH.value)
-
-
-    # grid2 = H.synthesis_steps(cqlm=C,sqlm=S)
-
-    # print(f"Shapes are: {grid1.shape},{grid2.shape}")
-
-    # Cq,Sq = np.zeros_like(C),np.zeros_like(S)
-    # Cq[0,0,0] = C[0,0,0]
-    # Cq[0,2,1] = C[0,2,1]
-    # # Cq[0,2,2] = C[0,2,2]
-    # Cq[0,2,0] = C[0,2,0]
-    # Sq[0,2,1] = S[0,2,1]
-    # Sq[0,2,2] = S[0,2,2]
-    #
-    # lat1 = np.arange(90 - resolution / 2, -90 - resolution / 2, -resolution)
-    # print(f"C,S:{C[0,0,0],S[0,0,0]}")
-
-    # H2 = Harmonic(lat=lat1,lon=lon, lmax=60, option=1)
-    # grid1 = H1.synthesis(cqlm=Cq,sqlm=Sq)
-    # grid2 = H2.synthesis(cqlm=C,sqlm=S)
-    # print(grid1.shape,grid2.shape)
-    quick_fig(grid=grid1[0]*100,lat=lat,lon=lon,maxvalue=5)
-    quick_fig(grid=grid2[0]*100,lat=lat,lon=lon,maxvalue=5)
-    quick_fig(grid=grid1[0]-grid2[0],lat=lat,lon=lon,maxvalue=1)
-
-
-
-
-if __name__ == '__main__':
-    demo1()
+        else:
+            return cqlm, sqlm

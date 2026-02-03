@@ -1,10 +1,8 @@
-import pathlib
 from pathlib import Path
 
 import numpy as np
 
-from lib.SaGEA.data_class.CoreGRID import CoreGRID
-from lib.SaGEA.data_class.DataClass import GRID
+from lib.SaGEA.data_class.GRD import GRD
 from lib.SaGEA.post_processing.extract_basin_signal.ExtractSpatialSignalConfig import ExtractSpatialSignalConfig
 
 from lib.SaGEA.auxiliary.load_file.LoadL2SH import load_SHC
@@ -36,9 +34,9 @@ class ExtractSpatial:
                         or class Basin
         """
 
-        assert type(basin) in (np.ndarray, pathlib.WindowsPath)
+        assert type(basin) in (np.ndarray,) or issubclass(type(basin), Path)
 
-        if type(basin) is pathlib.WindowsPath:
+        if issubclass(type(basin), Path):
             basin = self.__load_SHC_to_basin(basin)
 
         basin_shape = np.shape(basin)
@@ -49,17 +47,17 @@ class ExtractSpatial:
 
     def __load_SHC_to_basin(self, path: Path):
         lmax = 60
-        clm_basin, slm_basin = load_SHC(path, key='', lmax=lmax, lmcs_in_queue=(1, 2, 3, 4))
+        clm_basin, slm_basin = load_SHC(path, key='', lmax=lmax, read_rows=(1, 2, 3, 4))
         har = Harmonic(self.configuration.lat_range, self.configuration.lon_range, lmax)
         grid_basin = har.synthesis(np.array([clm_basin]), np.array([slm_basin]))[0]
 
         return grid_basin
 
-    def set_signal(self, grid: np.ndarray or GRID):
+    def set_signal(self, grid: np.ndarray or GRD):
         """
         :param grid: 2d-array of gridded signal or 3d-array for series
         """
-        if issubclass(type(grid), CoreGRID):
+        if isinstance(type(grid), GRD):
             grid = grid.value
 
         if grid.ndim == 2:
@@ -68,8 +66,8 @@ class ExtractSpatial:
         self.signal = grid
         return self
 
-    def set_weight(self, grid: np.ndarray or GRID):
-        if issubclass(type(grid), CoreGRID):
+    def set_weight(self, grid: np.ndarray or GRD):
+        if isinstance(type(grid), GRD):
             grid = grid.value
 
         if grid.ndim == 2:
@@ -146,7 +144,7 @@ class ExtractSpatial:
 
 
 if __name__ == '__main__':
-    from pysrc.ancillary.aux_tool.FileTool import FileTool
+    from lib.SaGEA.auxiliary.aux_tool.FileTool import FileTool
 
     signal = np.random.uniform(0, 10, (180, 360))
 

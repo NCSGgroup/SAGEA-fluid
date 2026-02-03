@@ -3,6 +3,7 @@ import numpy as np
 from lib.SaGEA.auxiliary.aux_tool.MathTool import MathTool
 from lib.SaGEA.post_processing.filter.Base import get_poly_func, SHCFilter
 
+
 class PnMmConfig:
     def __init__(self):
         self.poly_n = 3

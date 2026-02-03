@@ -2,45 +2,23 @@ import pathlib
 
 import numpy as np
 import geopandas as gpd
+from shapely.geometry import Point, Polygon
+from shapely.ops import transform
+from shapely.prepared import prep
 import shapely.vectorized
+from pyproj import Transformer, CRS
 
-from lib.SaGEA.data_class.DataClass import GRID
+from lib.SaGEA.data_class.GRD import GRD
 from lib.SaGEA.auxiliary.aux_tool.MathTool import MathTool
 
 
-class LoadShpConfig:
-    def __init__(self):
-        self.__filepath = None
-
-    def set_path(self, path: pathlib.Path):
-        self.__filepath = path
-
-        return self
-
-    def get_path(self):
-        return self.__filepath
-
-
 class LoadShp:
-    def __init__(self, path: pathlib.Path = None):
-        self.configuration = LoadShpConfig()
-        if path is not None:
-            self.configuration.set_path(path)
-            self.__prepare()
+    def __init__(self, path: pathlib.Path):
+        self.__gpf = gpd.read_file(path)
 
-        self.__gpf = None
-
-    def __prepare(self):
-        shp_filepath = self.configuration.get_path()
-        self.__gpf = gpd.read_file(shp_filepath)
-        return self
-
-    def __load_mask(self, grid_space=None, identity_name: str = None):
+    def __load_mask_old(self, grid_space=None, identity_name: str = None):
         if identity_name is None:
             identity_name = "Id"
-
-        if self.__gpf is None:
-            self.__prepare()
 
         gdf = self.__gpf
 
@@ -60,24 +38,158 @@ class LoadShp:
 
         return np.array(masks_list), lat, lon
 
-    def __load_bound(self):
-        if self.__gpf is None:
-            self.__prepare()
+    def __load_mask(self, grid_space, mode="polygon", around_polar=False):
+        """
+        Generate individual global grid masks for each independent feature in the Shapefile
 
+        params：
+        shp_path: pathlib.Path
+        grid_space: int ot float, space of global grid
+        mode: str, "point" or "polygon"
+        around_polar: "North", "South", or None, EXPERIMENTAL.
+
+        return:
+        list: list[np.ndarray], list of individual global grid masks
+            if mode == "point": all points are inside one mask, and length of returned list is 1.
+            elif mode == "polygon": each polygon is inside each mask,
+                                    and length of returned list equals to the number of polygons.
+            elif mode == "multipoint":
+        """
+        assert mode in ["point", "polygon", "multipoint"]
+
+        gdf = self.__gpf
+
+        # if gdf.crs is not None and gdf.crs.srs != "EPSG:4326":
+        #     gdf.to_crs(epsg=4326, inplace=True)
+
+        # if gdf.crs is None:
+        #     gdf.to_crs(epsg=4326, inplace=True)
+
+        # if around_polar == "South":
+        #     gdf = gdf.to_crs(epsg=3031)
+
+        geometries = gdf.geometry.tolist()
+
+        output_width, output_height = int(round(360 / grid_space, 0)), int(round(180 / grid_space, 0)),
+
+        lat, lon = MathTool.get_global_lat_lon_range(grid_space)
+
+        if mode == "polygon":
+            mask_list = []
+            for idx, geom in enumerate(geometries):
+                mask_global = np.zeros((output_height, output_width), dtype=np.uint8)
+
+                g_minx, g_miny, g_maxx, g_maxy = geom.bounds
+                lat_index = np.where((lat < g_maxy) * (lat > g_miny))[0]
+                lon_index = np.where((lon < g_maxx) * (lon > g_minx))[0]
+
+                prepared_geom = prep(geom)
+
+                for i in lat_index:
+                    this_lat = lat[i]
+                    for j in lon_index:
+                        this_lon = lon[j]
+                        if prepared_geom.contains(Point(this_lon, this_lat)):
+                            mask_global[i, j] = 1
+
+                mask_list.append(mask_global)
+
+        elif mode == "point":
+            mask_global = np.zeros((output_height, output_width), dtype=np.uint8)
+
+            cplygn = Polygon([(geometries[i].x, geometries[i].y) for i in range(len(geometries))])
+
+            g_minx, g_miny, g_maxx, g_maxy = cplygn.bounds
+            lat_index = np.where((lat < g_maxy) * (lat > g_miny))[0]
+            lon_index = np.where((lon < g_maxx) * (lon > g_minx))[0]
+
+            prepared_geom = prep(cplygn)
+
+            for i in lat_index:
+                this_lat = lat[i]
+                for j in lon_index:
+                    this_lon = lon[j]
+                    if prepared_geom.contains(Point(this_lon, this_lat)):
+                        mask_global[i, j] = 1
+
+            mask_list = [mask_global]
+
+        elif mode == "multipoint":
+            mask_global = np.zeros((output_height, output_width), dtype=np.uint8)
+
+            point_list = list(geometries[0].geoms)
+
+            if around_polar == "South":
+                """experimental"""
+
+                crs_antarctic = CRS("EPSG:3031")
+                transformer = Transformer.from_crs("EPSG:4326", crs_antarctic, always_xy=True)
+
+                # projected_coords = [transformer.transform(p.x, p.y) for p in point_list]
+                projected_coords = [transformer.transform(p.x + 180, p.y) for p in point_list]
+
+                polygon_proj = Polygon(projected_coords)
+
+                transformer_back = Transformer.from_crs(crs_antarctic, "EPSG:4326", always_xy=True)
+                cplygn = transform(transformer_back.transform, polygon_proj)
+
+            else:
+                cplygn = Polygon([(point_list[i].x, point_list[i].y) for i in range(len(point_list))])
+
+            # cplygn = Polygon([(point_list[i].x, point_list[i].y) for i in range(len(point_list))])
+
+            g_minx, g_miny, g_maxx, g_maxy = cplygn.bounds
+            lat_index = np.where((lat < g_maxy) * (lat > g_miny))[0]
+            lon_index = np.where((lon < g_maxx) * (lon > g_minx))[0]
+
+            prepared_geom = prep(cplygn)
+
+            for i in lat_index:
+                this_lat = lat[i]
+                for j in lon_index:
+                    this_lon = lon[j]
+                    if prepared_geom.contains(Point(this_lon, this_lat)):
+                        mask_global[i, j] = 1
+
+            if around_polar == "South":
+                """experimental"""
+                mask_global_new = np.zeros_like(mask_global)
+                mask_global_new[:, int(180 / grid_space):] = mask_global[:, :int(180 / grid_space)]
+                mask_global_new[:, :int(180 / grid_space)] = mask_global[:, int(180 / grid_space):]
+
+                mask_global = mask_global_new
+
+            mask_list = [mask_global]
+
+
+        else:
+            assert False
+
+        return mask_list, lat, lon
+
+    def __multipoint_to_one_mask(self, grid_space):
+        pass
+
+    def __load_bound(self):
         gdf = self.__gpf
         bound = np.array([gdf.bounds.minx, gdf.bounds.maxx, gdf.bounds.miny, gdf.bounds.maxy]).T
 
         return bound
 
-    def get_GRID(self, grid_space, identity_name: str = None):
+    def get_GRD(self, grid_space, mode="polygon", around_polar=None):
+        assert mode in ["point", "polygon", "multipoint"]
 
-        mask, lat, lon = self.__load_mask(grid_space, identity_name)
+        mask, lat, lon = self.__load_mask(grid_space, mode=mode, around_polar=around_polar)
 
-        return GRID(mask, lat, lon)
+        return GRD(mask, lat, lon)
 
-    def get_SHC(self, lmax: int = None):
+    def get_SHC(self, lmax: int, spatial_accuracy: int = None):
+        if spatial_accuracy is not None:
+            grid_space = spatial_accuracy
+        else:
+            grid_space = int(180 / lmax)
 
-        grid = self.get_GRID()
+        grid = self.get_GRD(grid_space)
         shc = grid.to_SHC(lmax)
         return shc
 
@@ -85,46 +197,11 @@ class LoadShp:
         return self.__load_bound()
 
     def get_attr(self, identity_name: str):
-        if self.__gpf is None:
-            self.__prepare()
-
         gdf = self.__gpf
         assert identity_name in gdf.keys(), f"{identity_name} dose not exist in axes names: {gdf.keys()}"
 
         return gdf[identity_name]
 
-
-def demo():
-    from pysrc.ancillary.scripts.PlotGrids import plot_grids
-    from pysrc.ancillary.aux_tool.FileTool import FileTool
-
-    grid_space = 0.5
-
-    load = LoadShp()
-    load.configuration.set_path(FileTool.get_project_dir() / 'data/basin_mask/Shp/bas200k_shp')
-
-    pass
-
-    grid = load.get_GRID(grid_space=grid_space)
-    bound = load.get_bound()
-    names = load.get_attr("rivr_nm")
-
-    map_to_plot = np.zeros_like(grid.value[0])
-    for i in range(len(grid.value[1:])):
-        map_to_plot += grid.value[i] * i
-
-    for i in (20, 21, 22, 23, 24, 25):
-        plot_grids(
-            grid.value[i:i + 1],
-            lat=grid.lat,
-            lon=grid.lon,
-            # vmin=0,
-            # vmax=2,
-            subtitle=list(names[i:i + 1]),
-            # extent=bound[i]
-        )
-    pass
-
-
-if __name__ == '__main__':
-    demo()
+    def keys(self):
+        gdf = self.__gpf
+        return gdf.keys()

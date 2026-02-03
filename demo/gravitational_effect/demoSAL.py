@@ -59,12 +59,12 @@ def demo_NM():
 
     lat, lon = MathTool.get_global_lat_lon_range(resolution=res)
     ATM_SAL = PseudoSpectralSLE(SH=ASP_SH.value, lmax=lmax)
-    ATM_SAL.setLoveNumber(lmax=lmax, method=Enums.LLN_Data.Wang, frame=Enums.Frame.CM)
+    ATM_SAL.setLoveNumber(lmax=lmax, method=Enums.LLN_Data.PREM, frame=Enums.Frame.CM)
     ATM_SAL.setLatLon(lat=lat, lon=lon)
     ATM_SAL_results = ATM_SAL.SLE(mask=None, rotation=True, isLand=False)
 
     OCN_SAL = PseudoSpectralSLE(SH=OBP_SH_N.value, lmax=lmax)
-    OCN_SAL.setLoveNumber(lmax=lmax, method=Enums.LLN_Data.Wang, frame=Enums.Frame.CM)
+    OCN_SAL.setLoveNumber(lmax=lmax, method=Enums.LLN_Data.PREM, frame=Enums.Frame.CM)
     OCN_SAL.setLatLon(lat=lat, lon=lon)
     OCN_SAL_results = OCN_SAL.SLE(mask=None, rotation=True, isLand=False)
 
@@ -144,7 +144,7 @@ def demo_GO():
     lat, lon = MathTool.get_global_lat_lon_range(resolution=res)
     '''Run SAL module'''
     SAL = PseudoSpectralSLE(SH=shc.value, lmax=lmax)
-    SAL.setLoveNumber(lmax=lmax, method=Enums.LLN_Data.Wang, frame=Enums.Frame.CM)
+    SAL.setLoveNumber(lmax=lmax, method=Enums.LLN_Data.Wang, frame=Enums.Frame.CF)
     SAL.setLatLon(lat=lat, lon=lon)
     SAL_results = SAL.SLE(mask=mask_ocean,rotation=True,isLand=True)
 
@@ -164,4 +164,4 @@ def demo_GO():
 
 if __name__ == '__main__':
     demo_GO()
-    demo_NM()
+    # demo_NM()
