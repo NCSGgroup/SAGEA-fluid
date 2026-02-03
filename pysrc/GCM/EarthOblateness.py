@@ -1,19 +1,21 @@
+import time
 import numpy as np
+
+from lib.SaGEA.data_class.SHC import SHC
+from lib.SaGEA.data_class.GRD import GRD
 from lib.SaGEA.auxiliary.aux_tool.MathTool import MathTool
-from pysrc.ancillary.geotools.GeoMathKit import GeoMathKit
-from lib.SaGEA.data_class.DataClass import SHC,GRID
-import lib.SaGEA.auxiliary.preference.EnumClasses as Enums
-from pysrc.SAL.SeaLevelEquation import PseudoSpectralSLE
-from lib.SaGEA.auxiliary.preference.Constants import PMConstant
 from lib.SaGEA.auxiliary.aux_tool.FileTool import FileTool
 from lib.SaGEA.auxiliary.load_file.LoadL2SH import load_SHC
-from pysrc.ancillary.geotools.LLN import LoveNumber
-import time
+import lib.SaGEA.auxiliary.preference.EnumClasses as Enums
 
+from pysrc.SAL.SeaLevelEquation import PseudoSpectralSLE
+from pysrc.SaKits.Setting.Constant import GCMConstant
+from pysrc.SaKits.Setting.GeoMathKit import GeoMathKit
+from pysrc.SaKits.LLN.LLN import LoveNumber,LLN_variable,LLN_Data,Frame
 
 def Convert_Mass_to_Coordinates(C10, C11, S11):
     k1 = 0.021
-    rho_earth = PMConstant.rho_earth
+    rho_earth = GCMConstant.rho_earth
     X = np.sqrt(3) * (1 + k1) * C11 / rho_earth
     Y = np.sqrt(3) * (1 + k1) * S11 / rho_earth
     Z = np.sqrt(3) * (1 + k1) * C10 / rho_earth
@@ -21,9 +23,9 @@ def Convert_Mass_to_Coordinates(C10, C11, S11):
     return Coordinate
 
 def Convert_Stokes_to_Coordinates(C10, C11, S11):
-    X = np.sqrt(3) * PMConstant.radius * C11
-    Y = np.sqrt(3) * PMConstant.radius * S11
-    Z = np.sqrt(3) * PMConstant.radius * C10
+    X = np.sqrt(3) * GCMConstant.radius * C11
+    Y = np.sqrt(3) * GCMConstant.radius * S11
+    Z = np.sqrt(3) * GCMConstant.radius * C10
     Coordinate = {"X": X, "Y": Y, "Z": Z}
     return Coordinate
 
@@ -46,8 +48,8 @@ class J2:
         self.res = 1
         self.lat,self.lon = MathTool.get_global_lat_lon_range(self.res)
 
-        self.LLN_method = Enums.LLN_Data.PREM
-        self.frame = Enums.Frame.CF
+        self.LLN_method = LLN_Data.PREM
+        self.frame = Frame.CF
     def setResolution(self,resolution):
         self.res = resolution
         self.lat,self.lon = MathTool.get_global_lat_lon_range(resolution)
@@ -74,7 +76,7 @@ class J2:
             grid_basin.limiter(threshold=0.5)
             mask_grid = grid_basin.value[0]
         return mask_grid
-    def setLoveNumber(self, method: Enums.LLN_Data.PREM, frame: Enums.Frame.CF):
+    def setLoveNumber(self, method: LLN_Data.PREM, frame: Frame.CF):
         self.LLN_method = method
         self.frame = frame
         return self
@@ -98,11 +100,11 @@ class J2:
         CoreI20C = Pilm[:, 2, 0][:, None] * ocean_mask * cosC20[None, :]
         CoreI30C = Pilm[:, 3, 0][:, None] * ocean_mask * cosC30[None, :]
 
-        I_10C = GRID(grid=CoreI10C, lat=self.lat, lon=self.lon).to_SHC(self.lmax)
-        I_11C = GRID(grid=CoreI11C, lat=self.lat, lon=self.lon).to_SHC(self.lmax)
-        I_11S = GRID(grid=CoreI11S, lat=self.lat, lon=self.lon).to_SHC(self.lmax)
-        I_20C = GRID(grid=CoreI20C, lat=self.lat, lon=self.lon).to_SHC(self.lmax)
-        I_30C = GRID(grid=CoreI30C, lat=self.lat, lon=self.lon).to_SHC(self.lmax)
+        I_10C = GRD(grid=CoreI10C, lat=self.lat, lon=self.lon).to_SHC(self.lmax)
+        I_11C = GRD(grid=CoreI11C, lat=self.lat, lon=self.lon).to_SHC(self.lmax)
+        I_11S = GRD(grid=CoreI11S, lat=self.lat, lon=self.lon).to_SHC(self.lmax)
+        I_20C = GRD(grid=CoreI20C, lat=self.lat, lon=self.lon).to_SHC(self.lmax)
+        I_30C = GRD(grid=CoreI30C, lat=self.lat, lon=self.lon).to_SHC(self.lmax)
 
         I[:, 0, 0], I[:, 0, 1], I[:, 0, 2], I[:, 0, 3], I[:, 0, 4] = \
             I_10C.value[:, 2], I_11C.value[:, 2], I_11S.value[:, 2], I_20C.value[:, 2], I_30C.value[:, 2]
@@ -128,8 +130,8 @@ class J2:
         GRACE_SH[:, 12] = 0
         ocean_mask = self.setOcean(ocean_mask=mask)
         ocean_mask = GeoMathKit.leakage(ocean_mask=ocean_mask, lats=self.lat, buffer_width_km=buffer)
-        kernal = (SHC(c=GRACE_SH).to_grid(self.res).value) * ocean_mask
-        G_SH = GRID(grid=kernal, lat=self.lat, lon=self.lon).to_SHC(self.lmax).value
+        kernal = (SHC(c=GRACE_SH).to_GRD(self.res).value) * ocean_mask
+        G_SH = GRD(grid=kernal, lat=self.lat, lon=self.lon).to_SHC(self.lmax).value
         G = np.zeros((len(GRACE_SH), 5))
         G[:, 0] = G_SH[:, 2]
         G[:, 1] = G_SH[:, 3]
@@ -150,7 +152,8 @@ class J2:
         OM[:,3] = OM_SH[:,6]-GAD_Correct[:,6]+C20
         OM[:,4] = OM_SH[:,12]-GAD_Correct[:,12]+C30
         return OM
-    def __GRD_Term(self,C10=None,C11=None,S11=None,C20=None,C30=None,mask=None,GRD=False,rotation=True):
+
+    def __SAL_Term(self,C10=None,C11=None,S11=None,C20=None,C30=None,mask=None,SAL=False,rotation=True):
         GRACE_SH = self.GRACE.value
         GRACE_SH[:,1] = S11
         GRACE_SH[:,2] = C10
@@ -159,8 +162,8 @@ class J2:
         GRACE_SH[:, 12] = C30
 
         GRACE_SH = SHC(c=GRACE_SH).convert_type(from_type=Enums.PhysicalDimensions.Density,to_type=Enums.PhysicalDimensions.EWH)
-        GRACE_GRID = GRACE_SH.to_grid(self.res)
-        if GRD:
+        GRACE_GRID = GRACE_SH.to_GRD(self.res)
+        if SAL:
             SLE = PseudoSpectralSLE(SH=GRACE_SH.value,lmax=self.lmax)
             SLE.setLatLon(lat=self.lat,lon=self.lon)
             SLE.setLoveNumber(lmax=self.lmax,method=self.LLN_method,frame=self.frame)
@@ -171,10 +174,11 @@ class J2:
             OceanArea = MathTool.get_acreage(basin=ocean_mask)
             uniform_value = GRACE_GRID.integral(mask=land_mask,average=False)/OceanArea
             uniform_mask = uniform_value[:,None,None]*ocean_mask
-            UpdateTerm = GRID(grid=uniform_mask,lat=self.lat,lon=self.lon).to_SHC(self.lmax).value
+            UpdateTerm = GRD(grid=uniform_mask,lat=self.lat,lon=self.lon).to_SHC(self.lmax).value
         UpdateTerm = SHC(c=UpdateTerm).convert_type(from_type=Enums.PhysicalDimensions.EWH,to_type=Enums.PhysicalDimensions.Density).value
         return UpdateTerm[:,2],UpdateTerm[:,3],UpdateTerm[:,1],UpdateTerm[:,6],UpdateTerm[:, 12]
-    def Low_Degree_Term(self,mask=None,GRD=False,rotation=True,buffer=0):
+
+    def Low_Degree_Term(self,mask=None,SAL=False,rotation=True,buffer=0):
         """
         the series of Stokes coefficients follow: C10, C11, S11, C20, C21, S21
         that means, index 0->C10, 1->C11, 2->S11, 3->C20, 4->C21, 5->S21
@@ -192,11 +196,11 @@ class J2:
         # print(f"verfiy: {I[0]@I_inv[0]}")
         C = np.einsum('nij,nj->ni',I_inv,OM-G)
 
-        GRD_Ocean_Term = self.__GRD_Term(C10=C[:,0],C11=C[:,1],S11=C[:,2],C20=C[:,3],C30=C[:,4],
-                                         mask=mask,GRD=GRD,rotation=rotation)
+        SAL_Ocean_Term = self.__SAL_Term(C10=C[:,0],C11=C[:,1],S11=C[:,2],C20=C[:,3],C30=C[:,4],
+                                         mask=mask,SAL=SAL,rotation=rotation)
         for iter in np.arange(100):
-            OM_new = self.__Ocean_Model_Term(C10=GRD_Ocean_Term[0],C11=GRD_Ocean_Term[1],S11=GRD_Ocean_Term[2],
-                                             C20=GRD_Ocean_Term[3],C30=GRD_Ocean_Term[4])
+            OM_new = self.__Ocean_Model_Term(C10=SAL_Ocean_Term[0],C11=SAL_Ocean_Term[1],S11=SAL_Ocean_Term[2],
+                                             C20=SAL_Ocean_Term[3],C30=SAL_Ocean_Term[4])
             C_new = np.einsum('nij,nj->ni', I_inv, OM_new - G)
             delta = np.abs(C_new-C).flatten()
             if np.max(delta) < 10e-4:
@@ -206,11 +210,11 @@ class J2:
 
         lln = LoveNumber().config(lmax=self.lmax, method=self.LLN_method).get_Love_number()
         lln.convert(target=self.frame)
-        k = lln.LLN[Enums.LLN_variable.k]
+        k = lln.LLN[LLN_variable.k]
 
-        factor = 1.021/(PMConstant.rho_earth*PMConstant.radius)
-        factor2 = (3+3*k[2])/(5*PMConstant.rho_earth*PMConstant.radius)
-        factor3 = (3+3*k[3])/(7*PMConstant.rho_earth*PMConstant.radius)
+        factor = 1.021/(GCMConstant.rho_earth*GCMConstant.radius)
+        factor2 = (3+3*k[2])/(5*GCMConstant.rho_earth*GCMConstant.radius)
+        factor3 = (3+3*k[3])/(7*GCMConstant.rho_earth*GCMConstant.radius)
 
         # print(f"Love numbers degree-1:{k[1]},degre-2:{k[2]},degree-3:{k[3]}")
         Mass_Coef = {"C10":C[:,0],"C11":C[:,1],"S11":C[:,2],"C20":C[:,3],"C30":C[:,4]}
@@ -226,24 +230,25 @@ class J2:
         print('%-20s%-20s ' % ('Resolution:', f'{self.res}°'))
         print('%-20s%-20s ' % ('LoveNumber:', f'{self.LLN_method}'))
         print('%-20s%-20s ' % ('Frame:', f'{self.frame}'))
-        print("%-20s%-20s " % ('SAL:',f'{GRD} (if False, omit rotation)'))
+        print("%-20s%-20s " % ('SAL:',f'{SAL} (if False, omit rotation)'))
         print("%-20s%-20s " % ('Rotation feedback:', f'{rotation}'))
         print('%-20s%-20s ' % ('Iteration:', f'{iter + 1}'))
         print('%-20s%-20s ' % ('Convergence:', f'{np.max(delta)}'))
         print('%-20s%-20s ' % ('Time-consuming:', f'{end_time - start_time:.4f} s'))
         print(f"---------------------------------------------------")
         return SH
-    def GSM_Like(self,mask=None,GRD=False,rotation=True,buffer=0):
-        SH = self.Low_Degree_Term(mask=mask,GRD=GRD,rotation=rotation,buffer=buffer)
+    def GSM_Like(self,mask=None,SAL=False,rotation=True,buffer=0):
+        SH = self.Low_Degree_Term(mask=mask,SAL=SAL,rotation=rotation,buffer=buffer)
         C = SH['Mass']
         Coordinate = Convert_Mass_to_Coordinates(C10=C["C10"],C11=C["C11"],S11=C["S11"])
         print("-------------Finished GSM-like computation-------------\n"
               "==========================================================")
         return Coordinate
-    def Full_Geocenter(self,GAC=None,mask=None,GRD=False,rotation=True,buffer=0):
+
+    def Full_Geocenter(self,GAC=None,mask=None,SAL=False,rotation=True,buffer=0):
         GAC = SHC(c=GAC)
         GAC_Coordinate = Convert_Stokes_to_Coordinates(C10=GAC.value[:,2],C11=GAC.value[:,3],S11=GAC.value[:,1])
-        SH = self.Low_Degree_Term(mask=mask,GRD=GRD,rotation=rotation,buffer=buffer)
+        SH = self.Low_Degree_Term(mask=mask,SAL=SAL,rotation=rotation,buffer=buffer)
         C = SH['Mass']
         GSM_Coordinate = Convert_Mass_to_Coordinates(C10=C["C10"], C11=C["C11"], S11=C["S11"])
         X = GAC_Coordinate['X']+GSM_Coordinate['X']

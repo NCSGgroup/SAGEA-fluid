@@ -1,15 +1,18 @@
+import time
+import numpy as np
+
+from pysrc.SaKits.LoadFile.SHC import SHC
+# from lib.SaGEA.data_class.SHC import SHC
+from lib.SaGEA.data_class.GRD import GRD
 from lib.SaGEA.auxiliary.aux_tool.FileTool import FileTool
 from lib.SaGEA.auxiliary.aux_tool.MathTool import MathTool
 from lib.SaGEA.auxiliary.load_file.LoadL2SH import load_SHC
-from lib.SaGEA.auxiliary.preference.Constants import GeoConstants,EarthConstant
-from pysrc.ancillary.geotools.LLN import LoveNumber,LLN_Data,LLN_variable,Frame
-import numpy as np
-from lib.SaGEA.data_class.DataClass import SHC,GRID
-import time
-from lib.SaGEA.post_processing.harmonic.Harmonic import Harmonic
-from lib.SaGEA.auxiliary.preference.EnumClasses import Displacement,GreenFunction
-from pysrc.basis_func import PointLoad,DiskLoad
 
+from pysrc.SaKits.Setting.Constant import SALConstant
+from pysrc.SaKits.LLN.LLN import LoveNumber,LLN_Data,LLN_variable,Frame
+from pysrc.SaKits.LoadFunc.Harmonic import Harmonic
+from pysrc.SaKits.Setting.EnumClasses import Displacement,GreenFunction
+from pysrc.SaKits.LoadFunc import PointLoad, DiskLoad
 
 
 class PseudoSpectralSLE:
@@ -27,14 +30,17 @@ class PseudoSpectralSLE:
         self.res = np.abs(self.lat[1]-self.lat[0])
 
         return self
+
     def setLoveNumber(self,lmax,method:LLN_Data.PREM,frame=Frame.CM):
         self.Frame = frame
         self.lln = LoveNumber().config(lmax=lmax,method=method).get_Love_number().convert(target=frame)
+        # print(self.lln)
         return self
+
     def setOcean(self,ocean_mask=None):
         if ocean_mask is not None:
             mask_grid = ocean_mask
-            mask_sh = GRID(grid=mask_grid,lat=self.lat,lon=self.lon).to_SHC(self.lmax).value
+            mask_sh = GRD(grid=mask_grid,lat=self.lat,lon=self.lon).to_SHC(self.lmax).value
         else:
             OceanFuction_SH = FileTool.get_project_dir("data/basin_mask/SH/Ocean_maskSH.dat")
             mask_shc = load_SHC(OceanFuction_SH, key='', lmax=self.lmax)
@@ -45,7 +51,8 @@ class PseudoSpectralSLE:
 
         mask = {"SH":mask_sh,"Grid":mask_grid}
         return mask
-    def BaryTerm(self,AL_SH,GRD_Grid,mask=None):
+
+    def BaryTerm(self,AL_SH,SAL_Grid,mask=None):
         '''Baryterm means only the mass change leads to the sea level changes, which also called eustatic term'''
         ocean_function = self.setOcean(ocean_mask=mask)
         ocean_grid = ocean_function['Grid']
@@ -53,17 +60,18 @@ class PseudoSpectralSLE:
 
         Mask00 = ocean_sh[0,0]
         AL00 = AL_SH[:,0]
-        RO_SH = GRID(grid=GRD_Grid*ocean_grid,lat=self.lat,lon=self.lon).to_SHC(self.lmax).value
+        RO_SH = GRD(grid=SAL_Grid*ocean_grid,lat=self.lat,lon=self.lon).to_SHC(self.lmax).value
 
         Bary = -(AL00+RO_SH[:,0])/Mask00
         return Bary
+
     def GRDparameter(self, option=0):
         lln = self.lln
         kl = lln.LLN[LLN_variable.k]
         hl = lln.LLN[LLN_variable.h]
 
-        rho_water = GeoConstants.density_water
-        rho_earth = GeoConstants.density_earth
+        rho_water = SALConstant.density_water
+        rho_earth = SALConstant.density_earth
 
         if option == 1:
             Green_N = []
@@ -113,10 +121,10 @@ class PseudoSpectralSLE:
 
         GRD_SH_value = X_SH.value + P_SH.value
         GRD_SH = SHC(c=GRD_SH_value)
-        GRD_GRID = GRD_SH.to_grid(self.res)
-        X_Grid = X_SH.to_grid(self.res)
+        GRD_GRID = GRD_SH.to_GRD(self.res)
+        X_Grid = X_SH.to_GRD(self.res)
 
-        GRD = {
+        SAL = {
             "SH": GRD_SH.value,
             "N": X_SH.value,
             "U": -P_SH.value,
@@ -124,7 +132,8 @@ class PseudoSpectralSLE:
             "N_Grid":X_Grid.value
         }
 
-        return GRD
+        return SAL
+
     def RotationTerm(self,SH):
         SH_00 = SH[:,0]
         SH_20 = SH[:,6]
@@ -160,14 +169,15 @@ class PseudoSpectralSLE:
             "U":SH_rotation_P,
         }
         return SH_rotation
+
     def Rotation_matrix(self):
-        a = EarthConstant.radiusm
-        rho_w= EarthConstant.rhow
-        Omega_E = EarthConstant.Omega
-        A,C = EarthConstant.A, EarthConstant.C
-        sigma_0 = EarthConstant.Chandler
-        k2,h2 = EarthConstant.k2, EarthConstant.h2
-        g = EarthConstant.grav
+        a = SALConstant.radiusm
+        rho_w= SALConstant.rhow
+        Omega_E = SALConstant.Omega
+        A,C = SALConstant.A, SALConstant.C
+        sigma_0 = SALConstant.Chandler
+        k2,h2 = SALConstant.k2, SALConstant.h2
+        g = SALConstant.grav
         lln = LoveNumber().config(lmax=self.lmax, method=LLN_Data.PREM).get_Love_number()
         kl2, hl2 = lln.LLN[LLN_variable.k][2], lln.LLN[LLN_variable.h][2]
 
@@ -209,23 +219,24 @@ class PseudoSpectralSLE:
             "U":T_U,
         }
         return Maxtrixs
-    def RSLTerm(self,GRD,Bary,mask=None):
+
+    def RSLTerm(self,SAL,Bary,mask=None):
         ocean_function = self.setOcean(ocean_mask=mask)
         ocean_mask = ocean_function["Grid"]
         Mask_SH = ocean_function["SH"]
 
-        RSL = GRD['Grid'] * ocean_mask
-        RSL_SH = GRID(grid=RSL, lat=self.lat, lon=self.lon).to_SHC(self.lmax).value
+        RSL = SAL['Grid'] * ocean_mask
+        RSL_SH = GRD(grid=RSL, lat=self.lat, lon=self.lon).to_SHC(self.lmax).value
         Bary_SH = Bary[:, None] * Mask_SH
         RSL_SH = RSL_SH + Bary_SH
 
-        Land_SH = GRID(grid=GRD['Grid']*(1-ocean_mask),lat=self.lat,lon=self.lon).to_SHC(self.lmax).value
+        Land_SH = GRD(grid=SAL['Grid']*(1-ocean_mask),lat=self.lat,lon=self.lon).to_SHC(self.lmax).value
         Quasi_RSL_SH = Land_SH+RSL_SH
 
-        Bary_Grid = SHC(c=Bary_SH).to_grid(self.res).value
+        Bary_Grid = SHC(c=Bary_SH).to_GRD(self.res).value
         # print(f"Bary_Grid and GRD_N:{Bary_Grid.shape,GRD['N_Grid'].shape}")
-        GHC_Grid = GRD['N_Grid']+Bary_Grid
-        GHC_SH = GRID(grid=GHC_Grid,lat=self.lat,lon=self.lon).to_SHC(self.lmax).value
+        GHC_Grid = SAL['N_Grid']+Bary_Grid
+        GHC_SH = GRD(grid=GHC_Grid,lat=self.lat,lon=self.lon).to_SHC(self.lmax).value
 
         SL_SH = {"RSL_SH":RSL_SH,
                  "Quasi_RSL_SH":Quasi_RSL_SH,
@@ -240,13 +251,13 @@ class PseudoSpectralSLE:
         ocean_mask = ocean_function['Grid']
         Mask_SH = ocean_function['SH']
         if isLand:
-            input_Grid = self.shc.to_grid(self.res).value * (1 - ocean_mask)
-            input_SH = GRID(grid=input_Grid, lat=self.lat, lon=self.lon).to_SHC(self.lmax).value
+            input_Grid = self.shc.to_GRD(self.res).value * (1 - ocean_mask)
+            input_SH = GRD(grid=input_Grid, lat=self.lat, lon=self.lon).to_SHC(self.lmax).value
         else:
-            input_Grid = self.shc.to_grid(self.res).value
-            input_SH = GRID(grid=input_Grid, lat=self.lat, lon=self.lon).to_SHC(self.lmax).value
+            input_Grid = self.shc.to_GRD(self.res).value
+            input_SH = GRD(grid=input_Grid, lat=self.lat, lon=self.lon).to_SHC(self.lmax).value
 
-        GRD = {"Grid":np.zeros_like(input_Grid),
+        SAL = {"Grid":np.zeros_like(input_Grid),
                "SH":np.zeros_like(input_SH),
                "N": np.zeros_like(input_SH),
                "U": np.zeros_like(input_SH),
@@ -254,17 +265,17 @@ class PseudoSpectralSLE:
                }
         GHC,VLM = None,None
 
-        BaryTerm = self.BaryTerm(AL_SH=input_SH,GRD_Grid=GRD['Grid'],mask=mask)
-        SL_SH = self.RSLTerm(GRD=GRD,Bary=BaryTerm,mask=mask)
+        BaryTerm = self.BaryTerm(AL_SH=input_SH,SAL_Grid=SAL['Grid'],mask=mask)
+        SL_SH = self.RSLTerm(SAL=SAL,Bary=BaryTerm,mask=mask)
         RSL_SH = SL_SH['RSL_SH']
         for iter in np.arange(100):
-            GRD = self.GRDTerm(AL_SH=input_SH, RSL_SH=RSL_SH, rotation=rotation)
-            BaryTerm = self.BaryTerm(AL_SH=input_SH, GRD_Grid=GRD['Grid'], mask=mask)
-            SL_SH = self.RSLTerm(GRD=GRD, Bary=BaryTerm, mask=mask)
+            SAL = self.GRDTerm(AL_SH=input_SH, RSL_SH=RSL_SH, rotation=rotation)
+            BaryTerm = self.BaryTerm(AL_SH=input_SH, SAL_Grid=SAL['Grid'], mask=mask)
+            SL_SH = self.RSLTerm(SAL=SAL, Bary=BaryTerm, mask=mask)
             new_RSL_SH =  SL_SH['RSL_SH']
-            VLM = GRD['U']
+            VLM = SAL['U']
             # GHC = SL_SH['GHC_SH']
-            GHC = GRD['N']
+            GHC = SAL['N']
 
             delta = np.max(np.abs(new_RSL_SH - RSL_SH))
             # print(f"The iteration is:{iter + 1},\n"
@@ -274,7 +285,7 @@ class PseudoSpectralSLE:
                 break
             RSL_SH = new_RSL_SH
         RSL_SH = SHC(c=RSL_SH)
-        RSL = RSL_SH.to_grid(self.res)
+        RSL = RSL_SH.to_GRD(self.res)
         SLE = {"Input": input_SH,
                "RSL_SH": RSL_SH.value,
                "Quasi_RSL_SH":SL_SH['Quasi_RSL_SH'],
@@ -299,11 +310,12 @@ class PseudoSpectralSLE:
         print("-------------------------------------------------\n")
         return SLE
 
+
 class SpatialSLE:
     def __init__(self,grid,lat,lon):
         self.lat,self.lon = lat,lon
         self.res = np.abs(lat[1] - lat[0])
-        self.Input = GRID(grid=grid,lat=lat,lon=lon)
+        self.Input = GRD(grid=grid,lat=lat,lon=lon)
         self.lmax = int(180/self.res)
         self.lln = LoveNumber().config(lmax=self.lmax,method=LLN_Data.PREM).get_Love_number()
         self.Green = GreenFunction.PointLoad
@@ -315,15 +327,18 @@ class SpatialSLE:
         self.lln = LoveNumber().config(lmax=lmax,method=method).get_Love_number().convert(target=frame)
         # print(f"The Load Love Number here is up to degree {lmax}, method is {method.name}, and frame is {frame.name}")
         return self
+
     def setmaxDegree(self,lmax):
         self.lmax = lmax
         # print(f"The update configuration information:\n"
         #       f"lmax:{self.lmax}, resolution:{self.res}, lat:{self.lat.shape}, lon:{self.lon.shape}\n")
         return self
+
     def setGreenFunctionType(self,kind:GreenFunction.PointLoad):
         self.Green = kind
         # print(f"The GreenFunction here is {self.Green.name}.")
         return self
+
     def setOcean(self,loadfile="data/basin_mask/SH/Ocean_maskSH.dat"):
         OceanFuction_SH = FileTool.get_project_dir(loadfile)
         shc_OceanFunction = load_SHC(OceanFuction_SH, key='', lmax=self.lmax)  # load basin mask (in SHC)
@@ -331,6 +346,7 @@ class SpatialSLE:
         grid_basin.limiter(threshold=0.5)
         ocean_function = grid_basin.value[0]
         return ocean_function
+
     def BaryTerm(self, mask):
         '''Also called eustatic term'''
         ocean_mask = mask
@@ -341,7 +357,7 @@ class SpatialSLE:
         E = E[:, np.newaxis, np.newaxis] * mask
         return E
 
-    def GRDTerm(self, WL, mask, rotation=False):
+    def SALTerm(self, WL, mask, rotation=False):
         ocean_mask = mask
         assert WL.ndim == 3, "The dimension should be 3"
         Load = WL.reshape((len(WL), -1)).T
@@ -354,7 +370,7 @@ class SpatialSLE:
         }
         if self.Green is GreenFunction.PointLoad:
             grids = PointLoad.Grids_generation.Equal_angular_distance(resolution=self.res)
-            grids['EWH'] = Load * EarthConstant.rhow
+            grids['EWH'] = Load * SALConstant.rhow
             gfa = PointLoad.GFA_regular_grid(lln=lln)
             gfa.configure(grids=grids)
             Bg = gfa.evaluation(points=point, variable=Displacement.Vertical, resolution=self.res).T
@@ -390,10 +406,11 @@ class SpatialSLE:
             B = Bg
             EP = EPg
 
-        Mean_GRD = GRID(grid=EP - B, lat=self.lat, lon=self.lon).integral(mask=ocean_mask, average=True)
+
+        Mean_GRD = GRD(grid=EP - B, lat=self.lat, lon=self.lon).integral(mask=ocean_mask, average=True)
         Mean_GRD = Mean_GRD[:, np.newaxis, np.newaxis] * ocean_mask
 
-        GRD = EP - B - Mean_GRD
+        SAL = EP - B - Mean_GRD
         # print(f"The GRD is: {GRD.shape},\n"
         #       f"The Mean GRD: {Mean_GRD.shape},\n"
         #       f"The GHC is: {(EP + self.BaryTerm(mask=mask) - Mean_GRD).shape},\n"
@@ -403,20 +420,20 @@ class SpatialSLE:
         #            "GRD_Mean": Mean_GRD,
         #            "GHC": EP + self.BaryTerm(mask=mask) - Mean_GRD,
         #            "VLM": B}
-        GRDterm = {"GRD": GRD,
+        SALterm = {"GRD": SAL,
                    "GRD_Mean": Mean_GRD,
                    "GHC": EP,
                    "VLM": B}
-        return GRDterm
+        return SALterm
 
     def RotationTerm(self, WL):
-        k2, h2 = EarthConstant.k2, EarthConstant.h2
-        grav = EarthConstant.grav
+        k2, h2 = SALConstant.k2, SALConstant.h2
+        grav = SALConstant.grav
         self.lat, self.lon = np.array(self.lat), np.array(self.lon)
         SHF = Harmonic(lat=self.lat, lon=self.lon, lmax=self.lmax, option=1).get_spherical_harmonic_function()[
             "Upsilon"]
         print(f"SHF shape is:{SHF.shape}")
-        WL_SH = GRID(grid=WL, lat=self.lat, lon=self.lon).to_SHC(self.lmax).value
+        WL_SH = GRD(grid=WL, lat=self.lat, lon=self.lon).to_SHC(self.lmax).value
         T_00 = WL_SH[:, 0]
         T_20 = WL_SH[:, 6]
         T_21 = WL_SH[:, 7]
@@ -450,13 +467,13 @@ class SpatialSLE:
         return rotation
 
     def Rotation_matrix(self):
-        a = EarthConstant.radiusm
-        rho_w = EarthConstant.rhow
-        Omega_E = EarthConstant.Omega
-        A, C = EarthConstant.A, EarthConstant.C
-        sigma_0 = EarthConstant.Chandler
-        k2, h2 = EarthConstant.k2, EarthConstant.h2
-        g = EarthConstant.grav
+        a = SALConstant.radiusm
+        rho_w = SALConstant.rhow
+        Omega_E = SALConstant.Omega
+        A, C = SALConstant.A, SALConstant.C
+        sigma_0 = SALConstant.Chandler
+        k2, h2 = SALConstant.k2, SALConstant.h2
+        g = SALConstant.grav
         lln = LoveNumber().config(lmax=self.lmax, method=LLN_Data.PREM).get_Love_number()
         kl2, hl2 = lln.LLN[LLN_variable.k][2], lln.LLN[LLN_variable.h][2]
 
@@ -508,9 +525,9 @@ class SpatialSLE:
         GHC, VLM = None, None
         for iteration in np.arange(100):
             WL = self.Input.value * (1 - ocean_mask) + S * ocean_mask
-            GRDterm = self.GRDTerm(WL=WL, mask=ocean_mask, rotation=rotation)
-            GHC, VLM = GRDterm['GHC'], GRDterm['VLM']
-            GRD = GRDterm['GRD']
+            SALterm = self.SALTerm(WL=WL, mask=ocean_mask, rotation=rotation)
+            GHC, VLM = SALterm['GHC'], SALterm['VLM']
+            SAL = SALterm['GRD']
             S_new = Baryterm + GRD
             # delta = np.abs(
             #     np.linalg.norm(S_new * ocean_mask, axis=(1, 2)) - np.linalg.norm(S * ocean_mask, axis=(1, 2)))
@@ -521,7 +538,7 @@ class SpatialSLE:
                 break
             S = S_new
 
-        S = GRID(grid=S, lat=self.lat, lon=self.lon)
+        S = GRD(grid=S, lat=self.lat, lon=self.lon)
         S_SH = S.to_SHC(lmax=self.lmax)
 
         SLE = {"Input": self.Input.value,
@@ -548,3 +565,19 @@ class SpatialSLE:
         print("-------------------------------------------------\n")
 
         return SLE
+
+def demo():
+    from datetime import date
+    lmax = 60
+    begin_date, end_date = date(2009, 1, 1), date(2009, 12, 31)
+    gsm_dir, gsm_key = FileTool.get_project_dir("data/L2_SH_products/GSM/CSR/RL06/BA01/"), "GRCOF2"
+    low_deg_dir = FileTool.get_project_dir("data/L2_low_degrees/")
+    shc, dates_begin, dates_end = load_SHC(gsm_dir, key=gsm_key, lmax=lmax, begin_date=begin_date, end_date=end_date,
+                                           get_dates=True, )  # load GSM and dates
+    A = PseudoSpectralSLE(SH=shc.value,lmax=lmax)
+    A.setLoveNumber(lmax=60,method=LLN_Data.Wang,frame=Frame.CM)
+
+if __name__ == '__main__':
+    demo()
+
+
