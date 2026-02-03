@@ -114,7 +114,7 @@ The estimation of GRACE geocenter motion follows a similar three-step workflow.
 
 - Step 3: Run the GRACE-OBP. 
 
-  `Results = GCM.Low_Degree_Term(mask, buffer, GRD=True, rotation=True)`,  where GRD controls whether SAL effects are included, rotation determines whether rotational feedback is considered, and buffer specifies the spatial buffer width used for leakage correction (default 0 km).
+  `Results = GCM.Low_Degree_Term(mask, buffer, SAL=True, rotation=True)`,  where SAL controls whether SAL effects are included, rotation determines whether rotational feedback is considered, and buffer specifies the spatial buffer width used for leakage correction (default 0 km).
 
 Users may then retrieve the estimated low-degree terms as Stokes coefficients using `Results['Stokes']` or as mass coefficients using `Results['Mass']`. For convenience, geocenter motion can also be obtained directly via `Results = GCM.GSM_Like(mask, GRD, rotation, buffer)`, and individual geocenter components can be accessed through the X, Y or Z options (in meters).
 
