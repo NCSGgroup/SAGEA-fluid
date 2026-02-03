@@ -1,0 +1,16 @@
+{
+             "Function": "Mean",
+             "period": "2022",
+             "Path_SP": "I:/Paper3/Result/sp_model/",
+             "Path_Upp": "I:/Paper3/Result/upper_model_0.25/",
+             "Path_Mean": "I:/",
+             "Path_Mean_Pressure": "I:/Paper3/Assessment/2_Scenario_2/mean/",
+             "Save_Path": "I:/",
+             "BeginDate": "2022-01-01",
+             "EndDate": "2022-12-31",
+             "interval": 3,
+             "Nmax": 180,
+             "GeoHeight": "model",
+             "MeanType": "sp",
+             "Grid": 0.25
+}

@@ -1,0 +1,14 @@
+{
+           "GeoHeight": "model level",
+           "Integral": "upper",
+           "BeginDate": "2020-01-01",
+           "EndDate": "2020-01-01",
+           "PathDataLoad": "I:/ERA5/model level/",
+           "PathTide": "I:/Paper3/Result/Tide/2022/TidePressure/",
+           "Path_SP": "I:/temp/",
+           "Path_Upper": "I:/temp/",
+           "Path_LN": "I:/Paper3/Auxiliary/",
+           "MaxDegree": 180,
+           "Interval": 3,
+           "OnlyPressure": "1"
+}
