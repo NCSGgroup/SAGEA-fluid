@@ -3,7 +3,7 @@ import numpy as np
 from pysrc.SaKits.LLN.LLN import LoveNumber, LLN_Data, LLN_variable
 from pysrc.SaKits.LoadFunc.Legendre import Legendre_polynomial
 from pysrc.SaKits.Setting.Constant import EarthConstant
-from lib.SaGEA.auxiliary.aux_tool.MathTool import MathTool
+from pysrc.SaKits.Setting.MathTool import MathTool
 from pysrc.SaKits.Setting.EnumClasses import Displacement
 from tqdm import tqdm
 

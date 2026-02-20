@@ -15,6 +15,7 @@ from lib.AOD.MathKit.GeoMathKit import GeoMathKit
 from lib.AOD.MathKit.Harmonic import Harmonic, SynthesisType
 from lib.AOD.LoadFile.LoadSH import SimpleSH
 from lib.AOD.MathKit.LoveNumber import LoveNumberType, LoveNumber
+from lib.SaGEA.auxiliary.aux_tool.FileTool import FileTool
 
 
 class LandSeaMask:
@@ -102,13 +103,18 @@ class LandSeaMask:
         Stokes coefficients of a land-sea mask generated from the shape file, up to degree/order = 360.
         :return:
         """
+
+
+        ocean_360_path = FileTool.get_project_dir("data/auxiliary/ocean360_grndline.sh")
+        ln_path = FileTool.get_project_dir("data/auxiliary/")
+
         lmax = 360
-        SHC, SHS = SimpleSH().load('I:\Paper3\Auxiliary/ocean360_grndline.sh').getCS(lmax)
+        SHC, SHS = SimpleSH().load(ocean_360_path).getCS(lmax)
 
         # lat = np.arange(89.75, -90, -0.5)
         # lon = np.arange(0.25, 360, 0.5)
 
-        LN = LoveNumber('I:\Paper3\Auxiliary/')
+        LN = LoveNumber(ln_path)
         hm = Harmonic(LN).setLoveNumMethod(LoveNumberType.Wang)
         PnmMat = GeoMathKit.getPnmMatrix(self.__lat, lmax, 2)
         grids = hm.synthesis(Cqlm=SHC, Sqlm=SHS, lat=self.__lat, lon=self.__lon, Nmax=lmax, PnmMat=PnmMat,kind=SynthesisType.synthesis)

@@ -5,7 +5,8 @@ from pysrc.SaKits.LoadFile.SHC import SHC
 # from lib.SaGEA.data_class.SHC import SHC
 from lib.SaGEA.data_class.GRD import GRD
 from lib.SaGEA.auxiliary.aux_tool.FileTool import FileTool
-from lib.SaGEA.auxiliary.aux_tool.MathTool import MathTool
+# from lib.SaGEA.auxiliary.aux_tool.MathTool import MathTool
+from pysrc.SaKits.Setting.MathTool import MathTool
 from lib.SaGEA.auxiliary.load_file.LoadL2SH import load_SHC
 
 from pysrc.SaKits.Setting.Constant import SALConstant
@@ -44,7 +45,7 @@ class PseudoSpectralSLE:
         else:
             OceanFuction_SH = FileTool.get_project_dir("data/basin_mask/SH/Ocean_maskSH.dat")
             mask_shc = load_SHC(OceanFuction_SH, key='', lmax=self.lmax)
-            grid_basin = mask_shc.to_grid(grid_space=self.res)
+            grid_basin = mask_shc.to_GRD(grid_space=self.res)
             grid_basin.limiter(threshold=0.5)
             mask_grid = grid_basin.value[0]
             mask_sh = mask_shc.value
