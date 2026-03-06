@@ -98,7 +98,7 @@ class LoveNumber:
 
     def __AOD04(self):
         """
-        Love number that was used in AOD RL04
+        Love number that was used in NUM RL04
         :return:
         """
 

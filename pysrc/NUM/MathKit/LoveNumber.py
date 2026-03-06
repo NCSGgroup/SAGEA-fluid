@@ -7,10 +7,10 @@
 # @Function : This code is dedicated to ...
 
 import numpy as np
-import scipy.io as scio
-from scipy import interpolate
+# import scipy.io as scio
+# from scipy import interpolate
 
-from lib.SaGEA.post_processing.geometric_correction.old.Setting import LoveNumberType
+from pysrc.NUM.Setting.Setting import LoveNumberType
 
 
 class LoveNumber:
@@ -29,7 +29,8 @@ class LoveNumber:
         self.__Nmax = Nmax
         func = None
         if method == LoveNumberType.PREM:
-            func = self.__PREM
+            # func = self.__PREM
+            func = self.__Wang
         elif method == LoveNumberType.AOD04:
             func = self.__AOD04
         elif method == LoveNumberType.Wang:
@@ -39,34 +40,34 @@ class LoveNumber:
 
         return func()
 
-    def __PREM(self):
-        """
-        PREM model
-        :return:
-        """
-
-        assert self.__Nmax < 200
-        '''The code is unreliable once greater than 200'''
-
-        index = np.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
-                          10, 12, 15, 20, 30, 40, 50,
-                          70, 100, 150, 200])
-
-        values = np.array([0.000, 0.027, -0.303, -0.194,
-                           -0.132, -0.104, -0.089, -0.081,
-                           -0.076, -0.072, -0.069, -0.064,
-                           -0.058, -0.051, -0.040, -0.033,
-                           -0.027, -0.020, -0.014, -0.010, -0.007])
-
-        xnew = np.array(range(0, self.__Nmax + 1))
-
-        f = interpolate.interp1d(index, values, kind="cubic")
-        # ‘slinear', ‘quadratic' and ‘cubic' refer to a spline interpolation of first, second or third order)
-        ynew = f(xnew)
-
-        # print(ynew)
-
-        return ynew
+    # def __PREM(self):
+    #     """
+    #     PREM model
+    #     :return:
+    #     """
+    #
+    #     assert self.__Nmax < 200
+    #     '''The code is unreliable once greater than 200'''
+    #
+    #     index = np.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
+    #                       10, 12, 15, 20, 30, 40, 50,
+    #                       70, 100, 150, 200])
+    #
+    #     values = np.array([0.000, 0.027, -0.303, -0.194,
+    #                        -0.132, -0.104, -0.089, -0.081,
+    #                        -0.076, -0.072, -0.069, -0.064,
+    #                        -0.058, -0.051, -0.040, -0.033,
+    #                        -0.027, -0.020, -0.014, -0.010, -0.007])
+    #
+    #     xnew = np.array(range(0, self.__Nmax + 1))
+    #
+    #     f = interpolate.interp1d(index, values, kind="cubic")
+    #     # ‘slinear', ‘quadratic' and ‘cubic' refer to a spline interpolation of first, second or third order)
+    #     ynew = f(xnew)
+    #
+    #     # print(ynew)
+    #
+    #     return ynew
 
     def __AOD04(self):
         """
@@ -111,13 +112,8 @@ class LoveNumber:
 
         assert self.__Nmax <= 360
 
-        path = str(self.__path) + '/LoveNumber'
-
-        love = scio.loadmat(path)
-
-        # love = scio.loadmat('raw_data/test/love')
-
-        kl = love['love'][0:self.__Nmax, 3]
+        path = self.__path + 'LoveNumber_Wang.npy'
+        kl = np.load(path)[0:self.__Nmax, 3]
 
         # print(kl)
 
@@ -155,8 +151,10 @@ class LoveNumber:
 
 
 def demo():
-    LN = LoveNumber('../data/auxiliary/')
-    Kn = LN.getNumber(30, LoveNumberType.Wang)
+    LN = LoveNumber('H:/Model for Atmosphere de-aliasing errors based on ERA5/paper_data/Auxiliary/')
+    # Kn = LN.getNumber(30, LoveNumberType.Wang)
+    Kn = LN.getNumber(20,LoveNumberType.Wang)
+    print(Kn)
     pass
 
 

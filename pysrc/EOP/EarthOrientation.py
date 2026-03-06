@@ -10,9 +10,9 @@ from lib.SaGEA.auxiliary.load_file.LoadL2SH import load_SHC
 import lib.SaGEA.auxiliary.preference.EnumClasses as Enums
 
 from pysrc.SAL.SeaLevelEquation import PseudoSpectralSLE
-from pysrc.SaKits.LLN.LLN import LoveNumber,LLN_variable,LLN_Data,Frame
-from pysrc.SaKits.Setting.EnumClasses import EAMtype
-from pysrc.SaKits.Setting.Constant import EOPConstant
+from pysrc.KITs.LLN.LLN import LoveNumber,LLN_variable,LLN_Data,Frame
+from pysrc.KITs.Setting.EnumClasses import EAMtype
+from pysrc.KITs.Setting.Constant import EOPConstant
 
 class EOP:
     def __init__(self):
@@ -20,6 +20,8 @@ class EOP:
         self.rad_to_ms = EOPConstant.rad_to_ms
 
     def PM_mass_term(self,Ps,lat,lon,isMas=False):
+        start_time = time.time()
+        print(f"=========Begin Polar motion mass term computing==========")
         phi, lam = np.deg2rad(lat), np.deg2rad(lon)
         dphi, dlam = np.abs(phi[1] - phi[0]), np.abs(lam[1] - lam[0])
         phi_2D, lam_2D = np.meshgrid(phi, lam, indexing='ij')
@@ -44,9 +46,18 @@ class EOP:
             chi2 = chi2 * self.rad_to_mas
 
         PM = {"chi1": chi1, "chi2": chi2}
+        end_time = time.time()
+        print('-------------------------------------------------\n'
+              'Polar motion mass term: Spatial method\n'
+              '-------------------------------------------------')
+        print('%-20s%-20s ' % ('Time-consuming:', f'{end_time - start_time:.4f} s'))
+        print("-------------------------------------------------\n")
+
         return PM
 
     def PM_mass_term_SH(self,SH,isMas=False):
+        start_time = time.time()
+        print(f"=========Begin Polar motion mass term computing==========")
         coef_numerator = -1.098 * np.sqrt(5) * (EOPConstant.radius ** 2) * EOPConstant.Mass
         coef_denominator = np.sqrt(3) * (1 + EOPConstant.k2_load) * (EOPConstant.Cm - EOPConstant.Am)
 
@@ -64,9 +75,17 @@ class EOP:
             chi1 = chi1 * self.rad_to_mas
             chi2 = chi2 * self.rad_to_mas
         chi = {"chi1": chi1, "chi2": chi2}
+        end_time = time.time()
+        print('-------------------------------------------------\n'
+              'Polar motion mass term: Spectral method\n'
+              '-------------------------------------------------')
+        print('%-20s%-20s ' % ('Time-consuming:', f'{end_time - start_time:.4f} s'))
+        print("-------------------------------------------------\n")
         return chi
 
     def PM_mass_term_EWHSH(self,EWH_SH,isMas=False):
+        start_time = time.time()
+        print(f"=========Begin Polar motion mass term computing==========")
         coef = (4 * np.pi * (EOPConstant.radius ** 4) * EOPConstant.rho_water) / (np.sqrt(15))
 
         I13 = coef * EWH_SH[:, 7]
@@ -78,6 +97,12 @@ class EOP:
             chi1 = chi1 * self.rad_to_mas
             chi2 = chi2 * self.rad_to_mas
         chi = {"chi1": chi1, "chi2": chi2}
+        end_time = time.time()
+        print('-------------------------------------------------\n'
+              'Polar motion mass term: Spatial method\n'
+              '-------------------------------------------------')
+        print('%-20s%-20s ' % ('Time-consuming:', f'{end_time - start_time:.4f} s'))
+        print("-------------------------------------------------\n")
         return chi
 
     def PM_motion_term(self, Us, Vs, lat, lon, levPres, Ps, Zth=None, type=EAMtype.AAM, isMas=True):
@@ -96,6 +121,8 @@ class EOP:
         :param isMas:  False means results are rad, True means results are mas
         :return:
         """
+        start_time = time.time()
+        print(f"=========Begin Polar motion motion term computing==========")
         chi1_series, chi2_series = [], []
         for i in tqdm(np.arange(len(Us))):
             dp_g = []
@@ -166,6 +193,12 @@ class EOP:
         chi1_series, chi2_series = np.array(chi1_series), np.array(chi2_series)
 
         chi = {"chi1": chi1_series, "chi2": chi2_series}
+        end_time = time.time()
+        print('-------------------------------------------------\n'
+              'Polar motion motion term: Spatial method\n'
+              '-------------------------------------------------')
+        print('%-20s%-20s ' % ('Time-consuming:', f'{end_time - start_time:.4f} s'))
+        print("-------------------------------------------------\n")
         return chi
 
     def LOD_mass_term_SH(self, SH, isMs=False):
@@ -174,6 +207,8 @@ class EOP:
         :param isMas: the same follow before.
         :return: chi3 with unit mas or rad, the unit of (Delta)LOD is seconds (s).
         """
+        start_time = time.time()
+        print(f"=========Begin LOD mass term computing==========")
         coef_numerator = 0.753*(EOPConstant.radius**2)*EOPConstant.Mass*2
         coef_denominator = (1+EOPConstant.k2_load)*EOPConstant.Cm*3
 
@@ -183,10 +218,17 @@ class EOP:
         if isMs:
             chi3 = chi3*self.rad_to_ms
         LOD = {"chi3": chi3}
+        end_time = time.time()
+        print('-------------------------------------------------\n'
+              'LOD mass term: Spectral method\n'
+              '-------------------------------------------------')
+        print('%-20s%-20s ' % ('Time-consuming:', f'{end_time - start_time:.4f} s'))
+        print("-------------------------------------------------\n")
         return LOD
 
     def LOD_mass_term(self, Ps, lat, lon, isMs=True):
-
+        start_time = time.time()
+        print(f"=========Begin LOD mass term computing==========")
         coef_numerator = 0.998*(EOPConstant.radius**3)
         coef_denominator = EOPConstant.Cm*EOPConstant.omega*EOPConstant.grav
 
@@ -202,9 +244,17 @@ class EOP:
         if isMs:
             chi3 = chi3*self.rad_to_ms
         LOD = {"chi3": chi3}
+        end_time = time.time()
+        print('-------------------------------------------------\n'
+              'LOD mass term: Spatial method\n'
+              '-------------------------------------------------')
+        print('%-20s%-20s ' % ('Time-consuming:', f'{end_time - start_time:.4f} s'))
+        print("-------------------------------------------------\n")
         return LOD
 
     def LOD_motion_term(self, Us, lat, lon, levPres, Ps=None, Zth=None,type=EAMtype.AAM, isMs=True):
+        start_time = time.time()
+        print(f"=========Begin LOD motion term computing==========")
 
         coef_numerator = 0.998*(EOPConstant.radius**2)
         coef_denominator = EOPConstant.Cm*EOPConstant.omega
@@ -258,6 +308,12 @@ class EOP:
 
         chi3_series = np.array(chi3_series)
         LOD = {"chi3": chi3_series}
+        end_time = time.time()
+        print('-------------------------------------------------\n'
+              'LOD motion term: Spatial method\n'
+              '-------------------------------------------------')
+        print('%-20s%-20s ' % ('Time-consuming:', f'{end_time - start_time:.4f} s'))
+        print("-------------------------------------------------\n")
         return LOD
     def __dp_AAM_full(self, levPres, lev, lat, lon, surPres=None, geoHeight=None):
         sampe_arr = np.ones((len(lat), len(lon))).flatten()

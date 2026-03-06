@@ -9,9 +9,9 @@ from lib.SaGEA.auxiliary.load_file.LoadL2SH import load_SHC
 import lib.SaGEA.auxiliary.preference.EnumClasses as Enums
 
 from pysrc.SAL.SeaLevelEquation import PseudoSpectralSLE
-from pysrc.SaKits.Setting.Constant import GCMConstant
-from pysrc.SaKits.Setting.GeoMathKit import GeoMathKit
-from pysrc.SaKits.LLN.LLN import LoveNumber,LLN_variable,LLN_Data,Frame
+from pysrc.KITs.Setting.Constant import GCMConstant
+from pysrc.KITs.Setting.GeoMathKit import GeoMathKit
+from pysrc.KITs.LLN.LLN import LoveNumber,LLN_variable,LLN_Data,Frame
 
 def Convert_Mass_to_Coordinates(C10, C11, S11):
     k1 = 0.021

@@ -239,7 +239,7 @@ class ForwardModel:
         """
         B = (90 - theta) * np.pi / 180  # co-latitude in [rad]
 
-        '''AOD RL06 document: get the real height from geopotential height'''
+        '''NUM RL06 document: get the real height from geopotential height'''
         z = (1 - 0.002644 * np.cos(2 * B)) * H + (1 - 0.0089 * np.cos(2 * B)) * np.power(H, 2) / 6.245e6
 
         return z

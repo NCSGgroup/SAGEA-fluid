@@ -1,19 +1,19 @@
 import time
 import numpy as np
 
-from pysrc.SaKits.LoadFile.SHC import SHC
+from pysrc.KITs.LoadFile.SHC import SHC
 # from lib.SaGEA.data_class.SHC import SHC
 from lib.SaGEA.data_class.GRD import GRD
 from lib.SaGEA.auxiliary.aux_tool.FileTool import FileTool
 # from lib.SaGEA.auxiliary.aux_tool.MathTool import MathTool
-from pysrc.SaKits.Setting.MathTool import MathTool
+from pysrc.KITs.Setting.MathTool import MathTool
 from lib.SaGEA.auxiliary.load_file.LoadL2SH import load_SHC
 
-from pysrc.SaKits.Setting.Constant import SALConstant
-from pysrc.SaKits.LLN.LLN import LoveNumber,LLN_Data,LLN_variable,Frame
-from pysrc.SaKits.LoadFunc.Harmonic import Harmonic
-from pysrc.SaKits.Setting.EnumClasses import Displacement,GreenFunction
-from pysrc.SaKits.LoadFunc import PointLoad, DiskLoad
+from pysrc.KITs.Setting.Constant import SALConstant
+from pysrc.KITs.LLN.LLN import LoveNumber,LLN_Data,LLN_variable,Frame
+from pysrc.KITs.LoadFunc.Harmonic import Harmonic
+from pysrc.KITs.Setting.EnumClasses import Displacement,GreenFunction
+from pysrc.KITs.LoadFunc import PointLoad, DiskLoad
 
 
 class PseudoSpectralSLE:
@@ -179,7 +179,8 @@ class PseudoSpectralSLE:
         sigma_0 = SALConstant.Chandler
         k2,h2 = SALConstant.k2, SALConstant.h2
         g = SALConstant.grav
-        lln = LoveNumber().config(lmax=self.lmax, method=LLN_Data.PREM).get_Love_number()
+        # lln = LoveNumber().config(lmax=self.lmax, method=LLN_Data.PREM).get_Love_number()
+        lln = self.lln
         kl2, hl2 = lln.LLN[LLN_variable.k][2], lln.LLN[LLN_variable.h][2]
 
         Psi_JT = np.array([
@@ -328,26 +329,22 @@ class SpatialSLE:
         self.lln = LoveNumber().config(lmax=lmax,method=method).get_Love_number().convert(target=frame)
         # print(f"The Load Love Number here is up to degree {lmax}, method is {method.name}, and frame is {frame.name}")
         return self
-
     def setmaxDegree(self,lmax):
         self.lmax = lmax
         # print(f"The update configuration information:\n"
         #       f"lmax:{self.lmax}, resolution:{self.res}, lat:{self.lat.shape}, lon:{self.lon.shape}\n")
         return self
-
     def setGreenFunctionType(self,kind:GreenFunction.PointLoad):
         self.Green = kind
         # print(f"The GreenFunction here is {self.Green.name}.")
         return self
-
     def setOcean(self,loadfile="data/basin_mask/SH/Ocean_maskSH.dat"):
         OceanFuction_SH = FileTool.get_project_dir(loadfile)
         shc_OceanFunction = load_SHC(OceanFuction_SH, key='', lmax=self.lmax)  # load basin mask (in SHC)
-        grid_basin = shc_OceanFunction.to_grid(grid_space=self.res)
+        grid_basin = shc_OceanFunction.to_GRD(grid_space=self.res)
         grid_basin.limiter(threshold=0.5)
         ocean_function = grid_basin.value[0]
         return ocean_function
-
     def BaryTerm(self, mask):
         '''Also called eustatic term'''
         ocean_mask = mask
@@ -407,7 +404,6 @@ class SpatialSLE:
             B = Bg
             EP = EPg
 
-
         Mean_GRD = GRD(grid=EP - B, lat=self.lat, lon=self.lon).integral(mask=ocean_mask, average=True)
         Mean_GRD = Mean_GRD[:, np.newaxis, np.newaxis] * ocean_mask
 
@@ -421,7 +417,7 @@ class SpatialSLE:
         #            "GRD_Mean": Mean_GRD,
         #            "GHC": EP + self.BaryTerm(mask=mask) - Mean_GRD,
         #            "VLM": B}
-        SALterm = {"GRD": SAL,
+        SALterm = {"SAL": SAL,
                    "GRD_Mean": Mean_GRD,
                    "GHC": EP,
                    "VLM": B}
@@ -475,7 +471,8 @@ class SpatialSLE:
         sigma_0 = SALConstant.Chandler
         k2, h2 = SALConstant.k2, SALConstant.h2
         g = SALConstant.grav
-        lln = LoveNumber().config(lmax=self.lmax, method=LLN_Data.PREM).get_Love_number()
+        # lln = LoveNumber().config(lmax=self.lmax, method=LLN_Data.PREM).get_Love_number()
+        lln = self.lln
         kl2, hl2 = lln.LLN[LLN_variable.k][2], lln.LLN[LLN_variable.h][2]
 
         Psi_JT = np.array([
@@ -528,8 +525,8 @@ class SpatialSLE:
             WL = self.Input.value * (1 - ocean_mask) + S * ocean_mask
             SALterm = self.SALTerm(WL=WL, mask=ocean_mask, rotation=rotation)
             GHC, VLM = SALterm['GHC'], SALterm['VLM']
-            SAL = SALterm['GRD']
-            S_new = Baryterm + GRD
+            SAL = SALterm['SAL']
+            S_new = Baryterm + SAL
             # delta = np.abs(
             #     np.linalg.norm(S_new * ocean_mask, axis=(1, 2)) - np.linalg.norm(S * ocean_mask, axis=(1, 2)))
             delta = np.abs(np.amax(S_new-S,axis=(1,2)))
@@ -553,7 +550,7 @@ class SpatialSLE:
         # print(f"===Baryterm is: {np.amin(Baryterm,axis=(1,2))}\n")
         end_time = time.time()
         print('-------------------------------------------------\n'
-              'Sea Level Equation: PseudoSpectral method\n'
+              'Sea Level Equation: Spatial method\n'
               '-------------------------------------------------')
         print('%-20s%-20s ' % ('Maxdegree:', f'{self.lmax}'))
         print('%-20s%-20s ' % ('PointLoad:', f'{self.Green}'))
@@ -577,6 +574,8 @@ def demo():
                                            get_dates=True, )  # load GSM and dates
     A = PseudoSpectralSLE(SH=shc.value,lmax=lmax)
     A.setLoveNumber(lmax=60,method=LLN_Data.Wang,frame=Frame.CM)
+
+
 
 if __name__ == '__main__':
     demo()
