@@ -6,16 +6,16 @@ import lib.SaGEA.auxiliary.preference.EnumClasses as Enums
 from lib.SaGEA.auxiliary.aux_tool.FileTool import FileTool
 from lib.SaGEA.auxiliary.aux_tool.TimeTool import TimeTool
 from lib.SaGEA.auxiliary.load_file.LoadL2SH import load_SHC
-from pysrc.SaKits.Setting.GeoMathKit import GeoMathKit
+from pysrc.KITs.Setting.GeoMathKit import GeoMathKit
 from lib.SaGEA.data_class.GRD import GRD
 from pysrc.GCM.GeocenterMotion import GeocenterMotion
 from pysrc.GCM.EarthOblateness import J2
-import pysrc.SaKits.Setting.EnumClasses as GCMEnums
+import pysrc.KITs.Setting.EnumClasses as GCMEnums
 
 
 def demo_GCM():
     """this demo shows an example of GRACE GCM estimation"""
-    lmax, res, buffer_width = 60, 1, 0
+    lmax, res, buffer_width = 60, 0.5, 0
     filter_method, filter_params = Enums.SHCFilterType.DDK, (3,)
     begin_date, end_date = date(2009,1,1),date(2009,12,31)
     begins, ends = begin_date.strftime("%Y-%m-%d").split('-'),end_date.strftime('%Y-%m-%d').split('-')
@@ -69,8 +69,8 @@ def demo_GCM():
 
     GCM = GeocenterMotion(GRACE=shc.value,OceanSH=OceanSH.value,GAD=shc_gac.value,lmax=lmax)
     GCM.setResolution(resolution=res)
-    GSM_like = GCM.GSM_Like(mask=mask,SAL=False,rotation=False,buffer=buffer_width)
-    full_geocenter = GCM.Full_Geocenter(GAC=shc_gad.value,mask=mask,SAL=False)
+    GSM_like = GCM.GSM_Like(mask=mask,SAL=True,rotation=True,buffer=buffer_width)
+    full_geocenter = GCM.Full_Geocenter(GAC=shc_gad.value,mask=mask,SAL=True)
 
     GCM_like_X,GCM_like_Y,GCM_like_Z = GSM_like['X']*1000,GSM_like['Y']*1000,GSM_like['Y']*1000
     GCM_full_X,GCM_full_Y,GCM_full_Z = full_geocenter['X']*1000,full_geocenter['Y']*1000,full_geocenter['Z']*1000

@@ -8,16 +8,16 @@ from datetime import date
 from lib.SaGEA.auxiliary.aux_tool.MathTool import MathTool
 from lib.SaGEA.auxiliary.aux_tool.TimeTool import TimeTool
 from lib.SaGEA.auxiliary.load_file.LoadL2LowDeg import load_low_degs
-from pysrc.SaKits.LoadFunc.Harmonic import Harmonic
+from pysrc.KITs.LoadFunc.Harmonic import Harmonic
 from lib.SaGEA.auxiliary.aux_tool.FileTool import FileTool
 from lib.SaGEA.auxiliary.load_file.LoadL2SH import load_SHC
 import lib.SaGEA.auxiliary.preference.EnumClasses as Enums
-import pysrc.SaKits.Setting.EnumClasses as EOPEnums
-from lib.AOD.IBcorrection.IBcorrection import IBcorrection
+import pysrc.KITs.Setting.EnumClasses as EOPEnums
+from pysrc.NUM.IBcorrection.IBcorrection import IBcorrection
 from lib.SaGEA.data_class.SHC import SHC
 from lib.SaGEA.data_class.GRD import GRD
 from pysrc.EOP.EarthOrientation import EOP
-from pysrc.SaKits.Setting.EnumClasses import EAMtype
+from pysrc.KITs.Setting.EnumClasses import EAMtype
 from tqdm import tqdm
 
 from pysrc.SAL.SeaLevelEquation import PseudoSpectralSLE

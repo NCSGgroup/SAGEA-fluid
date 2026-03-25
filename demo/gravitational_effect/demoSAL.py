@@ -4,20 +4,20 @@ import pandas as pd
 import xarray as xr
 from datetime import date
 import lib.SaGEA.auxiliary.preference.EnumClasses as Enums
-import pysrc.SaKits.Setting.EnumClasses as SALEnums
+import pysrc.KITs.Setting.EnumClasses as SALEnums
 from lib.SaGEA.auxiliary.aux_tool.FileTool import FileTool
 from lib.SaGEA.auxiliary.aux_tool.TimeTool import TimeTool
 from lib.SaGEA.auxiliary.aux_tool.MathTool import MathTool
 from lib.SaGEA.auxiliary.load_file.LoadL2LowDeg import load_low_degs
 from lib.SaGEA.auxiliary.load_file.LoadL2SH import load_SHC
 
-from lib.AOD.IBcorrection import IBcorrection
+from pysrc.NUM.IBcorrection.IBcorrection import IBcorrection
 from lib.SaGEA.data_class.GRD import GRD
 # from lib.SaGEA.data_class.SHC import SHC
-from pysrc.SaKits.LoadFile.SHC import SHC
+from pysrc.KITs.LoadFile.SHC import SHC
 from pysrc.SAL.SeaLevelEquation import PseudoSpectralSLE
 from tqdm import tqdm
-from pysrc.SaKits.LoadFunc.Harmonic import Harmonic
+from pysrc.KITs.LoadFunc.Harmonic import Harmonic
 def demo_NM():
     """This is an example for computing SAL effect using numerical model, i.e., ERA5 surface pressure and ECCO ocean bottom pressure"""
 
@@ -167,4 +167,4 @@ def demo_GO():
 
 if __name__ == '__main__':
     demo_GO()
-    # demo_NM()
+    demo_NM()
