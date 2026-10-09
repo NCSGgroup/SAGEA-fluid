@@ -340,8 +340,10 @@ class Harmonic:
         Qnm = Pnm * thetaS
 
         for m in range(n + 1):
-            Am[m] = factor1 * np.array(I_new * np.mat(np.cos(m * phi)).T).flatten()
-            Bm[m] = factor1 * np.array(I_new * np.mat(np.sin(m * phi)).T).flatten()
+            # Am[m] = factor1 * np.array(I_new * np.mat(np.cos(m * phi)).T).flatten()
+            # Bm[m] = factor1 * np.array(I_new * np.mat(np.sin(m * phi)).T).flatten()
+            Am[m] = factor1 * np.array(I_new * np.asmatrix(np.cos(m * phi)).T).flatten()
+            Bm[m] = factor1 * np.array(I_new * np.asmatrix(np.sin(m * phi)).T).flatten()
 
         indexM = np.arange(n + 1)
         Cnm[GeoMathKit.getIndex(n, 0):GeoMathKit.getIndex(n, n) + 1] = factorSH[n] * factor2 * \

@@ -551,3 +551,24 @@ class LoadL2SH:
                         filepath_list.append(this_filepath)
 
         return filepath_list
+
+
+def demo():
+    from datetime import date
+    import matplotlib.pyplot as plt
+    lmax=60
+    begin_date, end_date = date(2009, 1, 1), date(2009,12, 31)
+    gsm_dir = FileTool.get_project_dir("D:/PyCode/SAGEA-fluid/data/L2_SH_products/GSM/CSR/RL06/BA01/")
+    key='GRCOF2'
+    shc = load_SHC(gsm_dir, key=key, lmax=lmax, begin_date=begin_date, end_date=end_date,
+                   get_dates=False, )
+    # shc = load_SHC(gsm_dir, key=key, read_rows=[1,2,5,6],lmax=lmax,
+    #                begin_date=begin_date, end_date=end_date,
+    #                get_dates=False, )
+    print(shc.value[0][0:10])
+    plt.plot(shc.value[0])
+    plt.show()
+    pass
+
+if __name__ == "__main__":
+    demo()
