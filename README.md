@@ -12,7 +12,7 @@ When referencing this work, please cite:
 
 ## 2. Contact
 
-Weihang Zhang (zwh_cge@hust.edu.cn), Fan Yang ([fany@plan.aau.dk]())
+Weihang Zhang (zhang.17371@osu.edu), Fan Yang ([fany@plan.aau.dk]())
 
 ## 3. Features
 
