@@ -233,7 +233,7 @@ class FormatWrite:
 
 
 def demo1():
-    from pysrc.AOD.LoadFile.LoadSH import AOD_GFZ, AODtype
+    from pysrc.NUM.LoadFile.LoadSH import AOD_GFZ, AODtype
     ad = AOD_GFZ().load('../data/Products/RL05').setType(AODtype.ATM).setTime('2005-01-01', '12:00:00')
     C, S = ad.getCS(ad.maxDegree)
 

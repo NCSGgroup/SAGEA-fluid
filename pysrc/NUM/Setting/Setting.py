@@ -9,6 +9,9 @@
 
 from enum import Enum
 
+class TideInfo(Enum):
+    S1 = 0
+
 
 class ForceFields(Enum):
     ERAinterim = 0

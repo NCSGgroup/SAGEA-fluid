@@ -386,6 +386,57 @@ class GeoMathKit:
         g_file.close()
 
     @staticmethod
+    def buffer_outward(mask,lats,buffer_width_km):
+
+        if buffer_width_km <= 0:
+            corrected_mask = mask
+        else:
+            mask = 1-mask
+            # 1. compute grid resolution
+            dy = 111.32  # 1 degre of lat ≈ 111.32 km
+            dx_at_equator = 111.32  # 1 degree longitude in equator ≈ 111.32 km
+            # 2. mean grid resolution
+            mean_lat = np.mean(lats)
+            dx = dx_at_equator * np.cos(np.deg2rad(mean_lat))
+            mean_resolution_km = np.sqrt(dx ** 2 + dy ** 2) / 2  # approximately mean grid resolution
+            # 3. the points of buffer
+            buffer_cells = int(np.ceil(buffer_width_km / mean_resolution_km))
+            # 4. find the boundary
+            land = (mask == 0).astype(int)
+            structure = ndi.generate_binary_structure(2, 2)  # 8连通结构(3x3)
+            dilated_land = ndi.binary_dilation(land, structure=structure, iterations=buffer_cells)
+            # 5. correct mask
+            buffer_zone = dilated_land & (mask == 1)
+            corrected_mask = mask.copy()
+            corrected_mask[buffer_zone] = 0
+        return 1-corrected_mask
+
+    @staticmethod
+    def buffer_inward(mask, lats, buffer_width_km):
+
+        if buffer_width_km <= 0:
+            corrected_mask = mask
+        else:
+            # 1. compute grid resolution
+            dy = 111.32  # 1 degre of lat ≈ 111.32 km
+            dx_at_equator = 111.32  # 1 degree longitude in equator ≈ 111.32 km
+            # 2. mean grid resolution
+            mean_lat = np.mean(lats)
+            dx = dx_at_equator * np.cos(np.deg2rad(mean_lat))
+            mean_resolution_km = np.sqrt(dx ** 2 + dy ** 2) / 2  # approximately mean grid resolution
+            # 3. the points of buffer
+            buffer_cells = int(np.ceil(buffer_width_km / mean_resolution_km))
+            # 4. find the boundary
+            land = (mask == 0).astype(int)
+            structure = ndi.generate_binary_structure(2, 2)  # 8连通结构(3x3)
+            dilated_land = ndi.binary_dilation(land, structure=structure, iterations=buffer_cells)
+            # 5. correct mask
+            buffer_zone = dilated_land & (mask == 1)
+            corrected_mask = mask.copy()
+            corrected_mask[buffer_zone] = 0
+        return corrected_mask
+
+    @staticmethod
     def leakage(ocean_mask, lats, buffer_width_km):
         """
         parameters:

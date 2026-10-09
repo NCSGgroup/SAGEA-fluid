@@ -509,7 +509,7 @@ def load_SLR_AIUB(*filepath, key: str, lmax: int, lmcs_in_queue=None, get_dates=
                 # if this_begin_date >= begin_date and this_end_date <= end_date:
                 #     files_to_load.append(file_list[i])
 
-            return load_HUSTGRACE(*files_to_load, key=key, lmax=lmax, lmcs_in_queue=lmcs_in_queue,
+            return load_SLR_AIUB(*files_to_load, key=key, lmax=lmax, lmcs_in_queue=lmcs_in_queue,
                                   get_dates=get_dates, daylist=daylist)
 
     else:
@@ -517,7 +517,7 @@ def load_SLR_AIUB(*filepath, key: str, lmax: int, lmcs_in_queue=None, get_dates=
         dates_begin, dates_end = [], []
 
         for i in range(len(filepath)):
-            load = load_HUSTGRACE(filepath[i], key=key, lmax=lmax, lmcs_in_queue=lmcs_in_queue,
+            load = load_SLR_AIUB(filepath[i], key=key, lmax=lmax, lmcs_in_queue=lmcs_in_queue,
                                   get_dates=get_dates, daylist=daylist)
 
             if type(load) is tuple:
@@ -630,7 +630,7 @@ def load_SWPU(*filepath, key: str, lmax: int, lmcs_in_queue=None, get_dates=Fals
                 # if this_begin_date >= begin_date and this_end_date <= end_date:
                 #     files_to_load.append(file_list[i])
 
-            return load_HUSTGRACE(*files_to_load, key=key, lmax=lmax, lmcs_in_queue=lmcs_in_queue,
+            return load_SWPU(*files_to_load, key=key, lmax=lmax, lmcs_in_queue=lmcs_in_queue,
                                   get_dates=get_dates, daylist=daylist)
 
     else:
@@ -638,7 +638,7 @@ def load_SWPU(*filepath, key: str, lmax: int, lmcs_in_queue=None, get_dates=Fals
         dates_begin, dates_end = [], []
 
         for i in range(len(filepath)):
-            load = load_HUSTGRACE(filepath[i], key=key, lmax=lmax, lmcs_in_queue=lmcs_in_queue,
+            load = load_SWPU(filepath[i], key=key, lmax=lmax, lmcs_in_queue=lmcs_in_queue,
                                  get_dates=get_dates, daylist=daylist)
 
             if type(load) is tuple:
@@ -1001,14 +1001,20 @@ class LoadL2SH:
         return filepath_list
 
 def demo():
+    import matplotlib.pyplot as plt
     lmax=60
-    begin_date, end_date = date(2018, 12, 1), date(2018,12, 31)
-    gsm_dir = FileTool.get_project_dir("I:/GFZ/GSM/rl063/BA01/")
+    begin_date, end_date = date(2009, 1, 1), date(2009,12, 31)
+    gsm_dir = FileTool.get_project_dir("D:/PyCode/SAGEA-fluid/data/L2_SH_products/GSM/CSR/RL06/BA01/")
     key='GRCOF2'
-    shc = load_SHC(gsm_dir, key=key, lmax=lmax, begin_date=begin_date, end_date=end_date,
+    # shc = load_SHC(gsm_dir, key=key, lmax=lmax, begin_date=begin_date, end_date=end_date,
+    #                get_dates=False, )
+    shc = load_SHC(gsm_dir, key=key, lmcs_in_queue=[2,3,6,7],lmax=lmax,
+                   begin_date=begin_date, end_date=end_date,
                    get_dates=False, )
-    print(shc.value.shape)
-    print(shc.value[0][0:10])
+    plt.plot(shc.value[0])
+    plt.show()
+    # print(shc.value.shape)
+    # print(shc.value[0][0:10])
 
 def demo1():
     from lib.SaGEA.post_processing.geometric_correction.old.GeoMathKit import GeoMathKit
@@ -1030,5 +1036,6 @@ def demo2():
     print(date_range)
 
 
+
 if __name__ == '__main__':
-    demo2()
+    demo()
