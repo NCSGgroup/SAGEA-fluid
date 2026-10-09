@@ -79,6 +79,7 @@ def demo_GCM():
     print(f"Y axis:\nOnly:{GCM_like_Y}\nFull:{GCM_full_Y}")
     print(f"Z axis:\nOnly:{GCM_like_Z}\nFull:{GCM_full_Z}")
 
+    """Setting the save path"""
     save_path = '../../result/GCM/'
     os.makedirs(os.path.dirname(save_path),exist_ok=True)
 
