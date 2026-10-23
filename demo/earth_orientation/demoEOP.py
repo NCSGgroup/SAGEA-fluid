@@ -222,8 +222,8 @@ def demo_LOD_motion_term():
     ATM_SP, ATM_U, ASP_Grid, OCN_U,OCN_V, OCN_SSH =[],[],[],[],[],[]
     for i in tqdm(date_range):
         year, month = i.split('-')[0], i.split('-')[1]
-        atmos_sp = xr.open_dataset(f"../../data/ERA5\pressure level/sp-{year}{month}.nc")
-        atmos_u = xr.open_dataset(f"../../data/ERA5\pressure level/u_wind-{year}{month}.nc")
+        atmos_sp = xr.open_dataset(f"../../data/ERA5/pressure level/sp-{year}{month}.nc")
+        atmos_u = xr.open_dataset(f"../../data/ERA5/pressure level/u_wind-{year}{month}.nc")
         atm_lat = atmos_u['latitude'].values
         atm_lon = atmos_u['longitude'].values-180
         sp_atm = atmos_sp['sp'].values
@@ -232,7 +232,7 @@ def demo_LOD_motion_term():
         ATM_U.append(u_atm[0])
         ATM_SP.append(sp_atm[0])
 
-        ocean_vel = xr.open_dataset(f"../../data/ECCO\VEL/OCEAN_VELOCITY_mon_mean_{i}_ECCO_V4r4_latlon_0p50deg.nc")
+        ocean_vel = xr.open_dataset(f"../../data/ECCO/VEL/OCEAN_VELOCITY_mon_mean_{i}_ECCO_V4r4_latlon_0p50deg.nc")
         ocean_ssh = xr.open_dataset(f"../../data/ECCO/SSH/SEA_SURFACE_HEIGHT_mon_mean_{i}_ECCO_V4r4b_latlon_0p50deg.nc")
         ssh = ocean_ssh['SSH'].values
         ssh = np.nan_to_num(ssh, nan=0)
