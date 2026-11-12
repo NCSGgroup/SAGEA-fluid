@@ -15,9 +15,7 @@ from pysrc.SWOT.Settings.SWOTClasses import TrackType
 
 def data_filter(cNo=30,pNo=10,InputPath='/Users/zhang.17371/Documents/Datasets/SWOT/'):
     max_swh = 6
-    res = 0.02
-    # cross_indices = [4521, 4674, 4778]
-    # along_indices = [13, 27]
+    res = 2000          # 2000m, 2km
     datasets = Load_SSH(InputPath=InputPath).get_ssh_pass(cycle_No=cNo, pass_No=pNo)
     if datasets is None:
         return None
@@ -51,6 +49,7 @@ def data_filter(cNo=30,pNo=10,InputPath='/Users/zhang.17371/Documents/Datasets/S
         mss_da,mss_dc = derivative_2D(data=mss_value,spacing=res,pNo=pNo)
         mdt_da,mdt_dc = derivative_2D(data=mdt_value,spacing=res,pNo=pNo)
         ged_da,ged_dc = derivative_2D(data=ged_value,spacing=res,pNo=pNo)
+        dif_daz,dif_dcz = derivative_2D(data=ssh_value-ged_value-mdt_value,spacing=res,pNo=pNo)
         results = {"ssh":ssh_value,
                    "mss":mss_value,
                    "mdt":mdt_value,
@@ -59,12 +58,13 @@ def data_filter(cNo=30,pNo=10,InputPath='/Users/zhang.17371/Documents/Datasets/S
                    "mss_da":mss_da,"mss_dc":mss_dc,
                    "mdt_da":mdt_da,"mdt_dc":mdt_dc,
                    "ged_da":ged_da,"ged_dc":ged_dc,
+                   "dif_daz":dif_daz,"dif_dcz":dif_dcz,
                    "lat":lat,"lon":lon}
         return results
 
-def data_unfliter(cNo=30,pNo=10,InputPath='/Users/zhang.17371/Documents/Datasets/SWOT/'):
+def data_unfilter(cNo=30,pNo=10,InputPath='/Users/zhang.17371/Documents/Datasets/SWOT/'):
     max_swh = 6
-    res = 0.02
+    res = 2000
     # cross_indices = [4521, 4674, 4778]
     # along_indices = [13, 27]
     datasets = Load_SSH(InputPath=InputPath).get_ssh_pass(cycle_No=cNo, pass_No=pNo)

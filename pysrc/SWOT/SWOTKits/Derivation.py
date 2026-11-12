@@ -38,7 +38,7 @@ def derivative_center(data, axis, spacing):
 
     return result
 
-def derivative_adjacent(data,spacing,pNo=1):
+def derivative_adjacent(data,spacing,pass_id=1):
     dA_along = np.full(data.shape, np.nan)
     dA_cross = np.full(data.shape, np.nan)
     # 竖直方向：沿 axis=0，相邻行差分
@@ -49,7 +49,7 @@ def derivative_adjacent(data,spacing,pNo=1):
     # dA_cross[:, :-1] = (data[:, 1:] - data[:, :-1]) / spacing
     # # 最后一列：使用后向差分
     # dA_cross[:, -1] = (data[:, -1] - data[:, -2]) / spacing
-    if pNo % 2 == 1:
+    if pass_id % 2 == 1:
         dA_along[1:,:] = (data[1:,:]-data[:-1,:])/spacing
         dA_cross[:,1:] = (data[:,1:]-data[:,:-1])/spacing
     else:
@@ -57,21 +57,21 @@ def derivative_adjacent(data,spacing,pNo=1):
         dA_cross[:,1:] = (data[:,:-1]-data[:,1:])/spacing
     return dA_along,dA_cross
 
-def derivative_2D(data,spacing,pNo=1):
+def derivative_2D(data,spacing,pass_id=1):
     dfdy = np.full(data.shape, np.nan)
     dfdx = np.full(data.shape, np.nan)
 
-    if pNo % 2 == 1:
+    if pass_id % 2 == 1:
         dfdy[1:,:] = (data[1:,:]-data[:-1,:])/spacing   # axis=0, its row calculation
         dfdx[:,1:] = (data[:,1:]-data[:,:-1])/spacing   # axis=1, its column calculation
     else:
         dfdy[1:,:] = (data[:-1,:]-data[1:,:])/spacing   # axis=0, its row calculation
         dfdx[:,1:] = (data[:,:-1]-data[:,1:])/spacing   # axis=1, its column calculation
     return dfdy,dfdx
-def derivative_1D(data,spacing,pNo=1):
+def derivative_1D(data,spacing,pass_id=1):
     df = np.full(data.shape,np.nan)
     # print(f"data shape and df shape:{data.shape,df.shape}")
-    if pNo % 2 == 1:
+    if pass_id % 2 == 1:
         df[1:] = (data[1:]-data[:-1])/spacing
     else:
         df[1:] = (data[:-1]-data[1:])/spacing

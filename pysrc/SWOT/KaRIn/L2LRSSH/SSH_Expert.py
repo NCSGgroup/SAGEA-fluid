@@ -179,11 +179,11 @@ class Load_SSH:
             return data_dict
 
     def get_ssh_pass(self,cycle_id=30,pass_id=10):
-        # self.cycle_No = cycle_No
-        # self.pass_No = pass_No
-        data_path = self.return_pass_path(cycle_id=cycle_id,pass_id=pass_id)
+        self.cycle_id = cycle_id
+        self.pass_id = pass_id
+        data_path = self.return_pass_path(cycle_id=self.cycle_id,pass_id=self.pass_id)
         if not data_path:
-            print(f" > > There is no SWOT {self.FileType.name} data on cycle {cycle_id} and pass {pass_id}")
+            print(f" > > There is no SWOT {self.FileType.name} data on cycle {self.cycle_id} and pass {self.pass_id}")
             return None
 
         else:
