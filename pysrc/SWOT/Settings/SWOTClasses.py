@@ -27,6 +27,8 @@ class RefineType(Enum):
 class BGtype(Enum):
     MSSCLS = 0
     EGM2008 = 1
+    MSS = 2
+    N = 3
 
 
 class VariableType(Enum):
