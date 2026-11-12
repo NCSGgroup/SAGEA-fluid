@@ -18,22 +18,17 @@ from tqdm import tqdm
 class Load_SSH:
     def __init__(self,InputPath):
         self.load_path = InputPath
-        self.cycle_No = None
-        self.pass_No = None
+        self.cycle_id = None
+        self.pass_id = None
         self.FileType = KaRInL2LRSSH.Expert
-
-    def set_Orbit(self,cycle_No,pass_No):
-        self.cycle_No = cycle_No
-        self.pass_No = pass_No
-        return self
 
     def set_FileType(self,FileType):
         self.FileType = FileType
         return self
 
-    def _return_pass_path(self,cNo,pNo):
-        cycle_str = f"{cNo:03d}"
-        pass_str = f"{pNo:03d}"
+    def return_pass_path(self,cycle_id,pass_id):
+        cycle_str = f"{cycle_id:03d}"
+        pass_str = f"{pass_id:03d}"
         karin_type = self.FileType.name
         target_str = f"{karin_type}_{cycle_str}_{pass_str}"
         # print(target_str)
@@ -79,8 +74,8 @@ class Load_SSH:
                         }
         return data_dic
 
-    def _return_cycle_paths(self,cNo):
-        cycle_str = f"{cNo:03}"
+    def _return_cycle_paths(self,cycle_id):
+        cycle_str = f"{cycle_id:03}"
         # print(f"cycle_No is:{cycle_str}")
         target_str = f"_{self.FileType.name}_{cycle_str}_"
         # print(target_str)
@@ -169,11 +164,13 @@ class Load_SSH:
         return data_dic
 
 
-    def get_ssh(self):
-        data_path = self._return_pass_path(cNo=self.cycle_No,pNo=self.pass_No)
+    def get_ssh(self,cycle_id,pass_id):
+        self.pass_id = pass_id
+        self.cycle_id = cycle_id
+        data_path = self.return_pass_path(cycle_id=self.cycle_id,pass_id=self.pass_id)
         # print(data_path)
         if not data_path:
-            print(f" > > There is no SWOT {self.FileType.name} data on cycle {self.cycle_No} and pass {self.pass_No}")
+            print(f" > > There is no SWOT {self.FileType.name} data on cycle {self.cycle_id} and pass {self.pass_id}")
             return None
 
         else:
@@ -181,12 +178,12 @@ class Load_SSH:
             data_dict = self._return_ssh(data_path=data_path)
             return data_dict
 
-    def get_ssh_pass(self,cycle_No=30,pass_No=10):
+    def get_ssh_pass(self,cycle_id=30,pass_id=10):
         # self.cycle_No = cycle_No
         # self.pass_No = pass_No
-        data_path = self._return_pass_path(cNo=cycle_No,pNo=pass_No)
+        data_path = self.return_pass_path(cycle_id=cycle_id,pass_id=pass_id)
         if not data_path:
-            print(f" > > There is no SWOT {self.FileType.name} data on cycle {cycle_No} and pass {pass_No}")
+            print(f" > > There is no SWOT {self.FileType.name} data on cycle {cycle_id} and pass {pass_id}")
             return None
 
         else:
@@ -196,91 +193,23 @@ class Load_SSH:
 
         pass
 
-    def get_ssh_cycle(self,cycle_No=30):
-        # self.cycle_No = cycle_No
-        ds_files = self._return_cycle_paths(cNo=cycle_No)
+    def get_ssh_cycle(self,cycle_id=30):
+        self.cycle_id = cycle_id
+        ds_files = self._return_cycle_paths(cycle_id=self.cycle_id)
 
         data_dic = self._return_whole_cycle(file_path=ds_files)
         return data_dic
 
 
-
-def get_ssh_original(InputPath="D:/",cycle_No=30,pass_No=10,FileType=KaRInL2LRSSH.Expert):
-    cycle_str = f"{cycle_No:03d}"   # set the cycle_number format as _xxx_
-    orbit_str = f"{pass_No:03d}"    # set the pass_number format as _xxx_
-    karin_type = FileType.name      # give the granules files that need to load, usually is Expert
-
-    target_str = (f"{karin_type}_"
-                  f"{cycle_str}_"
-                  f"{orbit_str}_")  # This can set the identification like "Expert_xxx_xxx_" for better loading the file needed
-    # print(target_str)
-    file_pattern = (f"{InputPath}"
-                    f"/**/"
-                    f"*{target_str}*.nc")           # Set the pattern of the target path
-    # print(file_pattern)
-    nc_file = glob.glob(file_pattern,recursive=True)# To get the paths list which has the identification like {target_str}
-    print(f"{nc_file}")
-    xr_data = xr.open_dataset(nc_file[0])
-    return xr_data
-
-def get_ssh_quick_start(InputPath="D:/",cycle_No=30,pass_No=10,FileType=KaRInL2LRSSH.Expert):
-    cycle_str = f"{cycle_No:03d}"   # set the cycle_number format as _xxx_
-    orbit_str = f"{pass_No:03d}"    # set the pass_number format as _xxx_
-    karin_type = FileType.name      # give the granules files that need to load, usually is Expert
-
-    target_str = (f"{karin_type}_"
-                  f"{cycle_str}_"
-                  f"{orbit_str}_")  # This can set the identification like "Expert_xxx_xxx_" for better loading the file needed
-    # print(target_str)
-    file_pattern = (f"{InputPath}"
-                    f"/**/"
-                    f"*{target_str}*.nc")           # Set the pattern of the target path
-    # print(file_pattern)
-    nc_file = glob.glob(file_pattern,recursive=True)# To get the paths list which has the identification like {target_str}
-    # print(f"{nc_file}")
-    xr_data = xr.open_dataset(nc_file[0])
-    # print(xr_data.variables)
-    time_array = xr_data['time'].values
-    # print((xr_data['time'].values).dtype)
-    t = np.asarray(time_array,dtype="datetime64[ns]")
-    dt = (t-t[0])/np.timedelta64(1,"s")
-    # print(dt,dt.shape)
-    print(f" > > Loading SWOT L2 LR SSH "
-          f"{KaRInL2LRSSH.Expert.name} with cycle "
-          f"{cycle_No} and pass {pass_No}...")
-
-    data_dic = {"ssh":xr_data['ssh_karin'].values,
-                "ssh_qual":xr_data['ssh_karin_qual'].values,
-                "ssha":xr_data['ssha_karin'].values,
-                "lat":xr_data['latitude'].values,
-                "lon":xr_data['longitude'].values,
-                "tides":xr_data['ocean_tide_fes'].values+
-                        xr_data['ocean_tide_non_eq'].values+
-                        xr_data['pole_tide'].values+
-                        xr_data['solid_earth_tide'].values+
-                        xr_data["internal_tide_hret"].values,
-                "dac":xr_data['dac'].values,
-                "swh":xr_data['swh_karin'].values,
-                "mss_cnescls":xr_data['mean_sea_surface_cnescls'].values,
-                "mss_dtu": xr_data['mean_sea_surface_dtu'].values,
-                "geoid": xr_data['geoid'].values,
-                "mdt":xr_data['mean_dynamic_topography'].values,
-                "time":xr_data['time'].values,
-                "height_cor_xover":xr_data['height_cor_xover'].values,
-                "height_cor_xover_qual":xr_data['height_cor_xover_qual'].values,
-                "dt":dt,
-                }
-    return data_dic
-
 def demo():
-    a = Load_SSH(InputPath='D:/Documents/Datasets/SWOT/').get_ssh_pass(cycle_No=30,pass_No=100)
+    a = Load_SSH(InputPath='D:/Documents/Datasets/SWOT/').get_ssh_pass(cycle_id=30,pass_id=100)
     # a.set_FileType(FileType=KaRInL2LRSSH.Basic)
     # data_dic = a.get_ssh()
     # print(data_dic['ssh'])
 
 def demo1():
     a = Load_SSH(InputPath='D:/Documents/Datasets/',)
-    data = a.get_ssh_cycle(cycle_No=7)
+    data = a.get_ssh_cycle(cycle_id=7)
     print(f"lat:{data['lat'].shape}\nlon:{data['lon'].shape}\n"
           f"ssh:{data['ssh'].shape}\nmss:{data['mss_cnescls'].shape}\n"
           f"tides:{data['tides'].shape}\ndac:{data['dac'].shape}")
