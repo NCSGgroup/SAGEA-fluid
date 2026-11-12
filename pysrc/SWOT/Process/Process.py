@@ -127,7 +127,7 @@ def compute_slope_region(cycle_id=30,pass_total=584,region=None,
           f"{len(all_x)}, {len(all_y)}, {len(all_dif1)}")
     all_x, all_y = np.array(all_x),np.array(all_y)
     all_ged, all_mss = np.array(all_ged),np.array(all_mss)
-    all_dif1, all_dif1 = np.array(all_dif1),np.array(all_dif1)
+    all_dif1, all_dif2 = np.array(all_dif1),np.array(all_dif2)
 
 
     valid = (
@@ -138,16 +138,17 @@ def compute_slope_region(cycle_id=30,pass_total=584,region=None,
             & (all_y >= region[2]) & (all_y <= region[3])
     )
     x, y = all_x[valid], all_y[valid]
-    dged,dmss = all_ged[valid], all_mss[valid]
+    dged, dmss = all_ged[valid], all_mss[valid]
     d1, d2 = all_dif1[valid], all_dif2[valid]
 
     print(f"============================================================\n")
     if IsSave:
+        if not os.path.exists(OutputPath):
+            os.makedirs(OutputPath)
+
         data_series = [dged,dmss,d1,d2]
         suffix = ["EGM2008","MSSCLS",
                   "dEGM2008","dMSSCLS"]
-        # postfix = ["Along_Track","Cross_Track","Along_Track","Cross_Track",
-        #            "Along_Track","Cross_Track","Along_Track","Cross_Track"]
         for i in np.arange(len(data_series)):
             OutputFile = os.path.join(OutputPath, f"Slope_{suffix[i]}_{cycle_id:03d}_{pass_total}_{Track.name}.nc")
             grid = pygmt.xyz2grd(
@@ -314,10 +315,12 @@ def demo_slope():
     /Slope_dMSS_{cycle_id}_{pass_numbers}_{track_direction}.nc/
     """
     begin_cycle, end_cycle = 26, 31
+    pass_total_number = 584
+    research_area = [60,90,-45,-30]
     for i in np.arange(begin_cycle, end_cycle+1):
         for track_direction in [TrackType.Along_Track,TrackType.Cross_Track]:
             print(f"> > Computing {i}th cycle,{track_direction}")
-            compute_slope_region(cycle_id=i, pass_total=584, region=[60,90,-45,-30],
+            compute_slope_region(cycle_id=i, pass_total=pass_total_number, region=research_area,
                                  InputPath="/Users/zhang.17371/Documents/Datasets/SWOT/L2_LR_SSH/",
                                  OutputPath="../../../result/SWOT/SlopeSEIR/",
                                  IsSave=True,
