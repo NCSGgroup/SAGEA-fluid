@@ -8,7 +8,7 @@ SAGEA-fluid is an open-source Python solver for evaluating the self-attraction a
 
 SAGEA-fluid provides an accessible and extensible toolset for both geodesy specialists and non-specialists, supporting research on a wide range of Earth system processes. Potential applications include regional sea-level budget assessments under climate change, monitoring ice-sheet mass loss with satellite gravimetry, investigating atmosphere–ocean–hydrosphere–solid Earth interactions, and contributing to the establishment and maintenance of modern high-precision terrestrial reference frames.
 
-When referencing this work, please cite: 
+When referencing this work, please cite: Zhang, W., Liu, S., Yang, F. Han, S-C. & Forootan, E. (2026). SAGEA-fluid: A solver for gravitational self-attraction effect, geocenter motion and Earth orientation parameters driven by Earth’s surface fluid. Computers & Geosciences. 219. 106301. https://doi.org/10.1016/j.cageo.2026.106301
 
 ## 2. Contact
 
